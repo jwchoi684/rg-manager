@@ -16,9 +16,9 @@ function Dashboard() {
   const loadData = async () => {
     try {
       const [studentsRes, classesRes, attendanceRes] = await Promise.all([
-        fetch('http://localhost:5001/api/students'),
-        fetch('http://localhost:5001/api/classes'),
-        fetch('http://localhost:5001/api/attendance')
+        fetch('/api/students'),
+        fetch('/api/classes'),
+        fetch('/api/attendance')
       ]);
 
       const students = await studentsRes.json();

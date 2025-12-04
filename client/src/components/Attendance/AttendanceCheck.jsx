@@ -32,8 +32,8 @@ function AttendanceCheck() {
   const loadData = async () => {
     try {
       const [studentsRes, classesRes] = await Promise.all([
-        fetch('http://localhost:5001/api/students'),
-        fetch('http://localhost:5001/api/classes')
+        fetch('/api/students'),
+        fetch('/api/classes')
       ]);
       const studentsData = await studentsRes.json();
       const classesData = await classesRes.json();
@@ -46,7 +46,7 @@ function AttendanceCheck() {
 
   const loadAttendance = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/api/attendance/date/${selectedDate}`);
+      const response = await fetch(`/api/attendance/date/${selectedDate}`);
       const allAttendance = await response.json();
       const filtered = allAttendance.filter(a =>
         !selectedClass || a.classId === parseInt(selectedClass)
@@ -79,7 +79,7 @@ function AttendanceCheck() {
 
     try {
       // 해당 날짜와 수업의 기존 출석 기록 삭제
-      await fetch('http://localhost:5001/api/attendance/bulk', {
+      await fetch('/api/attendance/bulk', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -90,7 +90,7 @@ function AttendanceCheck() {
 
       // 새로운 출석 기록 추가
       const attendancePromises = Array.from(checkedStudents).map(studentId =>
-        fetch('http://localhost:5001/api/attendance', {
+        fetch('/api/attendance', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

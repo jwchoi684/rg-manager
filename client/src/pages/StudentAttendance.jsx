@@ -39,8 +39,8 @@ function StudentAttendance() {
   const loadData = async () => {
     try {
       const [studentsRes, classesRes] = await Promise.all([
-        fetch('http://localhost:5001/api/students'),
-        fetch('http://localhost:5001/api/classes')
+        fetch('/api/students'),
+        fetch('/api/classes')
       ]);
       const studentsData = await studentsRes.json();
       const classesData = await classesRes.json();
@@ -55,7 +55,7 @@ function StudentAttendance() {
     if (!selectedStudent) return;
 
     try {
-      const response = await fetch('http://localhost:5001/api/attendance');
+      const response = await fetch('/api/attendance');
       let allRecords = await response.json();
 
       // 선택한 학생의 모든 기록
