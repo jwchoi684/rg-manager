@@ -1,10 +1,10 @@
-import db from '../database.js';
+import User from '../models/User.js';
 
 export const login = (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const user = db.prepare('SELECT * FROM users WHERE username = ? AND password = ?').get(username, password);
+    const user = User.getByCredentials(username, password);
 
     if (!user) {
       return res.status(401).json({ error: '아이디 또는 비밀번호가 일치하지 않습니다.' });
@@ -27,26 +27,12 @@ export const signup = (req, res) => {
     const { username, password } = req.body;
 
     // 중복 확인
-    const existingUser = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+    const existingUser = User.getByUsername(username);
     if (existingUser) {
       return res.status(400).json({ error: '이미 존재하는 사용자입니다.' });
     }
 
-    const createdAt = new Date().toISOString();
-
-    const stmt = db.prepare(`
-      INSERT INTO users (username, password, role, createdAt)
-      VALUES (?, ?, ?, ?)
-    `);
-
-    const result = stmt.run(username, password, 'user', createdAt);
-
-    const newUser = {
-      id: result.lastInsertRowid,
-      username,
-      role: 'user',
-      createdAt
-    };
+    const newUser = User.create({ username, password });
 
     res.status(201).json({
       message: '회원가입 성공',
@@ -59,7 +45,7 @@ export const signup = (req, res) => {
 
 export const getUsers = (req, res) => {
   try {
-    const users = db.prepare('SELECT id, username, role, createdAt FROM users').all();
+    const users = User.getAll();
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -69,18 +55,7 @@ export const getUsers = (req, res) => {
 export const updateUser = (req, res) => {
   try {
     const { id } = req.params;
-    const { username, password, role } = req.body;
-
-    const stmt = db.prepare(`
-      UPDATE users
-      SET username = ?, password = ?, role = ?
-      WHERE id = ?
-    `);
-
-    stmt.run(username, password, role, id);
-
-    const updatedUser = db.prepare('SELECT id, username, role, createdAt FROM users WHERE id = ?').get(id);
-
+    const updatedUser = User.update(id, req.body);
     res.json(updatedUser);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -90,10 +65,7 @@ export const updateUser = (req, res) => {
 export const deleteUser = (req, res) => {
   try {
     const { id } = req.params;
-
-    const stmt = db.prepare('DELETE FROM users WHERE id = ?');
-    stmt.run(id);
-
+    User.delete(id);
     res.json({ message: '사용자가 삭제되었습니다.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
