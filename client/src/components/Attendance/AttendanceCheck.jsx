@@ -22,6 +22,8 @@ function AttendanceCheck() {
   };
 
   useEffect(() => {
+    // 페이지 로드 시 스크롤을 맨 위로 이동
+    window.scrollTo(0, 0);
     loadData();
   }, []);
 
