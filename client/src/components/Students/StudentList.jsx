@@ -190,17 +190,16 @@ function StudentList() {
                     key={cls.id}
                     style={{
                       display: 'flex',
-                      alignItems: 'center',
-                      padding: '0.5rem 1rem',
+                      alignItems: 'flex-start',
+                      padding: '0.75rem',
                       border: '2px solid',
                       borderColor: (formData.classIds || []).includes(cls.id) ? '#6366f1' : '#e5e7eb',
                       borderRadius: '4px',
                       cursor: 'pointer',
                       backgroundColor: (formData.classIds || []).includes(cls.id) ? '#e0e7ff' : 'white',
                       transition: 'all 0.2s',
-                      whiteSpace: isMobile ? 'normal' : 'nowrap',
-                      minWidth: isMobile ? 'auto' : 'fit-content',
-                      maxWidth: isMobile ? '100%' : 'none',
+                      minWidth: isMobile ? 'calc(50% - 0.25rem)' : 'fit-content',
+                      maxWidth: isMobile ? 'calc(50% - 0.25rem)' : 'none',
                       flex: isMobile ? '0 0 calc(50% - 0.25rem)' : '0 0 auto',
                       boxSizing: 'border-box'
                     }}
@@ -209,13 +208,26 @@ function StudentList() {
                       type="checkbox"
                       checked={(formData.classIds || []).includes(cls.id)}
                       onChange={() => handleClassToggle(cls.id)}
-                      style={{ marginRight: '0.5rem', flexShrink: 0 }}
+                      style={{ marginRight: '0.5rem', marginTop: '0.25rem', flexShrink: 0 }}
                     />
-                    <span style={{
-                      overflow: isMobile ? 'hidden' : 'visible',
-                      textOverflow: isMobile ? 'ellipsis' : 'clip',
-                      wordBreak: isMobile ? 'break-word' : 'normal'
-                    }}>{cls.name}</span>
+                    <div style={{
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.25rem'
+                    }}>
+                      <span style={{
+                        fontWeight: 'bold',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word'
+                      }}>{cls.name}</span>
+                      <span style={{
+                        fontSize: '0.875rem',
+                        color: '#6b7280',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word'
+                      }}>{cls.schedule}</span>
+                    </div>
                   </label>
                 ))}
               </div>
