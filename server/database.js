@@ -1,11 +1,25 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const db = new Database(path.join(__dirname, 'attendance.db'));
+// Render persistent disk 경로 사용 (환경 변수로 설정)
+// 로컬 개발: ./attendance.db
+// Render: /var/data/attendance.db (Persistent Disk 마운트 경로)
+const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, 'attendance.db');
+
+// 데이터베이스 디렉토리가 존재하는지 확인
+const dbDir = path.dirname(DB_PATH);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+  console.log(`데이터베이스 디렉토리 생성: ${dbDir}`);
+}
+
+console.log(`데이터베이스 경로: ${DB_PATH}`);
+const db = new Database(DB_PATH);
 
 // 데이터베이스 초기화
 const initDatabase = () => {
