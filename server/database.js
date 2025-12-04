@@ -25,7 +25,6 @@ const initDatabase = async () => {
         name TEXT NOT NULL,
         birthdate TEXT NOT NULL,
         phone TEXT,
-        "parentPhone" TEXT,
         "classIds" TEXT,
         "createdAt" TEXT NOT NULL
       )

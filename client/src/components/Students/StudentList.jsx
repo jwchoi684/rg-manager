@@ -8,7 +8,6 @@ function StudentList() {
     name: "",
     birthdate: "",
     phone: "",
-    parentPhone: "",
     classIds: [],
   });
   const [isEditing, setIsEditing] = useState(false);
@@ -95,7 +94,6 @@ function StudentList() {
         name: "",
         birthdate: "",
         phone: "",
-        parentPhone: "",
         classIds: [],
       });
     } catch (error) {
@@ -109,7 +107,6 @@ function StudentList() {
       name: student.name,
       birthdate: student.birthdate,
       phone: student.phone,
-      parentPhone: student.parentPhone,
       classIds: student.classIds || [],
     });
     setIsEditing(true);
@@ -197,14 +194,6 @@ function StudentList() {
               value={formData.phone}
               onChange={(e) =>
                 setFormData({ ...formData, phone: e.target.value })
-              }
-            />
-            <input
-              type="tel"
-              placeholder="학부모 연락처"
-              value={formData.parentPhone}
-              onChange={(e) =>
-                setFormData({ ...formData, parentPhone: e.target.value })
               }
             />
           </div>
@@ -315,7 +304,6 @@ function StudentList() {
                     name: "",
                     birthdate: "",
                     phone: "",
-                    parentPhone: "",
                     classIds: [],
                   });
                 }}
@@ -339,7 +327,6 @@ function StudentList() {
                 <th>생년월일 / 나이</th>
                 <th>수강 수업</th>
                 <th>연락처</th>
-                <th>학부모 연락처</th>
                 <th>관리</th>
               </tr>
             </thead>
@@ -357,7 +344,6 @@ function StudentList() {
                   </td>
                   <td>{getClassNames(student.classIds)}</td>
                   <td>{student.phone || "-"}</td>
-                  <td>{student.parentPhone || "-"}</td>
                   <td>
                     <button
                       className="btn btn-primary"
@@ -428,17 +414,8 @@ function StudentList() {
                   >
                     수강 수업: {getClassNames(student.classIds)}
                   </div>
-                  <div
-                    style={{
-                      fontSize: "0.875rem",
-                      color: "#6b7280",
-                      marginBottom: "0.25rem",
-                    }}
-                  >
-                    연락처: {student.phone || "-"}
-                  </div>
                   <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
-                    학부모 연락처: {student.parentPhone || "-"}
+                    연락처: {student.phone || "-"}
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: "0.5rem" }}>
