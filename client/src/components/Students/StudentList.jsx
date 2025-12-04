@@ -198,8 +198,11 @@ function StudentList() {
                       cursor: 'pointer',
                       backgroundColor: (formData.classIds || []).includes(cls.id) ? '#e0e7ff' : 'white',
                       transition: 'all 0.2s',
-                      whiteSpace: 'nowrap',
-                      minWidth: 'fit-content'
+                      whiteSpace: isMobile ? 'normal' : 'nowrap',
+                      minWidth: isMobile ? 'auto' : 'fit-content',
+                      maxWidth: isMobile ? '100%' : 'none',
+                      flex: isMobile ? '0 0 calc(50% - 0.25rem)' : '0 0 auto',
+                      boxSizing: 'border-box'
                     }}
                   >
                     <input
@@ -208,7 +211,11 @@ function StudentList() {
                       onChange={() => handleClassToggle(cls.id)}
                       style={{ marginRight: '0.5rem', flexShrink: 0 }}
                     />
-                    <span>{cls.name}</span>
+                    <span style={{
+                      overflow: isMobile ? 'hidden' : 'visible',
+                      textOverflow: isMobile ? 'ellipsis' : 'clip',
+                      wordBreak: isMobile ? 'break-word' : 'normal'
+                    }}>{cls.name}</span>
                   </label>
                 ))}
               </div>
