@@ -130,21 +130,21 @@ function AttendanceCheck() {
 
       <div className="card" style={{ marginTop: '1rem' }}>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', flexDirection: 'column' }}>
-          <div style={{ flex: 1, minWidth: '200px' }}>
+          <div style={{ flex: 1 }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>날짜</label>
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              style={{ width: '100%' }}
+              style={{ width: '100%', boxSizing: 'border-box' }}
             />
           </div>
-          <div style={{ flex: 1, minWidth: '200px' }}>
+          <div style={{ flex: 1 }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>수업 선택</label>
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              style={{ width: '100%' }}
+              style={{ width: '100%', boxSizing: 'border-box' }}
             >
               <option value="">수업을 선택하세요</option>
               {classes.map(c => (
