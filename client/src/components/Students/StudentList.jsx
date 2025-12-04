@@ -190,7 +190,7 @@ function StudentList() {
                     key={cls.id}
                     style={{
                       display: 'flex',
-                      alignItems: 'flex-start',
+                      alignItems: 'center',
                       padding: '0.75rem',
                       border: '2px solid',
                       borderColor: (formData.classIds || []).includes(cls.id) ? '#6366f1' : '#e5e7eb',
@@ -208,7 +208,7 @@ function StudentList() {
                       type="checkbox"
                       checked={(formData.classIds || []).includes(cls.id)}
                       onChange={() => handleClassToggle(cls.id)}
-                      style={{ marginRight: '0.5rem', marginTop: '0.25rem', flexShrink: 0 }}
+                      style={{ marginRight: '0.5rem', flexShrink: 0 }}
                     />
                     <div style={{
                       flex: 1,
