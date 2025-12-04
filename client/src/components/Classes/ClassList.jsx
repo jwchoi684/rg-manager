@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchWithAuth } from '../../utils/api';
 
 function ClassList() {
   const [classes, setClasses] = useState([]);
@@ -40,7 +41,7 @@ function ClassList() {
 
   const loadClasses = async () => {
     try {
-      const response = await fetch('/api/classes');
+      const response = await fetchWithAuth('/api/classes');
       const data = await response.json();
       setClasses(data);
     } catch (error) {
@@ -50,7 +51,7 @@ function ClassList() {
 
   const loadStudents = async () => {
     try {
-      const response = await fetch('/api/students');
+      const response = await fetchWithAuth('/api/students');
       const data = await response.json();
       setStudents(data);
     } catch (error) {
@@ -62,7 +63,7 @@ function ClassList() {
     e.preventDefault();
     try {
       if (isEditing) {
-        const response = await fetch(`/api/classes/${editId}`, {
+        const response = await fetchWithAuth(`/api/classes/${editId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
@@ -73,7 +74,7 @@ function ClassList() {
           setEditId(null);
         }
       } else {
-        const response = await fetch('/api/classes', {
+        const response = await fetchWithAuth('/api/classes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
@@ -107,7 +108,7 @@ function ClassList() {
         for (const student of students) {
           if (student.classIds && student.classIds.includes(id)) {
             const updatedClassIds = student.classIds.filter(classId => classId !== id);
-            await fetch(`/api/students/${student.id}`, {
+            await fetchWithAuth(`/api/students/${student.id}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ ...student, classIds: updatedClassIds })
@@ -115,7 +116,7 @@ function ClassList() {
           }
         }
 
-        const response = await fetch(`/api/classes/${id}`, {
+        const response = await fetchWithAuth(`/api/classes/${id}`, {
           method: 'DELETE'
         });
         if (response.ok) {
@@ -145,7 +146,7 @@ function ClassList() {
     try {
       const student = students.find(s => s.id === studentId);
       const updatedClassIds = [...(student.classIds || []), classId];
-      const response = await fetch(`/api/students/${studentId}`, {
+      const response = await fetchWithAuth(`/api/students/${studentId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...student, classIds: updatedClassIds })
@@ -164,7 +165,7 @@ function ClassList() {
       try {
         const student = students.find(s => s.id === studentId);
         const updatedClassIds = (student.classIds || []).filter(id => id !== classId);
-        const response = await fetch(`/api/students/${studentId}`, {
+        const response = await fetchWithAuth(`/api/students/${studentId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...student, classIds: updatedClassIds })

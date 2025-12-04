@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchWithAuth } from '../../utils/api';
 
 function AttendanceCheck() {
   const [students, setStudents] = useState([]);
@@ -7,6 +8,16 @@ function AttendanceCheck() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [checkedStudents, setCheckedStudents] = useState(new Set());
   const [hasChanges, setHasChanges] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  // 화면 크기 감지
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // 나이 계산 함수
   const calculateAge = (birthdate) => {
@@ -34,8 +45,8 @@ function AttendanceCheck() {
   const loadData = async () => {
     try {
       const [studentsRes, classesRes] = await Promise.all([
-        fetch('/api/students'),
-        fetch('/api/classes')
+        fetchWithAuth('/api/students'),
+        fetchWithAuth('/api/classes')
       ]);
       const studentsData = await studentsRes.json();
       const classesData = await classesRes.json();
@@ -48,7 +59,7 @@ function AttendanceCheck() {
 
   const loadAttendance = async () => {
     try {
-      const response = await fetch(`/api/attendance/date/${selectedDate}`);
+      const response = await fetchWithAuth(`/api/attendance/date/${selectedDate}`);
       const allAttendance = await response.json();
       const filtered = allAttendance.filter(a =>
         !selectedClass || a.classId === parseInt(selectedClass)
@@ -81,7 +92,7 @@ function AttendanceCheck() {
 
     try {
       // 해당 날짜와 수업의 기존 출석 기록 삭제
-      await fetch('/api/attendance/bulk', {
+      await fetchWithAuth('/api/attendance/bulk', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -92,7 +103,7 @@ function AttendanceCheck() {
 
       // 새로운 출석 기록 추가
       const attendancePromises = Array.from(checkedStudents).map(studentId =>
-        fetch('/api/attendance', {
+        fetchWithAuth('/api/attendance', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -129,7 +140,7 @@ function AttendanceCheck() {
       <h2>출석 체크</h2>
 
       <div className="card" style={{ marginTop: '1rem' }}>
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', flexDirection: isMobile ? 'column' : 'row' }}>
           <div style={{ flex: 1 }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>날짜</label>
             <input
@@ -148,7 +159,7 @@ function AttendanceCheck() {
             >
               <option value="">수업을 선택하세요</option>
               {classes.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id}>{c.name} - {c.schedule}</option>
               ))}
             </select>
           </div>
@@ -156,7 +167,10 @@ function AttendanceCheck() {
         {selectedClass && (
           <div style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#e0e7ff', borderRadius: '4px', border: '2px solid #6366f1' }}>
             <strong style={{ color: '#4338ca' }}>
-              {classes.find(c => c.id === parseInt(selectedClass))?.name} - {selectedDate}
+              {(() => {
+                const selectedClassData = classes.find(c => c.id === parseInt(selectedClass));
+                return `${selectedClassData?.name} (${selectedClassData?.schedule}) - ${selectedDate}`;
+              })()}
             </strong>
           </div>
         )}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../utils/api';
 
 function Admin() {
   const [users, setUsers] = useState([]);
@@ -23,7 +24,7 @@ function Admin() {
 
   const loadUsers = async () => {
     try {
-      const response = await fetch('/api/auth/users');
+      const response = await fetchWithAuth('/api/auth/users');
       const data = await response.json();
       setUsers(data);
     } catch (error) {
@@ -35,7 +36,7 @@ function Admin() {
     e.preventDefault();
     try {
       if (isEditing) {
-        const response = await fetch(`/api/auth/users/${editId}`, {
+        const response = await fetchWithAuth(`/api/auth/users/${editId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
@@ -66,7 +67,7 @@ function Admin() {
   const handleDelete = async (id) => {
     if (confirm('정말 삭제하시겠습니까?')) {
       try {
-        const response = await fetch(`/api/auth/users/${id}`, {
+        const response = await fetchWithAuth(`/api/auth/users/${id}`, {
           method: 'DELETE'
         });
         if (response.ok) {

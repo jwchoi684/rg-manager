@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchWithAuth } from '../utils/api';
 
 function Dashboard() {
   const [stats, setStats] = useState({
@@ -18,9 +19,9 @@ function Dashboard() {
   const loadData = async () => {
     try {
       const [studentsRes, classesRes, attendanceRes] = await Promise.all([
-        fetch('/api/students'),
-        fetch('/api/classes'),
-        fetch('/api/attendance')
+        fetchWithAuth('/api/students'),
+        fetchWithAuth('/api/classes'),
+        fetchWithAuth('/api/attendance')
       ]);
 
       const students = await studentsRes.json();

@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext();
 
@@ -12,12 +13,16 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    const storedToken = localStorage.getItem('token');
+
+    if (storedUser && storedToken) {
       setUser(JSON.parse(storedUser));
+      setToken(storedToken);
     }
     setLoading(false);
   }, []);
@@ -36,7 +41,9 @@ export const AuthProvider = ({ children }) => {
 
     const data = await response.json();
     setUser(data.user);
+    setToken(data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem('token', data.token);
     return data.user;
   };
 
@@ -54,17 +61,22 @@ export const AuthProvider = ({ children }) => {
 
     const data = await response.json();
     setUser(data.user);
+    setToken(data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem('token', data.token);
     return data.user;
   };
 
   const logout = () => {
     setUser(null);
+    setToken(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
   };
 
   const value = {
     user,
+    token,
     login,
     signup,
     logout,

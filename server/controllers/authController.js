@@ -1,4 +1,8 @@
 import User from '../models/User.js';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_EXPIRES_IN = '24h';
 
 export const login = async (req, res) => {
   try {
@@ -13,9 +17,17 @@ export const login = async (req, res) => {
     // 비밀번호 제외하고 반환
     const { password: _, ...userWithoutPassword } = user;
 
+    // JWT 토큰 생성
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
     res.json({
       message: '로그인 성공',
-      user: userWithoutPassword
+      user: userWithoutPassword,
+      token
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -34,9 +46,17 @@ export const signup = async (req, res) => {
 
     const newUser = await User.create({ username, password });
 
+    // JWT 토큰 생성
+    const token = jwt.sign(
+      { id: newUser.id, username: newUser.username, role: newUser.role },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
     res.status(201).json({
       message: '회원가입 성공',
-      user: newUser
+      user: newUser,
+      token
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

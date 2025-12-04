@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchWithAuth } from '../utils/api';
 
 function StudentAttendance() {
   const [students, setStudents] = useState([]);
@@ -39,8 +40,8 @@ function StudentAttendance() {
   const loadData = async () => {
     try {
       const [studentsRes, classesRes] = await Promise.all([
-        fetch('/api/students'),
-        fetch('/api/classes')
+        fetchWithAuth('/api/students'),
+        fetchWithAuth('/api/classes')
       ]);
       const studentsData = await studentsRes.json();
       const classesData = await classesRes.json();
@@ -55,7 +56,7 @@ function StudentAttendance() {
     if (!selectedStudent) return;
 
     try {
-      const response = await fetch('/api/attendance');
+      const response = await fetchWithAuth('/api/attendance');
       let allRecords = await response.json();
 
       // 선택한 학생의 모든 기록

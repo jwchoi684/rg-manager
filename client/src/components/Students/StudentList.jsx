@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchWithAuth } from '../../utils/api';
 
 function StudentList() {
   const [students, setStudents] = useState([]);
@@ -39,7 +40,7 @@ function StudentList() {
 
   const loadStudents = async () => {
     try {
-      const response = await fetch('/api/students');
+      const response = await fetchWithAuth('/api/students');
       const data = await response.json();
       setStudents(data);
     } catch (error) {
@@ -49,7 +50,7 @@ function StudentList() {
 
   const loadClasses = async () => {
     try {
-      const response = await fetch('/api/classes');
+      const response = await fetchWithAuth('/api/classes');
       const data = await response.json();
       setClasses(data);
     } catch (error) {
@@ -61,7 +62,7 @@ function StudentList() {
     e.preventDefault();
     try {
       if (isEditing) {
-        const response = await fetch(`/api/students/${editId}`, {
+        const response = await fetchWithAuth(`/api/students/${editId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
@@ -72,7 +73,7 @@ function StudentList() {
           setEditId(null);
         }
       } else {
-        const response = await fetch('/api/students', {
+        const response = await fetchWithAuth('/api/students', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
@@ -103,7 +104,7 @@ function StudentList() {
   const handleDelete = async (id) => {
     if (confirm('정말 삭제하시겠습니까?')) {
       try {
-        const response = await fetch(`/api/students/${id}`, {
+        const response = await fetchWithAuth(`/api/students/${id}`, {
           method: 'DELETE'
         });
         if (response.ok) {
