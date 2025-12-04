@@ -194,16 +194,18 @@ function StudentList() {
                       borderRadius: '4px',
                       cursor: 'pointer',
                       backgroundColor: (formData.classIds || []).includes(cls.id) ? '#e0e7ff' : 'white',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      whiteSpace: 'nowrap',
+                      minWidth: 'fit-content'
                     }}
                   >
                     <input
                       type="checkbox"
                       checked={(formData.classIds || []).includes(cls.id)}
                       onChange={() => handleClassToggle(cls.id)}
-                      style={{ marginRight: '0.5rem' }}
+                      style={{ marginRight: '0.5rem', flexShrink: 0 }}
                     />
-                    {cls.name}
+                    <span>{cls.name}</span>
                   </label>
                 ))}
               </div>
