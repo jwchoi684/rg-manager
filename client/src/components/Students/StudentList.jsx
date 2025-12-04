@@ -264,6 +264,7 @@ function StudentList() {
                     <div
                       style={{
                         flex: 1,
+                        minWidth: 0, // ★ 이게 있어야 박스 안에서 텍스트 줄바꿈이 제대로 됨
                         display: "flex",
                         flexDirection: "row",
                         gap: "0.5rem",
