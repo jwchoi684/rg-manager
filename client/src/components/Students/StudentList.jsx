@@ -264,7 +264,6 @@ function StudentList() {
                     <div
                       style={{
                         flex: 1,
-                        minWidth: 0, // ★ 텍스트 줄바꿈을 위해 꼭 필요
                         display: "flex",
                         flexDirection: "row",
                         gap: "0.5rem",
@@ -277,6 +276,7 @@ function StudentList() {
                           fontWeight: "bold",
                           wordBreak: "break-word",
                           overflowWrap: "break-word",
+                          whiteSpace: "normal",
                         }}
                       >
                         {cls.name}
@@ -287,6 +287,7 @@ function StudentList() {
                           color: "#6b7280",
                           wordBreak: "break-word",
                           overflowWrap: "break-word",
+                          whiteSpace: "normal",
                         }}
                       >
                         ({cls.schedule})
