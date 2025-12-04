@@ -213,8 +213,10 @@ function StudentList() {
                     <div style={{
                       flex: 1,
                       display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.25rem'
+                      flexDirection: 'row',
+                      gap: '0.5rem',
+                      alignItems: 'center',
+                      flexWrap: 'wrap'
                     }}>
                       <span style={{
                         fontWeight: 'bold',
@@ -226,7 +228,7 @@ function StudentList() {
                         color: '#6b7280',
                         wordBreak: 'break-word',
                         overflowWrap: 'break-word'
-                      }}>{cls.schedule}</span>
+                      }}>({cls.schedule})</span>
                     </div>
                   </label>
                 ))}
