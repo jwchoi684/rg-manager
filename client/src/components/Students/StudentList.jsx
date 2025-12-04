@@ -198,9 +198,9 @@ function StudentList() {
                       cursor: 'pointer',
                       backgroundColor: (formData.classIds || []).includes(cls.id) ? '#e0e7ff' : 'white',
                       transition: 'all 0.2s',
-                      minWidth: isMobile ? 'calc(50% - 0.25rem)' : 'fit-content',
-                      maxWidth: isMobile ? 'calc(50% - 0.25rem)' : 'none',
-                      flex: isMobile ? '0 0 calc(50% - 0.25rem)' : '0 0 auto',
+                      minWidth: isMobile ? '100%' : 'fit-content',
+                      maxWidth: isMobile ? '100%' : 'none',
+                      flex: isMobile ? '0 0 100%' : '0 0 auto',
                       boxSizing: 'border-box'
                     }}
                   >
