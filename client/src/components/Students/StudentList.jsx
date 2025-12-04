@@ -225,8 +225,7 @@ function StudentList() {
                 style={{
                   display: "flex",
                   gap: "0.5rem",
-                  flexWrap: isMobile ? "nowrap" : "wrap",
-                  flexDirection: isMobile ? "column" : "row",
+                  flexWrap: "wrap",
                 }}
               >
                 {classes.map((cls) => (
