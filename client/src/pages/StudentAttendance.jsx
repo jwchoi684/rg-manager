@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 
 function StudentAttendance() {
   const [students, setStudents] = useState([]);
@@ -147,108 +145,6 @@ function StudentAttendance() {
     return options;
   };
 
-  // PDF 다운로드 함수
-  const downloadPDF = () => {
-    if (!selectedStudent) {
-      alert('학생을 선택해주세요!');
-      return;
-    }
-
-    try {
-      const doc = new jsPDF();
-
-      // 제목
-      doc.setFontSize(20);
-      doc.text('Student Attendance Report', 14, 20);
-
-      // 학생 정보 (한글 이름은 Student ID로 표시)
-      doc.setFontSize(12);
-      doc.text(`Student ID: ${selectedStudent.id}`, 14, 35);
-      doc.text(`Student Name: ${selectedStudent.name || 'N/A'}`, 14, 42);
-      doc.text(`Age: ${selectedStudent.age || 'N/A'}`, 14, 49);
-      doc.text(`Phone: ${selectedStudent.phone || 'N/A'}`, 14, 56);
-      doc.text(`Parent Phone: ${selectedStudent.parentPhone || 'N/A'}`, 14, 63);
-
-      // 통계
-      doc.setFontSize(14);
-      doc.text('Attendance Statistics', 14, 77);
-      doc.setFontSize(11);
-      doc.text(`Total Days: ${stats.totalDays || 0}`, 14, 85);
-      doc.text(`Current Month: ${stats.currentMonth || 0}`, 14, 92);
-      doc.text(`Last Month: ${stats.lastMonth || 0}`, 14, 99);
-
-      // 출석 기록 테이블
-      if (allAttendanceRecords && allAttendanceRecords.length > 0) {
-        // 날짜순으로 정렬 (최신순)
-        const sortedRecords = [...allAttendanceRecords].sort((a, b) =>
-          new Date(b.date) - new Date(a.date)
-        );
-
-        const tableData = sortedRecords.map(record => {
-          const date = new Date(record.date);
-          const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-          const checkedTime = new Date(record.checkedAt);
-
-          // 클래스 이름 가져오기
-          const className = getClassName(record.classId) || `Class ${record.classId}`;
-
-          return [
-            record.date || 'N/A',
-            weekdays[date.getDay()] || 'N/A',
-            `Class ${record.classId}`,  // 한글 클래스명 대신 ID 사용
-            checkedTime.toLocaleTimeString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            })
-          ];
-        });
-
-        doc.autoTable({
-          startY: 110,
-          head: [['Date', 'Day', 'Class', 'Check Time']],
-          body: tableData,
-          theme: 'grid',
-          headStyles: {
-            fillColor: [99, 102, 241],
-            textColor: [255, 255, 255]
-          },
-          styles: {
-            fontSize: 9,
-            cellPadding: 3
-          },
-          margin: { top: 110 }
-        });
-      } else {
-        doc.setFontSize(11);
-        doc.text('No attendance records found.', 14, 115);
-      }
-
-      // 하단 정보
-      doc.setFontSize(9);
-      const generatedDate = new Date().toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-      doc.text(
-        `Generated on ${generatedDate}`,
-        14,
-        doc.internal.pageSize.height - 10
-      );
-
-      // 파일 저장
-      const fileName = `attendance_student_${selectedStudent.id}_${new Date().toISOString().split('T')[0]}.pdf`;
-      doc.save(fileName);
-
-      console.log('PDF generated successfully');
-    } catch (error) {
-      console.error('PDF generation error:', error);
-      alert(`PDF generation failed: ${error.message}`);
-    }
-  };
 
   return (
     <div>
@@ -336,22 +232,13 @@ function StudentAttendance() {
                   {selectedStudent.birthdate || '-'} ({calculateAge(selectedStudent.birthdate)}세) | {selectedStudent.phone || '연락처 없음'}
                 </p>
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  className="btn btn-primary"
-                  onClick={downloadPDF}
-                  style={{ backgroundColor: '#10b981', color: 'white' }}
-                >
-                  📄 PDF 다운로드
-                </button>
-                <button
-                  className="btn"
-                  onClick={() => setSelectedStudent(null)}
-                  style={{ backgroundColor: '#ef4444', color: 'white' }}
-                >
-                  선택 해제
-                </button>
-              </div>
+              <button
+                className="btn"
+                onClick={() => setSelectedStudent(null)}
+                style={{ backgroundColor: '#ef4444', color: 'white' }}
+              >
+                선택 해제
+              </button>
             </div>
           </div>
         )}
