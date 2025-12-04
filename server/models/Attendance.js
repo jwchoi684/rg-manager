@@ -1,46 +1,41 @@
-import db from '../database.js';
+import pool from '../database.js';
 
 class Attendance {
-  static getAll() {
-    return db.prepare('SELECT * FROM attendance').all();
+  static async getAll() {
+    const result = await pool.query('SELECT * FROM attendance ORDER BY id');
+    return result.rows;
   }
 
-  static getByDate(date) {
-    return db.prepare('SELECT * FROM attendance WHERE date = ?').all(date);
+  static async getByDate(date) {
+    const result = await pool.query('SELECT * FROM attendance WHERE date = $1', [date]);
+    return result.rows;
   }
 
-  static getById(id) {
-    return db.prepare('SELECT * FROM attendance WHERE id = ?').get(id);
+  static async getById(id) {
+    const result = await pool.query('SELECT * FROM attendance WHERE id = $1', [id]);
+    return result.rows.length > 0 ? result.rows[0] : null;
   }
 
-  static create(data) {
+  static async create(data) {
     const { studentId, classId, date } = data;
     const checkedAt = new Date().toISOString();
 
-    const stmt = db.prepare(`
-      INSERT INTO attendance (studentId, classId, date, checkedAt)
-      VALUES (?, ?, ?, ?)
-    `);
+    const result = await pool.query(
+      `INSERT INTO attendance ("studentId", "classId", date, "checkedAt")
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [studentId, classId, date, checkedAt]
+    );
 
-    const result = stmt.run(studentId, classId, date, checkedAt);
-
-    return {
-      id: result.lastInsertRowid,
-      studentId,
-      classId,
-      date,
-      checkedAt
-    };
+    return result.rows[0];
   }
 
-  static delete(id) {
-    const stmt = db.prepare('DELETE FROM attendance WHERE id = ?');
-    stmt.run(id);
+  static async delete(id) {
+    await pool.query('DELETE FROM attendance WHERE id = $1', [id]);
   }
 
-  static deleteByDateAndClass(date, classId) {
-    const stmt = db.prepare('DELETE FROM attendance WHERE date = ? AND classId = ?');
-    stmt.run(date, classId);
+  static async deleteByDateAndClass(date, classId) {
+    await pool.query('DELETE FROM attendance WHERE date = $1 AND "classId" = $2', [date, classId]);
   }
 }
 

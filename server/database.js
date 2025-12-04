@@ -1,90 +1,93 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
+import pkg from 'pg';
+const { Pool } = pkg;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// PostgreSQL 연결 설정
+// Render 환경: DATABASE_URL 환경 변수 사용
+// 로컬 환경: 기본 PostgreSQL 연결 또는 환경 변수
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://rg_manager_user:xgTkd8GYojqIOvkVluzIukCXriiAFNWU@dpg-d4ogj8a4i8rc73f3jeqg-a/rg_manager';
 
-// Render persistent disk 경로 사용 (환경 변수로 설정)
-// 로컬 개발: ./attendance.db
-// Render: /var/data/attendance.db (Persistent Disk 마운트 경로)
-const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, 'attendance.db');
+console.log(`데이터베이스 연결: ${DATABASE_URL.replace(/:[^:@]+@/, ':****@')}`); // 비밀번호 숨김
 
-// 데이터베이스 디렉토리가 존재하는지 확인
-const dbDir = path.dirname(DB_PATH);
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
-  console.log(`데이터베이스 디렉토리 생성: ${dbDir}`);
-}
-
-console.log(`데이터베이스 경로: ${DB_PATH}`);
-const db = new Database(DB_PATH);
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
 
 // 데이터베이스 초기화
-const initDatabase = () => {
-  // Students 테이블
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS students (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      birthdate TEXT NOT NULL,
-      phone TEXT,
-      parentPhone TEXT,
-      classIds TEXT,
-      createdAt TEXT NOT NULL
-    )
-  `);
+const initDatabase = async () => {
+  const client = await pool.connect();
 
-  // Classes 테이블
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS classes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      schedule TEXT NOT NULL,
-      duration TEXT NOT NULL,
-      instructor TEXT,
-      createdAt TEXT NOT NULL
-    )
-  `);
+  try {
+    // Students 테이블
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS students (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        birthdate TEXT NOT NULL,
+        phone TEXT,
+        "parentPhone" TEXT,
+        "classIds" TEXT,
+        "createdAt" TEXT NOT NULL
+      )
+    `);
 
-  // Attendance 테이블
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS attendance (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      studentId INTEGER NOT NULL,
-      classId INTEGER,
-      date TEXT NOT NULL,
-      checkedAt TEXT NOT NULL,
-      FOREIGN KEY (studentId) REFERENCES students(id) ON DELETE CASCADE,
-      FOREIGN KEY (classId) REFERENCES classes(id) ON DELETE CASCADE
-    )
-  `);
+    // Classes 테이블
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS classes (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        schedule TEXT NOT NULL,
+        duration TEXT NOT NULL,
+        instructor TEXT,
+        "createdAt" TEXT NOT NULL
+      )
+    `);
 
-  // Users 테이블
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT NOT NULL UNIQUE,
-      password TEXT NOT NULL,
-      role TEXT NOT NULL DEFAULT 'user',
-      createdAt TEXT NOT NULL
-    )
-  `);
+    // Attendance 테이블
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS attendance (
+        id SERIAL PRIMARY KEY,
+        "studentId" INTEGER NOT NULL,
+        "classId" INTEGER,
+        date TEXT NOT NULL,
+        "checkedAt" TEXT NOT NULL,
+        FOREIGN KEY ("studentId") REFERENCES students(id) ON DELETE CASCADE,
+        FOREIGN KEY ("classId") REFERENCES classes(id) ON DELETE CASCADE
+      )
+    `);
 
-  // 기본 관리자 계정 생성 (username: admin, password: admin123)
-  const adminExists = db.prepare('SELECT * FROM users WHERE username = ?').get('admin');
-  if (!adminExists) {
-    db.prepare(`
-      INSERT INTO users (username, password, role, createdAt)
-      VALUES (?, ?, ?, ?)
-    `).run('admin', 'admin123', 'admin', new Date().toISOString());
-    console.log('기본 관리자 계정 생성 완료 (username: admin, password: admin123)');
+    // Users 테이블
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'user',
+        "createdAt" TEXT NOT NULL
+      )
+    `);
+
+    // 기본 관리자 계정 생성 (username: admin, password: admin123)
+    const adminCheck = await client.query('SELECT * FROM users WHERE username = $1', ['admin']);
+    if (adminCheck.rows.length === 0) {
+      await client.query(
+        `INSERT INTO users (username, password, role, "createdAt")
+         VALUES ($1, $2, $3, $4)`,
+        ['admin', 'admin123', 'admin', new Date().toISOString()]
+      );
+      console.log('기본 관리자 계정 생성 완료 (username: admin, password: admin123)');
+    }
+
+    console.log('데이터베이스 초기화 완료');
+  } catch (error) {
+    console.error('데이터베이스 초기화 실패:', error);
+    throw error;
+  } finally {
+    client.release();
   }
-
-  console.log('데이터베이스 초기화 완료');
 };
 
-initDatabase();
+// 초기화 실행
+initDatabase().catch(console.error);
 
-export default db;
+export default pool;

@@ -1,10 +1,10 @@
 import User from '../models/User.js';
 
-export const login = (req, res) => {
+export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const user = User.getByCredentials(username, password);
+    const user = await User.getByCredentials(username, password);
 
     if (!user) {
       return res.status(401).json({ error: '아이디 또는 비밀번호가 일치하지 않습니다.' });
@@ -22,17 +22,17 @@ export const login = (req, res) => {
   }
 };
 
-export const signup = (req, res) => {
+export const signup = async (req, res) => {
   try {
     const { username, password } = req.body;
 
     // 중복 확인
-    const existingUser = User.getByUsername(username);
+    const existingUser = await User.getByUsername(username);
     if (existingUser) {
       return res.status(400).json({ error: '이미 존재하는 사용자입니다.' });
     }
 
-    const newUser = User.create({ username, password });
+    const newUser = await User.create({ username, password });
 
     res.status(201).json({
       message: '회원가입 성공',
@@ -43,29 +43,29 @@ export const signup = (req, res) => {
   }
 };
 
-export const getUsers = (req, res) => {
+export const getUsers = async (req, res) => {
   try {
-    const users = User.getAll();
+    const users = await User.getAll();
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-export const updateUser = (req, res) => {
+export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedUser = User.update(id, req.body);
+    const updatedUser = await User.update(id, req.body);
     res.json(updatedUser);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-export const deleteUser = (req, res) => {
+export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-    User.delete(id);
+    await User.delete(id);
     res.json({ message: '사용자가 삭제되었습니다.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
