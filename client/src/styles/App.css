@@ -102,7 +102,7 @@ body {
   color: white;
 }
 
-/* 텍스트 계열 input + select만 스타일 적용 */
+/* 텍스트 계열 input + select */
 input[type="text"],
 input[type="password"],
 input[type="number"],
@@ -110,11 +110,13 @@ input[type="email"],
 input[type="tel"],
 input[type="date"],
 select {
+  display: block; /* 인라인 말고 블록으로 고정 */
+  width: 100%; /* 항상 부모 폭 기준으로 */
+  max-width: 100%;
   padding: 0.5rem;
   border: 1px solid #d1d5db;
   border-radius: 4px;
   font-size: 1rem;
-  max-width: 100%;
 }
 
 /* 체크박스는 기본값 유지 */
@@ -228,7 +230,6 @@ th {
   input[type="date"],
   select {
     font-size: 1rem;
-    width: 100%;
   }
 
   /* 그리드 조정 */
