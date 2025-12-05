@@ -118,6 +118,9 @@ select {
   border: 1px solid #d1d5db;
   border-radius: 4px;
   font-size: 1rem;
+  line-height: 1.5; /* 일관된 line-height */
+  height: calc(1.5em + 1rem + 2px); /* font-size * line-height + padding + border */
+  box-sizing: border-box;
 }
 
 /* iOS Safari date input 최적화 */
