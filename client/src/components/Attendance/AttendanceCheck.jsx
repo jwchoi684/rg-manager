@@ -141,7 +141,7 @@ function AttendanceCheck() {
 
       <div className="card" style={{ marginTop: '1rem' }}>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', flexDirection: isMobile ? 'column' : 'row' }}>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: isMobile ? 'none' : 1, width: isMobile ? '100%' : 'auto' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>날짜</label>
             <input
               type="date"
@@ -150,7 +150,7 @@ function AttendanceCheck() {
               style={{ width: '100%', boxSizing: 'border-box' }}
             />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: isMobile ? 'none' : 1, width: isMobile ? '100%' : 'auto' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>수업 선택</label>
             <select
               value={selectedClass}
