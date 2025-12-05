@@ -187,7 +187,6 @@ function AttendanceCheck() {
                 minWidth: 0,
                 boxSizing: "border-box",
                 display: "block",
-                fontSize: "16px",
                 WebkitAppearance: "none",
                 MozAppearance: "textfield",
               }}
@@ -221,7 +220,6 @@ function AttendanceCheck() {
                 minWidth: 0,
                 boxSizing: "border-box",
                 display: "block",
-                fontSize: "16px",
               }}
             >
               <option value="">수업을 선택하세요</option>
