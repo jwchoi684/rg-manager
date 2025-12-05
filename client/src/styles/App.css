@@ -113,11 +113,19 @@ select {
   display: block; /* 인라인 말고 블록으로 고정 */
   width: 100%; /* 항상 부모 폭 기준 */
   max-width: 100%;
-  min-width: 0; /* ★ 이 줄 추가: iOS Safari 기본 min-width 무력화 */
+  min-width: 0; /* ★ iOS Safari 기본 min-width 무력화 */
   padding: 0.5rem;
   border: 1px solid #d1d5db;
   border-radius: 4px;
   font-size: 1rem;
+}
+
+/* iOS Safari date input 최적화 */
+input[type="date"] {
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  appearance: none;
+  min-width: 0 !important; /* iOS 강제 최소 너비 제거 */
 }
 
 /* 체크박스는 기본값 유지 */

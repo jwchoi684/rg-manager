@@ -166,7 +166,6 @@ function AttendanceCheck() {
               width: "100%",
               minWidth: 0,
               maxWidth: "100%",
-              overflow: "hidden",
             }}
           >
             <label
@@ -188,6 +187,9 @@ function AttendanceCheck() {
                 minWidth: 0,
                 boxSizing: "border-box",
                 display: "block",
+                fontSize: "16px",
+                WebkitAppearance: "none",
+                MozAppearance: "textfield",
               }}
             />
           </div>
@@ -199,7 +201,6 @@ function AttendanceCheck() {
               width: "100%",
               minWidth: 0,
               maxWidth: "100%",
-              overflow: "hidden",
             }}
           >
             <label
