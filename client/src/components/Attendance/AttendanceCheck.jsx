@@ -166,6 +166,7 @@ function AttendanceCheck() {
               width: "100%",
               minWidth: 0,
               maxWidth: "100%",
+              overflow: "hidden",
             }}
           >
             <label
@@ -184,6 +185,7 @@ function AttendanceCheck() {
               style={{
                 width: "100%",
                 maxWidth: "100%",
+                minWidth: 0,
                 boxSizing: "border-box",
                 display: "block",
               }}
@@ -197,6 +199,7 @@ function AttendanceCheck() {
               width: "100%",
               minWidth: 0,
               maxWidth: "100%",
+              overflow: "hidden",
             }}
           >
             <label
@@ -214,6 +217,7 @@ function AttendanceCheck() {
               style={{
                 width: "100%",
                 maxWidth: "100%",
+                minWidth: 0,
                 boxSizing: "border-box",
                 display: "block",
               }}
