@@ -155,6 +155,7 @@ function AttendanceCheck() {
             flexWrap: "wrap",
             flexDirection: isMobile ? "column" : "row",
             width: "100%",
+            maxWidth: "100%",
             boxSizing: "border-box",
           }}
         >

@@ -110,9 +110,10 @@ input[type="email"],
 input[type="tel"],
 input[type="date"],
 select {
-  display: block; /* 인라인 말고 블록으로 고정 */
-  width: 100%; /* 항상 부모 폭 기준으로 */
+  display: block;
+  width: 100%;
   max-width: 100%;
+  min-width: 0; /* ★ 추가 */
   padding: 0.5rem;
   border: 1px solid #d1d5db;
   border-radius: 4px;
