@@ -222,8 +222,13 @@ function StudentAttendance() {
                   ranges={dateRange}
                   onChange={(item) => {
                     setDateRange([item.selection]);
-                    setStartDate(item.selection.startDate.toISOString().split('T')[0]);
-                    setEndDate(item.selection.endDate.toISOString().split('T')[0]);
+                    // 로컬 날짜로 변환 (타임존 문제 해결)
+                    const start = new Date(item.selection.startDate);
+                    const end = new Date(item.selection.endDate);
+                    const startStr = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
+                    const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`;
+                    setStartDate(startStr);
+                    setEndDate(endStr);
                   }}
                   months={isMobile ? 1 : 2}
                   direction={isMobile ? 'vertical' : 'horizontal'}
@@ -343,6 +348,7 @@ function StudentAttendance() {
               <table>
                 <thead>
                   <tr>
+                    <th>출석 날짜</th>
                     <th>이름</th>
                     <th>생년월일</th>
                     <th>수업</th>
@@ -354,6 +360,7 @@ function StudentAttendance() {
                     const student = getStudentInfo(record.studentId);
                     return (
                       <tr key={record.id}>
+                        <td>{record.date}</td>
                         <td>{student?.name || '-'}</td>
                         <td>
                           {student?.birthdate || '-'}
@@ -399,7 +406,9 @@ function StudentAttendance() {
                       }}
                     >
                       <div>
-                        <div style={{ fontWeight: 'bold' }}>{student?.name || '-'}</div>
+                        <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                          {record.date} - {student?.name || '-'}
+                        </div>
                         <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
                           {student?.birthdate} ({calculateAge(student?.birthdate)}세)
                         </div>
