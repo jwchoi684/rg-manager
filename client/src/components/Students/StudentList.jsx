@@ -18,6 +18,7 @@ function StudentList() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [classFilter, setClassFilter] = useState('');
+  const [searchName, setSearchName] = useState('');
   const formRef = useRef(null);
 
   // 화면 크기 감지
@@ -198,6 +199,13 @@ function StudentList() {
 
   const getSortedStudents = () => {
     let sortedStudents = [...students];
+
+    // 이름 검색 필터링
+    if (searchName) {
+      sortedStudents = sortedStudents.filter(student =>
+        student.name.toLowerCase().includes(searchName.toLowerCase())
+      );
+    }
 
     // 반별 필터링
     if (classFilter) {
@@ -449,8 +457,21 @@ function StudentList() {
             gap: '0.5rem',
             width: isMobile ? '100%' : 'auto',
             minWidth: 0,
-            maxWidth: '100%'
+            maxWidth: '100%',
+            flexWrap: 'wrap'
           }}>
+            <input
+              type="text"
+              placeholder="이름 검색"
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+              style={{
+                minWidth: isMobile ? 0 : '150px',
+                width: isMobile ? '100%' : '150px',
+                maxWidth: '100%',
+                boxSizing: 'border-box'
+              }}
+            />
             <label style={{
               fontWeight: 'bold',
               whiteSpace: 'nowrap',
