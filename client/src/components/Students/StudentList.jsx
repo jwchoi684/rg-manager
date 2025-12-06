@@ -13,6 +13,7 @@ function StudentList() {
   const [editId, setEditId] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [classFilter, setClassFilter] = useState('');
 
   // 화면 크기 감지
   useEffect(() => {
@@ -164,6 +165,14 @@ function StudentList() {
   const getSortedStudents = () => {
     let sortedStudents = [...students];
 
+    // 반별 필터링
+    if (classFilter) {
+      sortedStudents = sortedStudents.filter(student =>
+        student.classIds && student.classIds.includes(parseInt(classFilter))
+      );
+    }
+
+    // 정렬
     if (sortConfig.key) {
       sortedStudents.sort((a, b) => {
         let aValue, bValue;
@@ -354,7 +363,24 @@ function StudentList() {
       </div>
 
       <div className="card" style={{ marginTop: "1rem" }}>
-        <h3>학생 목록 ({students.length}명)</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+          <h3 style={{ margin: 0 }}>학생 목록 ({getSortedStudents().length}명)</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <label style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>반 선택:</label>
+            <select
+              value={classFilter}
+              onChange={(e) => setClassFilter(e.target.value)}
+              style={{ minWidth: '150px' }}
+            >
+              <option value="">전체 학생</option>
+              {classes.map(cls => (
+                <option key={cls.id} value={cls.id}>
+                  {cls.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         {/* 데스크탑 뷰 - 테이블 */}
         {!isMobile && (
