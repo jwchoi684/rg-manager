@@ -5,9 +5,21 @@ function StudentAttendance() {
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split('T')[0]
-  );
+
+  // 이번 달 시작일과 종료일 계산
+  const getThisMonthRange = () => {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return {
+      start: firstDay.toISOString().split('T')[0],
+      end: lastDay.toISOString().split('T')[0]
+    };
+  };
+
+  const thisMonth = getThisMonthRange();
+  const [startDate, setStartDate] = useState(thisMonth.start);
+  const [endDate, setEndDate] = useState(thisMonth.end);
   const [selectedStudent, setSelectedStudent] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -51,7 +63,7 @@ function StudentAttendance() {
     if (students.length > 0) {
       loadAttendanceRecords();
     }
-  }, [selectedDate, selectedStudent, selectedClass, students]);
+  }, [startDate, endDate, selectedStudent, selectedClass, students]);
 
   const loadData = async () => {
     try {
@@ -70,8 +82,13 @@ function StudentAttendance() {
 
   const loadAttendanceRecords = async () => {
     try {
-      const response = await fetchWithAuth(`/api/attendance/date/${selectedDate}`);
+      const response = await fetchWithAuth('/api/attendance');
       let records = await response.json();
+
+      // 기간 필터
+      if (startDate && endDate) {
+        records = records.filter(r => r.date >= startDate && r.date <= endDate);
+      }
 
       // 학생 필터
       if (selectedStudent) {
@@ -82,6 +99,9 @@ function StudentAttendance() {
       if (selectedClass) {
         records = records.filter(r => r.classId === parseInt(selectedClass));
       }
+
+      // 날짜 역순 정렬 (최신순)
+      records.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       setAttendanceRecords(records);
     } catch (error) {
@@ -147,15 +167,28 @@ function StudentAttendance() {
           flexWrap: 'wrap',
           flexDirection: isMobile ? 'column' : 'row'
         }}>
-          {/* 날짜 선택 */}
+          {/* 시작일 선택 */}
           <div style={{ flex: isMobile ? '1' : '0 0 auto' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              날짜
+              시작일
             </label>
             <input
               type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              style={{ width: isMobile ? '100%' : '180px' }}
+            />
+          </div>
+
+          {/* 종료일 선택 */}
+          <div style={{ flex: isMobile ? '1' : '0 0 auto' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              종료일
+            </label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
               style={{ width: isMobile ? '100%' : '180px' }}
             />
           </div>
