@@ -140,9 +140,9 @@ function ClassStudentManagement() {
           <h3 style={{ marginBottom: '0.5rem', color: '#10b981' }}>
             등록된 학생 ({getStudentsInClass().length}명)
           </h3>
-          <div style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '1rem', minHeight: '200px', maxHeight: '400px', overflowY: 'auto', backgroundColor: 'white' }}>
+          <div style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '1rem', backgroundColor: 'white' }}>
             {getStudentsInClass().length === 0 ? (
-              <p style={{ color: '#6b7280', textAlign: 'center' }}>등록된 학생이 없습니다.</p>
+              <p style={{ color: '#6b7280', textAlign: 'center', padding: '2rem 0' }}>등록된 학생이 없습니다.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {getStudentsInClass().map(student => (
@@ -183,9 +183,9 @@ function ClassStudentManagement() {
           <h3 style={{ marginBottom: '0.5rem', color: '#6366f1' }}>
             등록 가능한 학생 ({getStudentsNotInClass().length}명)
           </h3>
-          <div style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '1rem', minHeight: '200px', maxHeight: '400px', overflowY: 'auto', backgroundColor: 'white' }}>
+          <div style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '1rem', backgroundColor: 'white' }}>
             {getStudentsNotInClass().length === 0 ? (
-              <p style={{ color: '#6b7280', textAlign: 'center' }}>등록 가능한 학생이 없습니다.</p>
+              <p style={{ color: '#6b7280', textAlign: 'center', padding: '2rem 0' }}>등록 가능한 학생이 없습니다.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {getStudentsNotInClass().map(student => (
