@@ -5,6 +5,7 @@ import StudentList from './components/Students/StudentList';
 import StudentForm from './pages/Students/StudentForm';
 import ClassList from './components/Classes/ClassList';
 import ClassForm from './pages/Classes/ClassForm';
+import ClassStudentManagement from './pages/Classes/ClassStudentManagement';
 import AttendanceCheck from './components/Attendance/AttendanceCheck';
 import Dashboard from './pages/Dashboard';
 import StudentAttendance from './pages/StudentAttendance';
@@ -100,6 +101,7 @@ function App() {
           <Route path="/classes" element={<ProtectedRoute><ClassList /></ProtectedRoute>} />
           <Route path="/classes/new" element={<ProtectedRoute><ClassForm /></ProtectedRoute>} />
           <Route path="/classes/edit" element={<ProtectedRoute><ClassForm /></ProtectedRoute>} />
+          <Route path="/classes/manage-students" element={<ProtectedRoute><ClassStudentManagement /></ProtectedRoute>} />
           <Route path="/attendance" element={<ProtectedRoute><AttendanceCheck /></ProtectedRoute>} />
           <Route path="/student-attendance" element={<ProtectedRoute><StudentAttendance /></ProtectedRoute>} />
           <Route path="/logs" element={<ProtectedRoute><Logs /></ProtectedRoute>} />

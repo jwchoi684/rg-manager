@@ -10,7 +10,6 @@ function ClassList() {
   const [students, setStudents] = useState([]);
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('all');
-  const [selectedClassForStudents, setSelectedClassForStudents] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [draggedIndex, setDraggedIndex] = useState(null);
 
@@ -127,48 +126,8 @@ function ClassList() {
     );
   };
 
-  const getStudentsNotInClass = (classId) => {
-    return students.filter(student =>
-      !student.classIds || !student.classIds.includes(classId)
-    );
-  };
-
-  const addStudentToClass = async (studentId, classId) => {
-    try {
-      const student = students.find(s => s.id === studentId);
-      const updatedClassIds = [...(student.classIds || []), classId];
-      const response = await fetchWithAuth(`/api/students/${studentId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...student, classIds: updatedClassIds })
-      });
-      if (response.ok) {
-        await loadStudents();
-      }
-    } catch (error) {
-      console.error('학생 등록 실패:', error);
-      alert('학생 등록에 실패했습니다.');
-    }
-  };
-
-  const removeStudentFromClass = async (studentId, classId) => {
-    if (confirm('이 학생을 수업에서 제외하시겠습니까?')) {
-      try {
-        const student = students.find(s => s.id === studentId);
-        const updatedClassIds = (student.classIds || []).filter(id => id !== classId);
-        const response = await fetchWithAuth(`/api/students/${studentId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...student, classIds: updatedClassIds })
-        });
-        if (response.ok) {
-          await loadStudents();
-        }
-      } catch (error) {
-        console.error('학생 제외 실패:', error);
-        alert('학생 제외에 실패했습니다.');
-      }
-    }
+  const handleManageStudents = (classItem) => {
+    navigate('/classes/manage-students', { state: { classItem } });
   };
 
   const handleDragStart = (e, index) => {
@@ -297,7 +256,7 @@ function ClassList() {
                     </button>
                     <button
                       className="btn btn-success"
-                      onClick={() => setSelectedClassForStudents(classItem)}
+                      onClick={() => handleManageStudents(classItem)}
                       style={{ marginRight: '0.5rem' }}
                     >
                       학생 관리
@@ -359,7 +318,7 @@ function ClassList() {
                   </button>
                   <button
                     className="btn btn-success"
-                    onClick={() => setSelectedClassForStudents(classItem)}
+                    onClick={() => handleManageStudents(classItem)}
                     style={{ width: '100%' }}
                   >
                     학생 관리
@@ -383,109 +342,6 @@ function ClassList() {
           </p>
         )}
       </div>
-
-      {selectedClassForStudents && (
-        <div className="card" style={{ marginTop: '1rem', border: '2px solid #6366f1' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ margin: 0 }}>{selectedClassForStudents.name} - 학생 관리</h3>
-            <button
-              className="btn"
-              onClick={() => setSelectedClassForStudents(null)}
-              style={{ backgroundColor: '#6b7280', color: 'white' }}
-            >
-              닫기
-            </button>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem' }}>
-            {/* 등록된 학생 */}
-            <div>
-              <h4 style={{ marginBottom: '0.5rem', color: '#10b981' }}>
-                등록된 학생 ({getStudentsInClass(selectedClassForStudents.id).length}명)
-              </h4>
-              <div style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '1rem', minHeight: '200px', maxHeight: '400px', overflowY: 'auto' }}>
-                {getStudentsInClass(selectedClassForStudents.id).length === 0 ? (
-                  <p style={{ color: '#6b7280', textAlign: 'center' }}>등록된 학생이 없습니다.</p>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {getStudentsInClass(selectedClassForStudents.id).map(student => (
-                      <div
-                        key={student.id}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '0.75rem',
-                          backgroundColor: '#d1fae5',
-                          borderRadius: '4px',
-                          border: '1px solid #10b981'
-                        }}
-                      >
-                        <div>
-                          <strong>{student.name}</strong>
-                          <span style={{ marginLeft: '0.5rem', color: '#6b7280', fontSize: '0.875rem' }}>
-                            ({calculateAge(student.birthdate)}세)
-                          </span>
-                        </div>
-                        <button
-                          className="btn btn-danger"
-                          onClick={() => removeStudentFromClass(student.id, selectedClassForStudents.id)}
-                          style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
-                        >
-                          제외
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* 등록 가능한 학생 */}
-            <div>
-              <h4 style={{ marginBottom: '0.5rem', color: '#6366f1' }}>
-                등록 가능한 학생 ({getStudentsNotInClass(selectedClassForStudents.id).length}명)
-              </h4>
-              <div style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '1rem', minHeight: '200px', maxHeight: '400px', overflowY: 'auto' }}>
-                {getStudentsNotInClass(selectedClassForStudents.id).length === 0 ? (
-                  <p style={{ color: '#6b7280', textAlign: 'center' }}>등록 가능한 학생이 없습니다.</p>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {getStudentsNotInClass(selectedClassForStudents.id).map(student => (
-                      <div
-                        key={student.id}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '0.75rem',
-                          backgroundColor: '#f3f4f6',
-                          borderRadius: '4px',
-                          border: '1px solid #e5e7eb'
-                        }}
-                      >
-                        <div>
-                          <strong>{student.name}</strong>
-                          <span style={{ marginLeft: '0.5rem', color: '#6b7280', fontSize: '0.875rem' }}>
-                            ({calculateAge(student.birthdate)}세)
-                          </span>
-                        </div>
-                        <button
-                          className="btn btn-primary"
-                          onClick={() => addStudentToClass(student.id, selectedClassForStudents.id)}
-                          style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
-                        >
-                          등록
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
