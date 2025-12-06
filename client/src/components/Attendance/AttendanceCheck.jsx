@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { fetchWithAuth } from "../../utils/api";
+import { useAuth } from "../../context/AuthContext";
 
 function AttendanceCheck() {
+  const { user } = useAuth();
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('all');
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -40,18 +44,44 @@ function AttendanceCheck() {
   useEffect(() => {
     // 페이지 로드 시 스크롤을 맨 위로 이동
     window.scrollTo(0, 0);
+    if (user?.role === 'admin') {
+      loadUsers();
+    }
     loadData();
   }, []);
+
+  useEffect(() => {
+    // 선택된 사용자가 변경되면 데이터 다시 로드
+    loadData();
+    setSelectedClass("");
+  }, [selectedUserId]);
 
   useEffect(() => {
     loadAttendance();
   }, [selectedDate, selectedClass]);
 
+  const loadUsers = async () => {
+    try {
+      const response = await fetchWithAuth("/api/auth/users");
+      const data = await response.json();
+      setUsers(data.filter(u => u.role !== 'admin'));
+    } catch (error) {
+      console.error("사용자 목록 로드 실패:", error);
+    }
+  };
+
   const loadData = async () => {
     try {
+      const studentsUrl = user?.role === 'admin' && selectedUserId !== 'all'
+        ? `/api/students?filterUserId=${selectedUserId}`
+        : "/api/students";
+      const classesUrl = user?.role === 'admin' && selectedUserId !== 'all'
+        ? `/api/classes?filterUserId=${selectedUserId}`
+        : "/api/classes";
+
       const [studentsRes, classesRes] = await Promise.all([
-        fetchWithAuth("/api/students"),
-        fetchWithAuth("/api/classes"),
+        fetchWithAuth(studentsUrl),
+        fetchWithAuth(classesUrl),
       ]);
       const studentsData = await studentsRes.json();
       const classesData = await classesRes.json();
@@ -64,9 +94,10 @@ function AttendanceCheck() {
 
   const loadAttendance = async () => {
     try {
-      const response = await fetchWithAuth(
-        `/api/attendance/date/${selectedDate}`
-      );
+      const url = user?.role === 'admin' && selectedUserId !== 'all'
+        ? `/api/attendance/date/${selectedDate}?filterUserId=${selectedUserId}`
+        : `/api/attendance/date/${selectedDate}`;
+      const response = await fetchWithAuth(url);
       const allAttendance = await response.json();
       const filtered = allAttendance.filter(
         (a) => !selectedClass || a.classId === parseInt(selectedClass)
@@ -147,6 +178,40 @@ function AttendanceCheck() {
   return (
     <div>
       <h2>출석 체크</h2>
+
+      {/* 관리자용 사용자 선택 */}
+      {user?.role === 'admin' && (
+        <div className="card" style={{ marginTop: "1rem" }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            flexWrap: 'wrap'
+          }}>
+            <label style={{
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap'
+            }}>
+              사용자 선택:
+            </label>
+            <select
+              value={selectedUserId}
+              onChange={(e) => setSelectedUserId(e.target.value)}
+              style={{
+                minWidth: '200px',
+                flex: 1
+              }}
+            >
+              <option value="all">전체 사용자</option>
+              {users.map(u => (
+                <option key={u.id} value={u.id}>
+                  {u.username}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
 
       <div className="card" style={{ marginTop: "1rem" }}>
         <div

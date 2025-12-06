@@ -4,8 +4,16 @@ export const getClasses = async (req, res) => {
   try {
     const userId = req.user.id;
     const role = req.user.role;
-    const classes = await Class.getAll(userId, role);
-    res.json(classes);
+    const filterUserId = req.query.filterUserId;
+
+    // Admin이 특정 사용자로 필터링하는 경우
+    if (role === 'admin' && filterUserId && filterUserId !== 'all') {
+      const classes = await Class.getAll(parseInt(filterUserId), 'user');
+      res.json(classes);
+    } else {
+      const classes = await Class.getAll(userId, role);
+      res.json(classes);
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

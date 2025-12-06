@@ -5,8 +5,16 @@ export const getAttendance = async (req, res) => {
   try {
     const userId = req.user.id;
     const role = req.user.role;
-    const attendance = await Attendance.getAll(userId, role);
-    res.json(attendance);
+    const filterUserId = req.query.filterUserId;
+
+    // Admin이 특정 사용자로 필터링하는 경우
+    if (role === 'admin' && filterUserId && filterUserId !== 'all') {
+      const attendance = await Attendance.getAll(parseInt(filterUserId), 'user');
+      res.json(attendance);
+    } else {
+      const attendance = await Attendance.getAll(userId, role);
+      res.json(attendance);
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -27,8 +35,16 @@ export const getAttendanceByDate = async (req, res) => {
     const { date } = req.params;
     const userId = req.user.id;
     const role = req.user.role;
-    const attendance = await Attendance.getByDate(date, userId, role);
-    res.json(attendance);
+    const filterUserId = req.query.filterUserId;
+
+    // Admin이 특정 사용자로 필터링하는 경우
+    if (role === 'admin' && filterUserId && filterUserId !== 'all') {
+      const attendance = await Attendance.getByDate(date, parseInt(filterUserId), 'user');
+      res.json(attendance);
+    } else {
+      const attendance = await Attendance.getByDate(date, userId, role);
+      res.json(attendance);
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

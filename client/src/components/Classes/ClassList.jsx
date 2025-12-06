@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { fetchWithAuth } from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 
 function ClassList() {
+  const { user } = useAuth();
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('all');
   const [formData, setFormData] = useState({ name: '', schedule: '', duration: '', instructor: '' });
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -37,13 +41,35 @@ function ClassList() {
   useEffect(() => {
     // 페이지 로드 시 스크롤을 맨 위로 이동
     window.scrollTo(0, 0);
+    if (user?.role === 'admin') {
+      loadUsers();
+    }
     loadClasses();
     loadStudents();
   }, []);
 
+  useEffect(() => {
+    // 선택된 사용자가 변경되면 데이터 다시 로드
+    loadClasses();
+    loadStudents();
+  }, [selectedUserId]);
+
+  const loadUsers = async () => {
+    try {
+      const response = await fetchWithAuth("/api/auth/users");
+      const data = await response.json();
+      setUsers(data.filter(u => u.role !== 'admin'));
+    } catch (error) {
+      console.error("사용자 목록 로드 실패:", error);
+    }
+  };
+
   const loadClasses = async () => {
     try {
-      const response = await fetchWithAuth('/api/classes');
+      const url = user?.role === 'admin' && selectedUserId !== 'all'
+        ? `/api/classes?filterUserId=${selectedUserId}`
+        : '/api/classes';
+      const response = await fetchWithAuth(url);
       const data = await response.json();
       setClasses(data);
     } catch (error) {
@@ -53,7 +79,10 @@ function ClassList() {
 
   const loadStudents = async () => {
     try {
-      const response = await fetchWithAuth('/api/students');
+      const url = user?.role === 'admin' && selectedUserId !== 'all'
+        ? `/api/students?filterUserId=${selectedUserId}`
+        : '/api/students';
+      const response = await fetchWithAuth(url);
       const data = await response.json();
       setStudents(data);
     } catch (error) {
@@ -225,6 +254,40 @@ function ClassList() {
   return (
     <div>
       <h2>수업 관리</h2>
+
+      {/* 관리자용 사용자 선택 */}
+      {user?.role === 'admin' && (
+        <div className="card" style={{ marginTop: "1rem" }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            flexWrap: 'wrap'
+          }}>
+            <label style={{
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap'
+            }}>
+              사용자 선택:
+            </label>
+            <select
+              value={selectedUserId}
+              onChange={(e) => setSelectedUserId(e.target.value)}
+              style={{
+                minWidth: '200px',
+                flex: 1
+              }}
+            >
+              <option value="all">전체 사용자</option>
+              {users.map(u => (
+                <option key={u.id} value={u.id}>
+                  {u.username}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
 
       <div className="card" style={{ marginTop: '1rem' }} ref={formRef}>
         <h3>{isEditing ? '수업 수정' : '새 수업 등록'}</h3>

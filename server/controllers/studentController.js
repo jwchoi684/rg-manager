@@ -4,8 +4,16 @@ export const getStudents = async (req, res) => {
   try {
     const userId = req.user.id;
     const role = req.user.role;
-    const students = await Student.getAll(userId, role);
-    res.json(students);
+    const filterUserId = req.query.filterUserId;
+
+    // Admin이 특정 사용자로 필터링하는 경우
+    if (role === 'admin' && filterUserId && filterUserId !== 'all') {
+      const students = await Student.getAll(parseInt(filterUserId), 'user');
+      res.json(students);
+    } else {
+      const students = await Student.getAll(userId, role);
+      res.json(students);
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

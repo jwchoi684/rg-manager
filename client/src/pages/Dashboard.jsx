@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 function Dashboard() {
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalClasses: 0,
@@ -11,10 +13,15 @@ function Dashboard() {
   const [attendanceByClass, setAttendanceByClass] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('all');
 
   useEffect(() => {
     // 페이지 로드 시 스크롤을 맨 위로 이동
     window.scrollTo(0, 0);
+    if (user?.role === 'admin') {
+      loadUsers();
+    }
     loadData();
   }, []);
 
@@ -27,6 +34,11 @@ function Dashboard() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // 선택된 사용자가 변경되면 데이터 다시 로드
+  useEffect(() => {
+    loadData();
+  }, [selectedUserId]);
+
   // 날짜 변경시 출석률 다시 계산
   useEffect(() => {
     if (classes.length > 0) {
@@ -34,12 +46,32 @@ function Dashboard() {
     }
   }, [selectedDate]);
 
+  const loadUsers = async () => {
+    try {
+      const response = await fetchWithAuth("/api/auth/users");
+      const data = await response.json();
+      setUsers(data.filter(u => u.role !== 'admin'));
+    } catch (error) {
+      console.error("사용자 목록 로드 실패:", error);
+    }
+  };
+
   const loadData = async () => {
     try {
+      const studentsUrl = user?.role === 'admin' && selectedUserId !== 'all'
+        ? `/api/students?filterUserId=${selectedUserId}`
+        : '/api/students';
+      const classesUrl = user?.role === 'admin' && selectedUserId !== 'all'
+        ? `/api/classes?filterUserId=${selectedUserId}`
+        : '/api/classes';
+      const attendanceUrl = user?.role === 'admin' && selectedUserId !== 'all'
+        ? `/api/attendance?filterUserId=${selectedUserId}`
+        : '/api/attendance';
+
       const [studentsRes, classesRes, attendanceRes] = await Promise.all([
-        fetchWithAuth('/api/students'),
-        fetchWithAuth('/api/classes'),
-        fetchWithAuth('/api/attendance')
+        fetchWithAuth(studentsUrl),
+        fetchWithAuth(classesUrl),
+        fetchWithAuth(attendanceUrl)
       ]);
 
       const students = await studentsRes.json();
@@ -112,6 +144,41 @@ function Dashboard() {
   return (
     <div>
       <h2>대시보드</h2>
+
+      {/* 관리자용 사용자 선택 */}
+      {user?.role === 'admin' && (
+        <div className="card" style={{ marginTop: "1rem" }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            flexWrap: 'wrap'
+          }}>
+            <label style={{
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap'
+            }}>
+              사용자 선택:
+            </label>
+            <select
+              value={selectedUserId}
+              onChange={(e) => setSelectedUserId(e.target.value)}
+              style={{
+                minWidth: '200px',
+                flex: 1
+              }}
+            >
+              <option value="all">전체 사용자</option>
+              {users.map(u => (
+                <option key={u.id} value={u.id}>
+                  {u.username}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
         <div className="card">
           <h3>전체 학생</h3>
