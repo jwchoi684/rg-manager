@@ -304,9 +304,12 @@ function StudentList() {
               required
             />
             <input
-              type="date"
+              type={formData.birthdate ? "date" : "text"}
               placeholder="생년월일"
               value={formData.birthdate}
+              onFocus={(e) => {
+                e.target.type = "date";
+              }}
               onChange={(e) =>
                 setFormData({ ...formData, birthdate: e.target.value })
               }
