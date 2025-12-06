@@ -178,6 +178,10 @@ function StudentAttendance() {
     return classItem ? classItem.name : '-';
   };
 
+  const getClassInfo = (classId) => {
+    return classes.find(c => c.id === classId);
+  };
+
   const getStudentName = (studentId) => {
     const student = students.find(s => s.id === studentId);
     return student ? student.name : '-';
@@ -396,6 +400,7 @@ function StudentAttendance() {
                 <tbody>
                   {attendanceRecords.map(record => {
                     const student = getStudentInfo(record.studentId);
+                    const classInfo = getClassInfo(record.classId);
                     return (
                       <tr key={record.id}>
                         <td>{record.date}</td>
@@ -408,7 +413,14 @@ function StudentAttendance() {
                             </span>
                           )}
                         </td>
-                        <td>{getClassName(record.classId)}</td>
+                        <td>
+                          <div>{classInfo?.name || '-'}</div>
+                          {classInfo?.schedule && (
+                            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                              {classInfo.schedule}
+                            </div>
+                          )}
+                        </td>
                         <td>
                           <button
                             className="btn btn-danger"
@@ -430,6 +442,7 @@ function StudentAttendance() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {attendanceRecords.map(record => {
                   const student = getStudentInfo(record.studentId);
+                  const classInfo = getClassInfo(record.classId);
                   return (
                     <div
                       key={record.id}
@@ -451,7 +464,8 @@ function StudentAttendance() {
                           {student?.birthdate} ({calculateAge(student?.birthdate)}세)
                         </div>
                         <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '0.25rem' }}>
-                          {getClassName(record.classId)}
+                          {classInfo?.name || '-'}
+                          {classInfo?.schedule && ` - ${classInfo.schedule}`}
                         </div>
                       </div>
                       <button
