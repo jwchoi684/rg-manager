@@ -13,6 +13,7 @@ function StudentList() {
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
   // 화면 크기 감지
   useEffect(() => {
@@ -153,6 +154,55 @@ function StudentList() {
       })
       .filter((name) => name)
       .join(", ");
+  };
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortedStudents = () => {
+    let sortedStudents = [...students];
+
+    if (sortConfig.key) {
+      sortedStudents.sort((a, b) => {
+        let aValue, bValue;
+
+        if (sortConfig.key === 'name') {
+          aValue = a.name;
+          bValue = b.name;
+          return sortConfig.direction === 'asc'
+            ? aValue.localeCompare(bValue, 'ko')
+            : bValue.localeCompare(aValue, 'ko');
+        } else if (sortConfig.key === 'birthdate') {
+          aValue = a.birthdate || '';
+          bValue = b.birthdate || '';
+          return sortConfig.direction === 'asc'
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        } else if (sortConfig.key === 'classes') {
+          aValue = getClassNames(a.classIds);
+          bValue = getClassNames(b.classIds);
+          return sortConfig.direction === 'asc'
+            ? aValue.localeCompare(bValue, 'ko')
+            : bValue.localeCompare(aValue, 'ko');
+        }
+
+        return 0;
+      });
+    }
+
+    return sortedStudents;
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return '⇅';
+    }
+    return sortConfig.direction === 'asc' ? '↑' : '↓';
   };
 
   return (
@@ -323,15 +373,36 @@ function StudentList() {
           <table style={{ marginTop: "1rem" }}>
             <thead>
               <tr>
-                <th>이름</th>
-                <th>생년월일 / 나이</th>
-                <th>수강 수업</th>
+                <th>
+                  <span
+                    onClick={() => handleSort('name')}
+                    style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                  >
+                    이름 <span style={{ fontSize: '0.875rem' }}>{getSortIcon('name')}</span>
+                  </span>
+                </th>
+                <th>
+                  <span
+                    onClick={() => handleSort('birthdate')}
+                    style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                  >
+                    생년월일 / 나이 <span style={{ fontSize: '0.875rem' }}>{getSortIcon('birthdate')}</span>
+                  </span>
+                </th>
+                <th>
+                  <span
+                    onClick={() => handleSort('classes')}
+                    style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                  >
+                    수강 수업 <span style={{ fontSize: '0.875rem' }}>{getSortIcon('classes')}</span>
+                  </span>
+                </th>
                 <th>연락처</th>
                 <th>관리</th>
               </tr>
             </thead>
             <tbody>
-              {students.map((student) => (
+              {getSortedStudents().map((student) => (
                 <tr key={student.id}>
                   <td>{student.name}</td>
                   <td>
@@ -367,15 +438,53 @@ function StudentList() {
 
         {/* 모바일 뷰 - 카드 */}
         {isMobile && (
-          <div
-            style={{
-              marginTop: "1rem",
-              display: "flex",
-              flexDirection: "column",
-              gap: "1rem",
-            }}
-          >
-            {students.map((student) => (
+          <>
+            {/* 모바일 정렬 버튼 */}
+            <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              <button
+                onClick={() => handleSort('name')}
+                className="btn"
+                style={{
+                  fontSize: "0.875rem",
+                  backgroundColor: sortConfig.key === 'name' ? '#6366f1' : '#e5e7eb',
+                  color: sortConfig.key === 'name' ? 'white' : '#374151'
+                }}
+              >
+                이름 {getSortIcon('name')}
+              </button>
+              <button
+                onClick={() => handleSort('birthdate')}
+                className="btn"
+                style={{
+                  fontSize: "0.875rem",
+                  backgroundColor: sortConfig.key === 'birthdate' ? '#6366f1' : '#e5e7eb',
+                  color: sortConfig.key === 'birthdate' ? 'white' : '#374151'
+                }}
+              >
+                생년월일 {getSortIcon('birthdate')}
+              </button>
+              <button
+                onClick={() => handleSort('classes')}
+                className="btn"
+                style={{
+                  fontSize: "0.875rem",
+                  backgroundColor: sortConfig.key === 'classes' ? '#6366f1' : '#e5e7eb',
+                  color: sortConfig.key === 'classes' ? 'white' : '#374151'
+                }}
+              >
+                수강 수업 {getSortIcon('classes')}
+              </button>
+            </div>
+
+            <div
+              style={{
+                marginTop: "0.5rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "1rem",
+              }}
+            >
+              {getSortedStudents().map((student) => (
               <div
                 key={student.id}
                 style={{
@@ -436,7 +545,8 @@ function StudentList() {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+          </>
         )}
 
         {students.length === 0 && (
