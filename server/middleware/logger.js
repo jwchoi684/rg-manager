@@ -6,17 +6,20 @@ export const logAction = (action, target = null) => {
     // 원본 응답 메서드 저장
     const originalJson = res.json;
     const originalSend = res.send;
+    let logged = false; // 중복 방지 플래그
 
     // 응답 성공 시 로그 기록
     res.json = function(data) {
-      if (res.statusCode >= 200 && res.statusCode < 300) {
+      if (res.statusCode >= 200 && res.statusCode < 300 && !logged) {
+        logged = true;
         saveLog(req, action, target, data);
       }
       return originalJson.call(this, data);
     };
 
     res.send = function(data) {
-      if (res.statusCode >= 200 && res.statusCode < 300) {
+      if (res.statusCode >= 200 && res.statusCode < 300 && !logged) {
+        logged = true;
         saveLog(req, action, target, data);
       }
       return originalSend.call(this, data);
