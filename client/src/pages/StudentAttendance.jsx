@@ -231,12 +231,14 @@ function StudentAttendance() {
           </div>
 
           {/* 필터 초기화 버튼 */}
-          {(selectedStudent || selectedClass || selectedDate !== new Date().toISOString().split('T')[0]) && (
+          {(selectedStudent || selectedClass || startDate !== getThisMonthRange().start || endDate !== getThisMonthRange().end) && (
             <div style={{ flex: isMobile ? '1' : '0 0 auto', display: 'flex', alignItems: 'flex-end' }}>
               <button
                 className="btn"
                 onClick={() => {
-                  setSelectedDate(new Date().toISOString().split('T')[0]);
+                  const thisMonth = getThisMonthRange();
+                  setStartDate(thisMonth.start);
+                  setEndDate(thisMonth.end);
                   setSelectedClass('');
                   setSelectedStudent('');
                 }}
@@ -257,7 +259,7 @@ function StudentAttendance() {
           border: '2px solid #6366f1'
         }}>
           <strong style={{ color: '#4338ca' }}>
-            {selectedDate} ({getDayOfWeek(selectedDate)}요일)
+            {startDate} ~ {endDate}
             {selectedClass && ` - ${getClassName(parseInt(selectedClass))}`}
             {selectedStudent && ` - ${getStudentName(parseInt(selectedStudent))}`}
           </strong>

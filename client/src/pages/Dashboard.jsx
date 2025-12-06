@@ -46,12 +46,13 @@ function Dashboard() {
       const classesData = await classesRes.json();
       const attendance = await attendanceRes.json();
 
-      const selectedDateAttendance = attendance.filter(a => a.date === selectedDate);
+      const today = new Date().toISOString().split('T')[0];
+      const todayAttendance = attendance.filter(a => a.date === today);
 
       setStats({
         totalStudents: students.length,
         totalClasses: classesData.length,
-        todayAttendance: selectedDateAttendance.length
+        todayAttendance: todayAttendance.length
       });
 
       setClasses(classesData);
@@ -121,15 +122,7 @@ function Dashboard() {
           <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>{stats.totalClasses}개</p>
         </div>
         <div className="card">
-          <h3>선택한 날짜 출석</h3>
-          <div style={{ marginBottom: '0.5rem' }}>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              style={{ width: isMobile ? '100%' : '180px' }}
-            />
-          </div>
+          <h3>오늘 출석</h3>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b' }}>{stats.todayAttendance}명</p>
         </div>
       </div>
@@ -216,7 +209,24 @@ function Dashboard() {
 
       {classes.length > 0 && (
         <div className="card" style={{ marginTop: '1rem' }}>
-          <h3>선택한 날짜의 수업별 출석률</h3>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem',
+            marginBottom: '1rem'
+          }}>
+            <h3 style={{ margin: 0 }}>선택한 날짜의 수업별 출석률</h3>
+            <div>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                style={{ width: isMobile ? '100%' : '180px' }}
+              />
+            </div>
+          </div>
           <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
             {attendanceByClass.map((item, idx) => {
               const selectedDateAttendance = item.dailyAttendance.find(d => d.date === selectedDate);
