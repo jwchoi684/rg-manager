@@ -233,19 +233,23 @@ function Dashboard() {
             alignItems: 'center',
             flexWrap: 'wrap'
           }}>
-            <label style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>기간:</label>
+            <label style={{
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap',
+              display: isMobile ? 'none' : 'inline'
+            }}>기간:</label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              style={{ width: isMobile ? '140px' : '180px' }}
+              style={{ width: isMobile ? '45%' : '180px', flex: isMobile ? '1' : 'none' }}
             />
             <span>~</span>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              style={{ width: isMobile ? '140px' : '180px' }}
+              style={{ width: isMobile ? '45%' : '180px', flex: isMobile ? '1' : 'none' }}
             />
           </div>
         </div>
