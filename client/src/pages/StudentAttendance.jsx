@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../utils/api';
-import { DateRangePicker } from 'react-date-range';
+import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { ko } from 'date-fns/locale';
@@ -34,11 +34,11 @@ function StudentAttendance() {
   const thisMonth = getThisMonthRange();
   const [startDate, setStartDate] = useState(thisMonth.start);
   const [endDate, setEndDate] = useState(thisMonth.end);
-  const [dateRange, setDateRange] = useState([{
+  const [dateRange, setDateRange] = useState({
     startDate: thisMonth.startDate,
     endDate: thisMonth.endDate,
     key: 'selection'
-  }]);
+  });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
@@ -259,10 +259,10 @@ function StudentAttendance() {
                   maxHeight: isMobile ? '90vh' : 'none',
                   overflow: isMobile ? 'auto' : 'visible'
                 }}>
-                  <DateRangePicker
-                    ranges={dateRange}
+                  <DateRange
+                    ranges={[dateRange]}
                     onChange={(item) => {
-                      setDateRange([item.selection]);
+                      setDateRange(item.selection);
                       // 로컬 날짜로 변환 (타임존 문제 해결)
                       setStartDate(formatDate(item.selection.startDate));
                       setEndDate(formatDate(item.selection.endDate));
@@ -336,11 +336,11 @@ function StudentAttendance() {
                   const thisMonth = getThisMonthRange();
                   setStartDate(thisMonth.start);
                   setEndDate(thisMonth.end);
-                  setDateRange([{
+                  setDateRange({
                     startDate: thisMonth.startDate,
                     endDate: thisMonth.endDate,
                     key: 'selection'
-                  }]);
+                  });
                   setSelectedClass('');
                   setSelectedStudent('');
                 }}
