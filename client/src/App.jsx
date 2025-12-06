@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import StudentList from './components/Students/StudentList';
+import StudentForm from './pages/Students/StudentForm';
 import ClassList from './components/Classes/ClassList';
+import ClassForm from './pages/Classes/ClassForm';
 import AttendanceCheck from './components/Attendance/AttendanceCheck';
 import Dashboard from './pages/Dashboard';
 import StudentAttendance from './pages/StudentAttendance';
@@ -93,7 +95,11 @@ function App() {
         <Routes>
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute><StudentList /></ProtectedRoute>} />
+          <Route path="/students/new" element={<ProtectedRoute><StudentForm /></ProtectedRoute>} />
+          <Route path="/students/edit" element={<ProtectedRoute><StudentForm /></ProtectedRoute>} />
           <Route path="/classes" element={<ProtectedRoute><ClassList /></ProtectedRoute>} />
+          <Route path="/classes/new" element={<ProtectedRoute><ClassForm /></ProtectedRoute>} />
+          <Route path="/classes/edit" element={<ProtectedRoute><ClassForm /></ProtectedRoute>} />
           <Route path="/attendance" element={<ProtectedRoute><AttendanceCheck /></ProtectedRoute>} />
           <Route path="/student-attendance" element={<ProtectedRoute><StudentAttendance /></ProtectedRoute>} />
           <Route path="/logs" element={<ProtectedRoute><Logs /></ProtectedRoute>} />

@@ -1,20 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 function ClassList() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('all');
-  const [formData, setFormData] = useState({ name: '', schedule: '', duration: '', instructor: '' });
-  const [isEditing, setIsEditing] = useState(false);
-  const [editId, setEditId] = useState(null);
   const [selectedClassForStudents, setSelectedClassForStudents] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [draggedIndex, setDraggedIndex] = useState(null);
-  const formRef = useRef(null);
 
   // 화면 크기 감지
   useEffect(() => {
@@ -90,50 +88,8 @@ function ClassList() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (isEditing) {
-        const response = await fetchWithAuth(`/api/classes/${editId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
-        if (response.ok) {
-          await loadClasses();
-          setIsEditing(false);
-          setEditId(null);
-        }
-      } else {
-        const response = await fetchWithAuth('/api/classes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
-        if (response.ok) {
-          await loadClasses();
-        }
-      }
-      setFormData({ name: '', schedule: '', duration: '', instructor: '' });
-    } catch (error) {
-      console.error('수업 저장 실패:', error);
-      alert('수업 정보 저장에 실패했습니다.');
-    }
-  };
-
   const handleEdit = (classItem) => {
-    setFormData({
-      name: classItem.name,
-      schedule: classItem.schedule,
-      duration: classItem.duration,
-      instructor: classItem.instructor
-    });
-    setIsEditing(true);
-    setEditId(classItem.id);
-    // 폼으로 스크롤 이동
-    setTimeout(() => {
-      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    navigate('/classes/edit', { state: { classItem } });
   };
 
   const handleDelete = async (id) => {
@@ -253,7 +209,15 @@ function ClassList() {
 
   return (
     <div>
-      <h2>수업 관리</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h2>수업 관리</h2>
+        <button
+          className="btn btn-primary"
+          onClick={() => navigate('/classes/new')}
+        >
+          새 수업 등록
+        </button>
+      </div>
 
       {/* 관리자용 사용자 선택 */}
       {user?.role === 'admin' && (
@@ -288,51 +252,6 @@ function ClassList() {
           </div>
         </div>
       )}
-
-      <div className="card" style={{ marginTop: '1rem' }} ref={formRef}>
-        <h3>{isEditing ? '수업 수정' : '새 수업 등록'}</h3>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '1rem' }}>
-          <input
-            type="text"
-            placeholder="수업명 (예: 초급반)"
-            value={formData.name}
-            onChange={(e) => setFormData({...formData, name: e.target.value})}
-            required
-          />
-          <input
-            type="text"
-            placeholder="수업 시간 (예: 화/목 14:00)"
-            value={formData.schedule}
-            onChange={(e) => setFormData({...formData, schedule: e.target.value})}
-            required
-          />
-          <input
-            type="text"
-            placeholder="수업 시간 (예: 90분)"
-            value={formData.duration}
-            onChange={(e) => setFormData({...formData, duration: e.target.value})}
-            required
-          />
-          <input
-            type="text"
-            placeholder="강사명"
-            value={formData.instructor}
-            onChange={(e) => setFormData({...formData, instructor: e.target.value})}
-          />
-          <button type="submit" className="btn btn-primary">
-            {isEditing ? '수정' : '등록'}
-          </button>
-          {isEditing && (
-            <button type="button" className="btn" onClick={() => {
-              setIsEditing(false);
-              setEditId(null);
-              setFormData({ name: '', schedule: '', duration: '', instructor: '' });
-            }}>
-              취소
-            </button>
-          )}
-        </form>
-      </div>
 
       <div className="card" style={{ marginTop: '1rem' }}>
         <h3>수업 목록 ({classes.length}개)</h3>
