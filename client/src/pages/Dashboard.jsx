@@ -220,9 +220,9 @@ function Dashboard() {
       <div className="card" style={{ marginTop: '1rem' }}>
         <div style={{
           display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
+          alignItems: isMobile ? 'stretch' : 'center',
           gap: '1rem',
           marginBottom: '1rem'
         }}>
@@ -238,14 +238,14 @@ function Dashboard() {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              style={{ width: isMobile ? '140px' : '150px' }}
+              style={{ width: isMobile ? '140px' : '180px' }}
             />
             <span>~</span>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              style={{ width: isMobile ? '140px' : '150px' }}
+              style={{ width: isMobile ? '140px' : '180px' }}
             />
           </div>
         </div>
