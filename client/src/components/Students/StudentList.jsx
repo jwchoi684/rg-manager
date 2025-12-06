@@ -7,7 +7,6 @@ function StudentList() {
   const [formData, setFormData] = useState({
     name: "",
     birthdate: "",
-    phone: "",
     classIds: [],
   });
   const [isEditing, setIsEditing] = useState(false);
@@ -94,7 +93,6 @@ function StudentList() {
       setFormData({
         name: "",
         birthdate: "",
-        phone: "",
         classIds: [],
       });
     } catch (error) {
@@ -107,7 +105,6 @@ function StudentList() {
     setFormData({
       name: student.name,
       birthdate: student.birthdate,
-      phone: student.phone,
       classIds: student.classIds || [],
     });
     setIsEditing(true);
@@ -238,14 +235,6 @@ function StudentList() {
               }
               required
             />
-            <input
-              type="tel"
-              placeholder="연락처"
-              value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
-            />
           </div>
 
           {classes.length > 0 && (
@@ -353,7 +342,6 @@ function StudentList() {
                   setFormData({
                     name: "",
                     birthdate: "",
-                    phone: "",
                     classIds: [],
                   });
                 }}
@@ -397,7 +385,6 @@ function StudentList() {
                     수강 수업 <span style={{ fontSize: '0.875rem' }}>{getSortIcon('classes')}</span>
                   </span>
                 </th>
-                <th>연락처</th>
                 <th>관리</th>
               </tr>
             </thead>
@@ -414,7 +401,6 @@ function StudentList() {
                     )}
                   </td>
                   <td>{getClassNames(student.classIds)}</td>
-                  <td>{student.phone || "-"}</td>
                   <td>
                     <button
                       className="btn btn-primary"
@@ -514,17 +500,8 @@ function StudentList() {
                     생년월일: {student.birthdate || "-"} (
                     {calculateAge(student.birthdate)}세)
                   </div>
-                  <div
-                    style={{
-                      fontSize: "0.875rem",
-                      color: "#6b7280",
-                      marginBottom: "0.25rem",
-                    }}
-                  >
-                    수강 수업: {getClassNames(student.classIds)}
-                  </div>
                   <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
-                    연락처: {student.phone || "-"}
+                    수강 수업: {getClassNames(student.classIds)}
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: "0.5rem" }}>

@@ -24,7 +24,6 @@ const initDatabase = async () => {
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         birthdate TEXT NOT NULL,
-        phone TEXT,
         "classIds" TEXT,
         "createdAt" TEXT NOT NULL
       )
