@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
@@ -20,6 +20,8 @@ function DateRangePicker({ startDate, endDate, onDateChange, isMobile = false, l
     endDate: new Date(endDate),
     key: 'selection'
   });
+  const [pickerPosition, setPickerPosition] = useState({ left: 0, right: 'auto' });
+  const buttonRef = useRef(null);
 
   // startDate, endDate props가 변경될 때 dateRange 업데이트
   useEffect(() => {
@@ -37,6 +39,26 @@ function DateRangePicker({ startDate, endDate, onDateChange, isMobile = false, l
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
+  // 달력 위치 계산
+  useEffect(() => {
+    if (showDatePicker && buttonRef.current && !isMobile) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const windowWidth = window.innerWidth;
+      const pickerWidth = 650; // DateRange 컴포넌트의 대략적인 너비 (2개월 표시)
+
+      // 버튼의 오른쪽에서 화면 끝까지의 공간
+      const spaceOnRight = windowWidth - rect.right;
+
+      if (spaceOnRight < pickerWidth) {
+        // 오른쪽 공간이 부족하면 right 정렬
+        setPickerPosition({ left: 'auto', right: 0 });
+      } else {
+        // 충분한 공간이 있으면 left 정렬
+        setPickerPosition({ left: 0, right: 'auto' });
+      }
+    }
+  }, [showDatePicker, isMobile]);
 
   // 날짜 선택기 외부 클릭 감지 (데스크탑 전용)
   useEffect(() => {
@@ -75,6 +97,7 @@ function DateRangePicker({ startDate, endDate, onDateChange, isMobile = false, l
         {label}
       </label>
       <button
+        ref={buttonRef}
         className="btn"
         onClick={() => setShowDatePicker(!showDatePicker)}
         style={{
@@ -106,7 +129,8 @@ function DateRangePicker({ startDate, endDate, onDateChange, isMobile = false, l
           <div style={{
             position: isMobile ? 'fixed' : 'absolute',
             top: isMobile ? '50%' : '100%',
-            left: isMobile ? '50%' : 0,
+            left: isMobile ? '50%' : pickerPosition.left,
+            right: isMobile ? 'auto' : pickerPosition.right,
             transform: isMobile ? 'translate(-50%, -50%)' : 'none',
             zIndex: 1000,
             backgroundColor: 'white',
