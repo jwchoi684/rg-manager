@@ -6,6 +6,7 @@ import studentRoutes from './routes/students.js';
 import classRoutes from './routes/classes.js';
 import attendanceRoutes from './routes/attendance.js';
 import authRoutes from './routes/auth.js';
+import logRoutes from './routes/logs.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +26,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/logs', logRoutes);
 
 // Serve static files from React build
 app.use(express.static(path.join(__dirname, '../client/dist')));

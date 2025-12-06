@@ -9,6 +9,7 @@ import StudentAttendance from './pages/StudentAttendance';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Admin from './pages/Admin';
+import Logs from './pages/Logs';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -67,7 +68,10 @@ function App() {
           <Link to="/attendance" onClick={closeMobileMenu}>출석 체크</Link>
           <Link to="/student-attendance" onClick={closeMobileMenu}>학생별 출석</Link>
           {user?.role === 'admin' && (
-            <Link to="/admin" onClick={closeMobileMenu}>관리자</Link>
+            <>
+              <Link to="/logs" onClick={closeMobileMenu}>로그</Link>
+              <Link to="/admin" onClick={closeMobileMenu}>관리자</Link>
+            </>
           )}
           <button
             onClick={handleLogout}
@@ -92,6 +96,7 @@ function App() {
           <Route path="/classes" element={<ProtectedRoute><ClassList /></ProtectedRoute>} />
           <Route path="/attendance" element={<ProtectedRoute><AttendanceCheck /></ProtectedRoute>} />
           <Route path="/student-attendance" element={<ProtectedRoute><StudentAttendance /></ProtectedRoute>} />
+          <Route path="/logs" element={<ProtectedRoute><Logs /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

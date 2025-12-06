@@ -72,6 +72,18 @@ const initDatabase = async () => {
       )
     `);
 
+    // Logs 테이블
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS logs (
+        id SERIAL PRIMARY KEY,
+        username TEXT NOT NULL,
+        action TEXT NOT NULL,
+        target TEXT,
+        details TEXT,
+        "createdAt" TEXT NOT NULL
+      )
+    `);
+
     // 기본 관리자 계정 생성 (username: admin, password: admin123)
     const adminCheck = await client.query('SELECT * FROM users WHERE username = $1', ['admin']);
     if (adminCheck.rows.length === 0) {
