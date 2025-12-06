@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import DateRangePicker from '../components/common/DateRangePicker';
 
 function Dashboard() {
   const { user } = useAuth();
@@ -227,31 +228,16 @@ function Dashboard() {
           marginBottom: '1rem'
         }}>
           <h3 style={{ margin: 0 }}>수업별 출석 현황</h3>
-          <div style={{
-            display: 'flex',
-            gap: '0.5rem',
-            alignItems: 'center',
-            flexWrap: 'wrap'
-          }}>
-            <label style={{
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap',
-              display: isMobile ? 'none' : 'inline'
-            }}>기간:</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              style={{ width: isMobile ? '45%' : '180px', flex: isMobile ? '1' : 'none' }}
-            />
-            <span>~</span>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              style={{ width: isMobile ? '45%' : '180px', flex: isMobile ? '1' : 'none' }}
-            />
-          </div>
+          <DateRangePicker
+            startDate={startDate}
+            endDate={endDate}
+            onDateChange={(newStartDate, newEndDate) => {
+              setStartDate(newStartDate);
+              setEndDate(newEndDate);
+            }}
+            isMobile={isMobile}
+            label={isMobile ? "기간 선택" : "기간"}
+          />
         </div>
         {classes.length === 0 ? (
           <p style={{ textAlign: 'center', color: '#6b7280', padding: '2rem' }}>

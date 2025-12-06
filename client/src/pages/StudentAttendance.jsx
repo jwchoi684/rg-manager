@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../utils/api';
-import { DateRange } from 'react-date-range';
-import 'react-date-range/dist/styles.css';
-import 'react-date-range/dist/theme/default.css';
-import { ko } from 'date-fns/locale';
 import { useAuth } from '../context/AuthContext';
+import DateRangePicker from '../components/common/DateRangePicker';
 
 function StudentAttendance() {
   const { user } = useAuth();
@@ -38,12 +35,6 @@ function StudentAttendance() {
   const thisMonth = getThisMonthRange();
   const [startDate, setStartDate] = useState(thisMonth.start);
   const [endDate, setEndDate] = useState(thisMonth.end);
-  const [dateRange, setDateRange] = useState({
-    startDate: thisMonth.startDate,
-    endDate: thisMonth.endDate,
-    key: 'selection'
-  });
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -56,30 +47,6 @@ function StudentAttendance() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  // 날짜 선택기 외부 클릭 감지 (데스크탑 전용)
-  useEffect(() => {
-    if (isMobile) return; // 모바일에서는 오버레이 클릭으로 처리
-    const handleClickOutside = (event) => {
-      if (showDatePicker && !event.target.closest('.date-picker-container')) {
-        setShowDatePicker(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showDatePicker, isMobile]);
-
-  // 모바일에서 모달 열릴 때 body 스크롤 방지
-  useEffect(() => {
-    if (isMobile && showDatePicker) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [showDatePicker, isMobile]);
 
   // 나이 계산 함수
   const calculateAge = (birthdate) => {
@@ -284,82 +251,17 @@ function StudentAttendance() {
           flexDirection: isMobile ? 'column' : 'row'
         }}>
           {/* 날짜 범위 선택 */}
-          <div className="date-picker-container" style={{ flex: isMobile ? '1' : '0 0 auto', position: 'relative' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              기간 선택
-            </label>
-            <button
-              className="btn"
-              onClick={() => setShowDatePicker(!showDatePicker)}
-              style={{
-                width: isMobile ? '100%' : 'auto',
-                minWidth: '200px',
-                textAlign: 'left',
-                padding: '0.5rem 1rem'
+          <div style={{ flex: isMobile ? '1' : '0 0 auto' }}>
+            <DateRangePicker
+              startDate={startDate}
+              endDate={endDate}
+              onDateChange={(newStartDate, newEndDate) => {
+                setStartDate(newStartDate);
+                setEndDate(newEndDate);
               }}
-            >
-              {startDate} ~ {endDate}
-            </button>
-            {showDatePicker && (
-              <>
-                {/* 모바일: 전체 화면 오버레이 */}
-                {isMobile && (
-                  <div
-                    style={{
-                      position: 'fixed',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                      zIndex: 999
-                    }}
-                    onClick={() => setShowDatePicker(false)}
-                  />
-                )}
-                <div style={{
-                  position: isMobile ? 'fixed' : 'absolute',
-                  top: isMobile ? '50%' : '100%',
-                  left: isMobile ? '50%' : 0,
-                  transform: isMobile ? 'translate(-50%, -50%)' : 'none',
-                  zIndex: 1000,
-                  backgroundColor: 'white',
-                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                  borderRadius: '8px',
-                  marginTop: isMobile ? 0 : '0.5rem',
-                  maxWidth: isMobile ? '95vw' : 'none',
-                  maxHeight: isMobile ? '90vh' : 'none',
-                  overflow: isMobile ? 'auto' : 'visible'
-                }}>
-                  <DateRange
-                    ranges={[dateRange]}
-                    onChange={(item) => {
-                      setDateRange(item.selection);
-                      // 로컬 날짜로 변환 (타임존 문제 해결)
-                      setStartDate(formatDate(item.selection.startDate));
-                      setEndDate(formatDate(item.selection.endDate));
-                    }}
-                    months={isMobile ? 1 : 2}
-                    direction={isMobile ? 'vertical' : 'horizontal'}
-                    locale={ko}
-                    rangeColors={['#6366f1']}
-                  />
-                  <div style={{
-                    padding: '1rem',
-                    borderTop: '1px solid #e5e7eb',
-                    textAlign: 'right'
-                  }}>
-                    <button
-                      className="btn"
-                      onClick={() => setShowDatePicker(false)}
-                      style={{ fontSize: '0.875rem' }}
-                    >
-                      닫기
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
+              isMobile={isMobile}
+              label="기간 선택"
+            />
           </div>
 
           {/* 수업 선택 */}
@@ -408,11 +310,6 @@ function StudentAttendance() {
                   const thisMonth = getThisMonthRange();
                   setStartDate(thisMonth.start);
                   setEndDate(thisMonth.end);
-                  setDateRange({
-                    startDate: thisMonth.startDate,
-                    endDate: thisMonth.endDate,
-                    key: 'selection'
-                  });
                   setSelectedClass('');
                   setSelectedStudent('');
                 }}
