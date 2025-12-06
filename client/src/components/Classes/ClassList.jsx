@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { fetchWithAuth } from '../../utils/api';
 
 function ClassList() {
@@ -10,6 +10,7 @@ function ClassList() {
   const [selectedClassForStudents, setSelectedClassForStudents] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [draggedIndex, setDraggedIndex] = useState(null);
+  const formRef = useRef(null);
 
   // 화면 크기 감지
   useEffect(() => {
@@ -100,6 +101,10 @@ function ClassList() {
     });
     setIsEditing(true);
     setEditId(classItem.id);
+    // 폼으로 스크롤 이동
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
   const handleDelete = async (id) => {
@@ -221,7 +226,7 @@ function ClassList() {
     <div>
       <h2>수업 관리</h2>
 
-      <div className="card" style={{ marginTop: '1rem' }}>
+      <div className="card" style={{ marginTop: '1rem' }} ref={formRef}>
         <h3>{isEditing ? '수업 수정' : '새 수업 등록'}</h3>
         <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '1rem' }}>
           <input

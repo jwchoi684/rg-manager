@@ -1,14 +1,3 @@
-import nodemailer from 'nodemailer';
-
-// Gmail SMTP 설정
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER || 'jay.jaewoong.choi@gmail.com',
-    pass: process.env.EMAIL_PASS || 'gkij hwut ulas anxh'
-  }
-});
-
 // 요일 변환 함수
 const getDayOfWeek = (dateString) => {
   const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
@@ -18,6 +7,24 @@ const getDayOfWeek = (dateString) => {
 
 // 출석 결과 이메일 발송
 export const sendAttendanceEmail = async ({ date, className, schedule, students, presentStudentIds }) => {
+  // nodemailer를 동적으로 import (설치되지 않았어도 서버가 시작되도록)
+  let nodemailer;
+  try {
+    nodemailer = await import('nodemailer');
+  } catch (importError) {
+    console.error('nodemailer 모듈을 찾을 수 없습니다:', importError.message);
+    return { success: false, error: 'nodemailer 모듈이 설치되지 않았습니다.' };
+  }
+
+  // Gmail SMTP 설정
+  const transporter = nodemailer.default.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER || 'jay.jaewoong.choi@gmail.com',
+      pass: process.env.EMAIL_PASS || 'gkij hwut ulas anxh'
+    }
+  });
+
   const dayOfWeek = getDayOfWeek(date);
 
   // 학생 목록 HTML 테이블 생성
