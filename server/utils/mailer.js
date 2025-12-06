@@ -16,13 +16,18 @@ export const sendAttendanceEmail = async ({ date, className, schedule, students,
     return { success: false, error: 'nodemailer 모듈이 설치되지 않았습니다.' };
   }
 
-  // Gmail SMTP 설정
+  // Gmail SMTP 설정 (포트 587 TLS 사용 - 클라우드 환경에서 더 안정적)
   const transporter = nodemailer.default.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // TLS 사용
     auth: {
       user: process.env.EMAIL_USER || 'jay.jaewoong.choi@gmail.com',
       pass: process.env.EMAIL_PASS || 'gkij hwut ulas anxh'
-    }
+    },
+    connectionTimeout: 10000, // 10초
+    greetingTimeout: 10000,
+    socketTimeout: 10000
   });
 
   const dayOfWeek = getDayOfWeek(date);
