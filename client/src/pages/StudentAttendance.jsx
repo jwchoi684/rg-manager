@@ -4,13 +4,22 @@ import { fetchWithAuth } from '../utils/api';
 function StudentAttendance() {
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState(null);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
-  const [allAttendanceRecords, setAllAttendanceRecords] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [classFilter, setClassFilter] = useState('');
-  const [filterClass, setFilterClass] = useState('');
-  const [filterMonth, setFilterMonth] = useState('');
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split('T')[0]
+  );
+  const [selectedStudent, setSelectedStudent] = useState('');
+  const [selectedClass, setSelectedClass] = useState('');
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  // 화면 크기 감지
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // 나이 계산 함수
   const calculateAge = (birthdate) => {
@@ -25,6 +34,13 @@ function StudentAttendance() {
     return age;
   };
 
+  // 요일 변환 함수
+  const getDayOfWeek = (dateString) => {
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    const date = new Date(dateString);
+    return days[date.getDay()];
+  };
+
   useEffect(() => {
     // 페이지 로드 시 스크롤을 맨 위로 이동
     window.scrollTo(0, 0);
@@ -32,10 +48,8 @@ function StudentAttendance() {
   }, []);
 
   useEffect(() => {
-    if (selectedStudent) {
-      loadAttendanceRecords();
-    }
-  }, [selectedStudent, filterClass, filterMonth]);
+    loadAttendanceRecords();
+  }, [selectedDate, selectedStudent, selectedClass]);
 
   const loadData = async () => {
     try {
@@ -53,304 +67,272 @@ function StudentAttendance() {
   };
 
   const loadAttendanceRecords = async () => {
-    if (!selectedStudent) return;
-
     try {
-      const response = await fetchWithAuth('/api/attendance');
-      let allRecords = await response.json();
+      const response = await fetchWithAuth(`/api/attendance/date/${selectedDate}`);
+      let records = await response.json();
 
-      // 선택한 학생의 모든 기록
-      const studentRecords = allRecords.filter(r => r.studentId === selectedStudent.id);
-      setAllAttendanceRecords(studentRecords);
-
-      // 필터링된 기록
-      let filteredRecords = [...studentRecords];
+      // 학생 필터
+      if (selectedStudent) {
+        records = records.filter(r => r.studentId === parseInt(selectedStudent));
+      }
 
       // 수업 필터
-      if (filterClass) {
-        filteredRecords = filteredRecords.filter(r => r.classId === parseInt(filterClass));
+      if (selectedClass) {
+        records = records.filter(r => r.classId === parseInt(selectedClass));
       }
 
-      // 월 필터
-      if (filterMonth) {
-        filteredRecords = filteredRecords.filter(r => r.date.startsWith(filterMonth));
-      }
-
-      // 날짜 역순 정렬 (최신순)
-      filteredRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      setAttendanceRecords(filteredRecords);
+      setAttendanceRecords(records);
     } catch (error) {
       console.error('출석 기록 로드 실패:', error);
+      setAttendanceRecords([]);
     }
   };
-
-  // 학생 필터링 및 정렬
-  const getFilteredAndSortedStudents = () => {
-    let filtered = students;
-
-    // 검색어 필터
-    if (searchTerm) {
-      filtered = filtered.filter(student =>
-        student.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // 반별 필터
-    if (classFilter) {
-      // student.classIds에 해당 클래스가 포함된 학생만 필터
-      filtered = filtered.filter(student =>
-        student.classIds && student.classIds.includes(parseInt(classFilter))
-      );
-    }
-
-    // 이름순 오름차순 정렬
-    filtered.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-
-    return filtered;
-  };
-
-  const filteredStudents = getFilteredAndSortedStudents();
 
   const getClassName = (classId) => {
     const classItem = classes.find(c => c.id === classId);
     return classItem ? classItem.name : '-';
   };
 
-  const getStats = () => {
-    if (!selectedStudent) return { totalDays: 0, currentMonth: 0, lastMonth: 0 };
-
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonth = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`;
-
-    // Use allAttendanceRecords which contains all records for the selected student
-    return {
-      totalDays: allAttendanceRecords.length,
-      currentMonth: allAttendanceRecords.filter(r => r.date.startsWith(currentMonth)).length,
-      lastMonth: allAttendanceRecords.filter(r => r.date.startsWith(lastMonth)).length
-    };
+  const getStudentName = (studentId) => {
+    const student = students.find(s => s.id === studentId);
+    return student ? student.name : '-';
   };
 
-  const stats = getStats();
+  const getStudentInfo = (studentId) => {
+    return students.find(s => s.id === studentId);
+  };
 
-  // 월 옵션 생성 (최근 6개월)
-  const getMonthOptions = () => {
-    const options = [];
-    const now = new Date();
-    for (let i = 0; i < 6; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const label = `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
-      options.push({ value, label });
+  // 필터링된 학생 목록 (선택된 수업에 속한 학생들만)
+  const getFilteredStudents = () => {
+    if (!selectedClass) {
+      return students;
     }
-    return options;
+    return students.filter(student =>
+      student.classIds && student.classIds.includes(parseInt(selectedClass))
+    );
   };
 
+  // 출석한 학생과 결석한 학생 분리
+  const getAttendanceStats = () => {
+    const filteredStudents = getFilteredStudents();
+    const presentStudentIds = attendanceRecords.map(r => r.studentId);
+
+    // 선택된 학생 필터가 있으면 해당 학생만 포함
+    let studentsToCheck = filteredStudents;
+    if (selectedStudent) {
+      studentsToCheck = filteredStudents.filter(s => s.id === parseInt(selectedStudent));
+    }
+
+    const presentStudents = studentsToCheck.filter(s => presentStudentIds.includes(s.id));
+    const absentStudents = studentsToCheck.filter(s => !presentStudentIds.includes(s.id));
+
+    return { presentStudents, absentStudents };
+  };
+
+  const { presentStudents, absentStudents } = getAttendanceStats();
 
   return (
     <div>
       <h2>학생별 출석 조회</h2>
 
+      {/* 필터 영역 */}
       <div className="card" style={{ marginTop: '1rem' }}>
-        <h3>학생 선택</h3>
-        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <input
-            type="text"
-            placeholder="이름으로 검색..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ flex: '1', minWidth: '200px' }}
-          />
-          <select
-            value={classFilter}
-            onChange={(e) => setClassFilter(e.target.value)}
-            style={{ minWidth: '150px' }}
-          >
-            <option value="">전체 반</option>
-            {classes.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-          {(searchTerm || classFilter) && (
-            <button
-              className="btn"
-              onClick={() => {
-                setSearchTerm('');
-                setClassFilter('');
-              }}
-            >
-              초기화
-            </button>
-          )}
-        </div>
+        <h3>조회 조건</h3>
+        <div style={{
+          marginTop: '1rem',
+          display: 'flex',
+          gap: '1rem',
+          flexWrap: 'wrap',
+          flexDirection: isMobile ? 'column' : 'row'
+        }}>
+          {/* 날짜 선택 */}
+          <div style={{ flex: isMobile ? '1' : '0 0 auto' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              날짜
+            </label>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              style={{ width: isMobile ? '100%' : '180px' }}
+            />
+          </div>
 
-        <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.5rem' }}>
-          {filteredStudents.map(student => (
-            <div
-              key={student.id}
-              onClick={() => setSelectedStudent(student)}
-              style={{
-                padding: '1rem',
-                border: '2px solid',
-                borderColor: selectedStudent?.id === student.id ? '#6366f1' : '#e5e7eb',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                backgroundColor: selectedStudent?.id === student.id ? '#e0e7ff' : 'white'
+          {/* 수업 선택 */}
+          <div style={{ flex: isMobile ? '1' : '0 0 auto' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              수업
+            </label>
+            <select
+              value={selectedClass}
+              onChange={(e) => {
+                setSelectedClass(e.target.value);
+                setSelectedStudent(''); // 수업 변경 시 학생 선택 초기화
               }}
-              onMouseEnter={(e) => {
-                if (selectedStudent?.id !== student.id) {
-                  e.currentTarget.style.borderColor = '#6366f1';
-                  e.currentTarget.style.backgroundColor = '#f5f5ff';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (selectedStudent?.id !== student.id) {
-                  e.currentTarget.style.borderColor = '#e5e7eb';
-                  e.currentTarget.style.backgroundColor = 'white';
-                }
-              }}
+              style={{ width: isMobile ? '100%' : '180px' }}
             >
-              <div style={{ fontWeight: 'bold' }}>{student.name}</div>
-              <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                {student.birthdate || '-'} ({calculateAge(student.birthdate)}세)
-              </div>
-            </div>
-          ))}
-          {filteredStudents.length === 0 && (
-            <p style={{ gridColumn: '1 / -1', color: '#6b7280', textAlign: 'center', padding: '2rem' }}>
-              {students.length === 0 ? '등록된 학생이 없습니다.' : '조건에 맞는 학생이 없습니다.'}
-            </p>
-          )}
-        </div>
+              <option value="">전체 수업</option>
+              {classes.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
 
-        {selectedStudent && (
-          <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f0f9ff', borderRadius: '8px', border: '2px solid #6366f1' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h3 style={{ margin: 0 }}>{selectedStudent.name}</h3>
-                <p style={{ margin: '0.25rem 0 0 0', color: '#6b7280' }}>
-                  {selectedStudent.birthdate || '-'} ({calculateAge(selectedStudent.birthdate)}세) | {selectedStudent.phone || '연락처 없음'}
-                </p>
-              </div>
+          {/* 학생 선택 */}
+          <div style={{ flex: isMobile ? '1' : '0 0 auto' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              학생
+            </label>
+            <select
+              value={selectedStudent}
+              onChange={(e) => setSelectedStudent(e.target.value)}
+              style={{ width: isMobile ? '100%' : '180px' }}
+            >
+              <option value="">전체 학생</option>
+              {getFilteredStudents().map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 필터 초기화 버튼 */}
+          {(selectedStudent || selectedClass || selectedDate !== new Date().toISOString().split('T')[0]) && (
+            <div style={{ flex: isMobile ? '1' : '0 0 auto', display: 'flex', alignItems: 'flex-end' }}>
               <button
                 className="btn"
-                onClick={() => setSelectedStudent(null)}
-                style={{ backgroundColor: '#ef4444', color: 'white' }}
+                onClick={() => {
+                  setSelectedDate(new Date().toISOString().split('T')[0]);
+                  setSelectedClass('');
+                  setSelectedStudent('');
+                }}
+                style={{ width: isMobile ? '100%' : 'auto' }}
               >
-                선택 해제
+                초기화
               </button>
             </div>
+          )}
+        </div>
+
+        {/* 선택된 조건 표시 */}
+        <div style={{
+          marginTop: '1rem',
+          padding: '0.75rem',
+          backgroundColor: '#e0e7ff',
+          borderRadius: '4px',
+          border: '2px solid #6366f1'
+        }}>
+          <strong style={{ color: '#4338ca' }}>
+            {selectedDate} ({getDayOfWeek(selectedDate)}요일)
+            {selectedClass && ` - ${getClassName(parseInt(selectedClass))}`}
+            {selectedStudent && ` - ${getStudentName(parseInt(selectedStudent))}`}
+          </strong>
+        </div>
+      </div>
+
+      {/* 출석 통계 */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+        gap: '1rem',
+        marginTop: '1rem'
+      }}>
+        <div className="card">
+          <h3>출석</h3>
+          <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981', margin: '0.5rem 0 0 0' }}>
+            {presentStudents.length}명
+          </p>
+        </div>
+        <div className="card">
+          <h3>결석</h3>
+          <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ef4444', margin: '0.5rem 0 0 0' }}>
+            {absentStudents.length}명
+          </p>
+        </div>
+        <div className="card">
+          <h3>출석률</h3>
+          <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#6366f1', margin: '0.5rem 0 0 0' }}>
+            {presentStudents.length + absentStudents.length > 0
+              ? Math.round((presentStudents.length / (presentStudents.length + absentStudents.length)) * 100)
+              : 0}%
+          </p>
+        </div>
+      </div>
+
+      {/* 출석 학생 목록 */}
+      <div className="card" style={{ marginTop: '1rem' }}>
+        <h3 style={{ color: '#10b981' }}>출석 학생 ({presentStudents.length}명)</h3>
+        {presentStudents.length > 0 ? (
+          <div style={{
+            marginTop: '1rem',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: '0.5rem'
+          }}>
+            {presentStudents.map(student => {
+              const record = attendanceRecords.find(r => r.studentId === student.id);
+              return (
+                <div
+                  key={student.id}
+                  style={{
+                    padding: '0.75rem',
+                    backgroundColor: '#d1fae5',
+                    borderRadius: '8px',
+                    border: '1px solid #10b981'
+                  }}
+                >
+                  <div style={{ fontWeight: 'bold' }}>{student.name}</div>
+                  <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                    {student.birthdate} ({calculateAge(student.birthdate)}세)
+                  </div>
+                  {record && (
+                    <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '0.25rem' }}>
+                      {getClassName(record.classId)}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
+        ) : (
+          <p style={{ textAlign: 'center', color: '#6b7280', padding: '1rem' }}>
+            출석한 학생이 없습니다.
+          </p>
         )}
       </div>
 
-      {selectedStudent && (
-        <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
-            <div className="card">
-              <h3>총 출석일</h3>
-              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#6366f1', margin: '0.5rem 0 0 0' }}>
-                {stats.totalDays}일
-              </p>
-            </div>
-            <div className="card">
-              <h3>이번 달 출석</h3>
-              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981', margin: '0.5rem 0 0 0' }}>
-                {stats.currentMonth}일
-              </p>
-            </div>
-            <div className="card">
-              <h3>지난 달 출석</h3>
-              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b', margin: '0.5rem 0 0 0' }}>
-                {stats.lastMonth}일
-              </p>
-            </div>
-          </div>
-
-          <div className="card" style={{ marginTop: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ margin: 0 }}>출석 기록</h3>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <select
-                  value={filterClass}
-                  onChange={(e) => setFilterClass(e.target.value)}
-                  style={{ minWidth: '150px' }}
-                >
-                  <option value="">전체 수업</option>
-                  {classes.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-                <select
-                  value={filterMonth}
-                  onChange={(e) => setFilterMonth(e.target.value)}
-                  style={{ minWidth: '150px' }}
-                >
-                  <option value="">전체 기간</option>
-                  {getMonthOptions().map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-                {(filterClass || filterMonth) && (
-                  <button
-                    className="btn"
-                    onClick={() => {
-                      setFilterClass('');
-                      setFilterMonth('');
-                    }}
-                  >
-                    필터 초기화
-                  </button>
-                )}
+      {/* 결석 학생 목록 */}
+      <div className="card" style={{ marginTop: '1rem' }}>
+        <h3 style={{ color: '#ef4444' }}>결석 학생 ({absentStudents.length}명)</h3>
+        {absentStudents.length > 0 ? (
+          <div style={{
+            marginTop: '1rem',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: '0.5rem'
+          }}>
+            {absentStudents.map(student => (
+              <div
+                key={student.id}
+                style={{
+                  padding: '0.75rem',
+                  backgroundColor: '#fee2e2',
+                  borderRadius: '8px',
+                  border: '1px solid #ef4444'
+                }}
+              >
+                <div style={{ fontWeight: 'bold' }}>{student.name}</div>
+                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                  {student.birthdate} ({calculateAge(student.birthdate)}세)
+                </div>
               </div>
-            </div>
-
-            {attendanceRecords.length > 0 ? (
-              <table>
-                <thead>
-                  <tr>
-                    <th>날짜</th>
-                    <th>요일</th>
-                    <th>수업</th>
-                    <th>체크 시간</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {attendanceRecords.map(record => {
-                    const date = new Date(record.date);
-                    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-                    const checkedTime = new Date(record.checkedAt);
-
-                    return (
-                      <tr key={record.id}>
-                        <td>{record.date}</td>
-                        <td>{weekdays[date.getDay()]}요일</td>
-                        <td>{getClassName(record.classId)}</td>
-                        <td>{checkedTime.toLocaleTimeString('ko-KR')}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            ) : (
-              <p style={{ textAlign: 'center', color: '#6b7280', padding: '2rem' }}>
-                출석 기록이 없습니다.
-              </p>
-            )}
+            ))}
           </div>
-        </>
-      )}
-
-      {!selectedStudent && students.length > 0 && (
-        <div className="card" style={{ marginTop: '1rem' }}>
-          <p style={{ textAlign: 'center', color: '#6b7280', padding: '2rem' }}>
-            위의 학생 목록에서 학생을 선택하여 출석 기록을 확인하세요.
+        ) : (
+          <p style={{ textAlign: 'center', color: '#6b7280', padding: '1rem' }}>
+            결석한 학생이 없습니다.
           </p>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
