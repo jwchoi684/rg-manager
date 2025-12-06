@@ -9,6 +9,7 @@ function ClassList() {
   const [editId, setEditId] = useState(null);
   const [selectedClassForStudents, setSelectedClassForStudents] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [draggedIndex, setDraggedIndex] = useState(null);
 
   // 화면 크기 감지
   useEffect(() => {
@@ -180,6 +181,42 @@ function ClassList() {
     }
   };
 
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+
+    const newClasses = [...classes];
+    const draggedItem = newClasses[draggedIndex];
+    newClasses.splice(draggedIndex, 1);
+    newClasses.splice(index, 0, draggedItem);
+
+    setDraggedIndex(index);
+    setClasses(newClasses);
+  };
+
+  const handleDragEnd = async () => {
+    if (draggedIndex !== null) {
+      try {
+        const classIds = classes.map(c => c.id);
+        await fetchWithAuth('/api/classes/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ classIds })
+        });
+      } catch (error) {
+        console.error('순서 업데이트 실패:', error);
+        alert('순서 업데이트에 실패했습니다.');
+        await loadClasses(); // 실패 시 원래 순서로 복구
+      }
+    }
+    setDraggedIndex(null);
+  };
+
   return (
     <div>
       <h2>수업 관리</h2>
@@ -246,9 +283,23 @@ function ClassList() {
               </tr>
             </thead>
             <tbody>
-              {classes.map(classItem => (
-                <tr key={classItem.id}>
-                  <td>{classItem.name}</td>
+              {classes.map((classItem, index) => (
+                <tr
+                  key={classItem.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragEnd={handleDragEnd}
+                  style={{
+                    cursor: 'move',
+                    opacity: draggedIndex === index ? 0.5 : 1,
+                    backgroundColor: draggedIndex === index ? '#f0f9ff' : 'transparent'
+                  }}
+                >
+                  <td>
+                    <span style={{ marginRight: '0.5rem', color: '#6b7280', cursor: 'grab' }}>⋮⋮</span>
+                    {classItem.name}
+                  </td>
                   <td>{classItem.schedule}</td>
                   <td>{classItem.duration}</td>
                   <td>{classItem.instructor || '-'}</td>
@@ -277,15 +328,25 @@ function ClassList() {
         {/* 모바일 뷰 - 카드 */}
         {isMobile && (
           <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {classes.map(classItem => (
-              <div key={classItem.id} style={{
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                padding: '1rem',
-                backgroundColor: 'white'
-              }}>
+            {classes.map((classItem, index) => (
+              <div
+                key={classItem.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragEnd={handleDragEnd}
+                style={{
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  padding: '1rem',
+                  backgroundColor: draggedIndex === index ? '#f0f9ff' : 'white',
+                  opacity: draggedIndex === index ? 0.5 : 1,
+                  cursor: 'move'
+                }}
+              >
                 <div style={{ marginBottom: '0.75rem' }}>
-                  <div style={{ fontWeight: 'bold', fontSize: '1.125rem', marginBottom: '0.5rem' }}>
+                  <div style={{ fontWeight: 'bold', fontSize: '1.125rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ color: '#6b7280', cursor: 'grab' }}>⋮⋮</span>
                     {classItem.name}
                   </div>
                   <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>

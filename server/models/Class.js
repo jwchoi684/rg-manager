@@ -2,7 +2,7 @@ import pool from '../database.js';
 
 class Class {
   static async getAll() {
-    const result = await pool.query('SELECT * FROM classes ORDER BY id');
+    const result = await pool.query('SELECT * FROM classes ORDER BY "displayOrder", id');
     return result.rows;
   }
 
@@ -41,6 +41,27 @@ class Class {
 
   static async delete(id) {
     await pool.query('DELETE FROM classes WHERE id = $1', [id]);
+  }
+
+  static async updateOrder(classIds) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      for (let i = 0; i < classIds.length; i++) {
+        await client.query(
+          'UPDATE classes SET "displayOrder" = $1 WHERE id = $2',
+          [i, classIds[i]]
+        );
+      }
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 }
 

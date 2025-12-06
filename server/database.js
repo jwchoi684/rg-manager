@@ -38,8 +38,15 @@ const initDatabase = async () => {
         schedule TEXT NOT NULL,
         duration TEXT NOT NULL,
         instructor TEXT,
+        "displayOrder" INTEGER DEFAULT 0,
         "createdAt" TEXT NOT NULL
       )
+    `);
+
+    // displayOrder 컬럼이 없는 경우 추가 (기존 테이블 마이그레이션)
+    await client.query(`
+      ALTER TABLE classes
+      ADD COLUMN IF NOT EXISTS "displayOrder" INTEGER DEFAULT 0
     `);
 
     // Attendance 테이블

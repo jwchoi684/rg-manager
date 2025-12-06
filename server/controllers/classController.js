@@ -37,3 +37,13 @@ export const deleteClass = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const updateClassOrder = async (req, res) => {
+  try {
+    const { classIds } = req.body;
+    await Class.updateOrder(classIds);
+    res.json({ message: '수업 순서가 업데이트되었습니다.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
