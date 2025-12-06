@@ -123,32 +123,8 @@ function AttendanceCheck() {
 
       await Promise.all(attendancePromises);
 
-      // 선택된 수업 정보 가져오기
-      const selectedClassData = classes.find(
-        (c) => c.id === parseInt(selectedClass)
-      );
-
-      // 이메일 발송 API 호출
-      try {
-        await fetchWithAuth("/api/attendance/submit-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            date: selectedDate,
-            classId: parseInt(selectedClass),
-            className: selectedClassData?.name || "",
-            schedule: selectedClassData?.schedule || "",
-            students: filteredStudents,
-            presentStudentIds: Array.from(checkedStudents),
-          }),
-        });
-      } catch (emailError) {
-        console.error("이메일 발송 실패:", emailError);
-        // 이메일 발송 실패해도 출석 체크는 완료된 상태이므로 경고만 표시
-      }
-
       setHasChanges(false);
-      alert(`출석 체크가 완료되었습니다! (${checkedStudents.size}명)\n결과가 이메일로 발송됩니다.`);
+      alert(`출석 체크가 완료되었습니다! (${checkedStudents.size}명)`);
     } catch (error) {
       console.error("출석 체크 제출 실패:", error);
       alert("출석 체크 제출에 실패했습니다.");

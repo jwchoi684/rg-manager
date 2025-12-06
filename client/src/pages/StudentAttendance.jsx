@@ -48,8 +48,10 @@ function StudentAttendance() {
   }, []);
 
   useEffect(() => {
-    loadAttendanceRecords();
-  }, [selectedDate, selectedStudent, selectedClass]);
+    if (students.length > 0) {
+      loadAttendanceRecords();
+    }
+  }, [selectedDate, selectedStudent, selectedClass, students]);
 
   const loadData = async () => {
     try {
@@ -88,6 +90,25 @@ function StudentAttendance() {
     }
   };
 
+  const handleDeleteAttendance = async (recordId) => {
+    if (!confirm('이 출석 기록을 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      const response = await fetchWithAuth(`/api/attendance/${recordId}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        await loadAttendanceRecords();
+        alert('출석 기록이 삭제되었습니다.');
+      }
+    } catch (error) {
+      console.error('출석 삭제 실패:', error);
+      alert('출석 삭제에 실패했습니다.');
+    }
+  };
+
   const getClassName = (classId) => {
     const classItem = classes.find(c => c.id === classId);
     return classItem ? classItem.name : '-';
@@ -111,25 +132,6 @@ function StudentAttendance() {
       student.classIds && student.classIds.includes(parseInt(selectedClass))
     );
   };
-
-  // 출석한 학생과 결석한 학생 분리
-  const getAttendanceStats = () => {
-    const filteredStudents = getFilteredStudents();
-    const presentStudentIds = attendanceRecords.map(r => r.studentId);
-
-    // 선택된 학생 필터가 있으면 해당 학생만 포함
-    let studentsToCheck = filteredStudents;
-    if (selectedStudent) {
-      studentsToCheck = filteredStudents.filter(s => s.id === parseInt(selectedStudent));
-    }
-
-    const presentStudents = studentsToCheck.filter(s => presentStudentIds.includes(s.id));
-    const absentStudents = studentsToCheck.filter(s => !presentStudentIds.includes(s.id));
-
-    return { presentStudents, absentStudents };
-  };
-
-  const { presentStudents, absentStudents } = getAttendanceStats();
 
   return (
     <div>
@@ -230,106 +232,103 @@ function StudentAttendance() {
       </div>
 
       {/* 출석 통계 */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-        gap: '1rem',
-        marginTop: '1rem'
-      }}>
-        <div className="card">
-          <h3>출석</h3>
-          <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981', margin: '0.5rem 0 0 0' }}>
-            {presentStudents.length}명
-          </p>
-        </div>
-        <div className="card">
-          <h3>결석</h3>
-          <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ef4444', margin: '0.5rem 0 0 0' }}>
-            {absentStudents.length}명
-          </p>
-        </div>
-        <div className="card">
-          <h3>출석률</h3>
-          <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#6366f1', margin: '0.5rem 0 0 0' }}>
-            {presentStudents.length + absentStudents.length > 0
-              ? Math.round((presentStudents.length / (presentStudents.length + absentStudents.length)) * 100)
-              : 0}%
-          </p>
-        </div>
+      <div className="card" style={{ marginTop: '1rem' }}>
+        <h3>출석 현황</h3>
+        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#10b981', margin: '0.5rem 0 0 0' }}>
+          총 {attendanceRecords.length}명 출석
+        </p>
       </div>
 
       {/* 출석 학생 목록 */}
       <div className="card" style={{ marginTop: '1rem' }}>
-        <h3 style={{ color: '#10b981' }}>출석 학생 ({presentStudents.length}명)</h3>
-        {presentStudents.length > 0 ? (
-          <div style={{
-            marginTop: '1rem',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-            gap: '0.5rem'
-          }}>
-            {presentStudents.map(student => {
-              const record = attendanceRecords.find(r => r.studentId === student.id);
-              return (
-                <div
-                  key={student.id}
-                  style={{
-                    padding: '0.75rem',
-                    backgroundColor: '#d1fae5',
-                    borderRadius: '8px',
-                    border: '1px solid #10b981'
-                  }}
-                >
-                  <div style={{ fontWeight: 'bold' }}>{student.name}</div>
-                  <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                    {student.birthdate} ({calculateAge(student.birthdate)}세)
-                  </div>
-                  {record && (
-                    <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '0.25rem' }}>
-                      {getClassName(record.classId)}
+        <h3 style={{ color: '#10b981' }}>출석 학생 목록</h3>
+        {attendanceRecords.length > 0 ? (
+          <div style={{ marginTop: '1rem' }}>
+            {/* 데스크탑 - 테이블 */}
+            {!isMobile && (
+              <table>
+                <thead>
+                  <tr>
+                    <th>이름</th>
+                    <th>생년월일</th>
+                    <th>수업</th>
+                    <th>관리</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {attendanceRecords.map(record => {
+                    const student = getStudentInfo(record.studentId);
+                    return (
+                      <tr key={record.id}>
+                        <td>{student?.name || '-'}</td>
+                        <td>
+                          {student?.birthdate || '-'}
+                          {student?.birthdate && (
+                            <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>
+                              ({calculateAge(student.birthdate)}세)
+                            </span>
+                          )}
+                        </td>
+                        <td>{getClassName(record.classId)}</td>
+                        <td>
+                          <button
+                            className="btn btn-danger"
+                            onClick={() => handleDeleteAttendance(record.id)}
+                            style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
+                          >
+                            삭제
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+
+            {/* 모바일 - 카드 */}
+            {isMobile && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {attendanceRecords.map(record => {
+                  const student = getStudentInfo(record.studentId);
+                  return (
+                    <div
+                      key={record.id}
+                      style={{
+                        padding: '0.75rem',
+                        backgroundColor: '#d1fae5',
+                        borderRadius: '8px',
+                        border: '1px solid #10b981',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 'bold' }}>{student?.name || '-'}</div>
+                        <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                          {student?.birthdate} ({calculateAge(student?.birthdate)}세)
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '0.25rem' }}>
+                          {getClassName(record.classId)}
+                        </div>
+                      </div>
+                      <button
+                        className="btn btn-danger"
+                        onClick={() => handleDeleteAttendance(record.id)}
+                        style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
+                      >
+                        삭제
+                      </button>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            )}
           </div>
         ) : (
           <p style={{ textAlign: 'center', color: '#6b7280', padding: '1rem' }}>
             출석한 학생이 없습니다.
-          </p>
-        )}
-      </div>
-
-      {/* 결석 학생 목록 */}
-      <div className="card" style={{ marginTop: '1rem' }}>
-        <h3 style={{ color: '#ef4444' }}>결석 학생 ({absentStudents.length}명)</h3>
-        {absentStudents.length > 0 ? (
-          <div style={{
-            marginTop: '1rem',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-            gap: '0.5rem'
-          }}>
-            {absentStudents.map(student => (
-              <div
-                key={student.id}
-                style={{
-                  padding: '0.75rem',
-                  backgroundColor: '#fee2e2',
-                  borderRadius: '8px',
-                  border: '1px solid #ef4444'
-                }}
-              >
-                <div style={{ fontWeight: 'bold' }}>{student.name}</div>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                  {student.birthdate} ({calculateAge(student.birthdate)}세)
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p style={{ textAlign: 'center', color: '#6b7280', padding: '1rem' }}>
-            결석한 학생이 없습니다.
           </p>
         )}
       </div>
