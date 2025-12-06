@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../utils/api';
+import { DateRangePicker } from 'react-date-range';
+import 'react-date-range/dist/styles.css';
+import 'react-date-range/dist/theme/default.css';
+import { ko } from 'date-fns/locale';
 
 function StudentAttendance() {
   const [students, setStudents] = useState([]);
@@ -13,13 +17,21 @@ function StudentAttendance() {
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     return {
       start: firstDay.toISOString().split('T')[0],
-      end: lastDay.toISOString().split('T')[0]
+      end: lastDay.toISOString().split('T')[0],
+      startDate: firstDay,
+      endDate: lastDay
     };
   };
 
   const thisMonth = getThisMonthRange();
   const [startDate, setStartDate] = useState(thisMonth.start);
   const [endDate, setEndDate] = useState(thisMonth.end);
+  const [dateRange, setDateRange] = useState([{
+    startDate: thisMonth.startDate,
+    endDate: thisMonth.endDate,
+    key: 'selection'
+  }]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -32,6 +44,17 @@ function StudentAttendance() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // 날짜 선택기 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showDatePicker && !event.target.closest('.date-picker-container')) {
+        setShowDatePicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDatePicker]);
 
   // 나이 계산 함수
   const calculateAge = (birthdate) => {
@@ -167,30 +190,61 @@ function StudentAttendance() {
           flexWrap: 'wrap',
           flexDirection: isMobile ? 'column' : 'row'
         }}>
-          {/* 시작일 선택 */}
-          <div style={{ flex: isMobile ? '1' : '0 0 auto' }}>
+          {/* 날짜 범위 선택 */}
+          <div className="date-picker-container" style={{ flex: isMobile ? '1' : '0 0 auto', position: 'relative' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              시작일
+              기간 선택
             </label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              style={{ width: isMobile ? '100%' : '180px' }}
-            />
-          </div>
-
-          {/* 종료일 선택 */}
-          <div style={{ flex: isMobile ? '1' : '0 0 auto' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              종료일
-            </label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              style={{ width: isMobile ? '100%' : '180px' }}
-            />
+            <button
+              className="btn"
+              onClick={() => setShowDatePicker(!showDatePicker)}
+              style={{
+                width: isMobile ? '100%' : 'auto',
+                minWidth: '200px',
+                textAlign: 'left',
+                padding: '0.5rem 1rem'
+              }}
+            >
+              {startDate} ~ {endDate}
+            </button>
+            {showDatePicker && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                zIndex: 1000,
+                backgroundColor: 'white',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                borderRadius: '8px',
+                marginTop: '0.5rem'
+              }}>
+                <DateRangePicker
+                  ranges={dateRange}
+                  onChange={(item) => {
+                    setDateRange([item.selection]);
+                    setStartDate(item.selection.startDate.toISOString().split('T')[0]);
+                    setEndDate(item.selection.endDate.toISOString().split('T')[0]);
+                  }}
+                  months={isMobile ? 1 : 2}
+                  direction={isMobile ? 'vertical' : 'horizontal'}
+                  locale={ko}
+                  rangeColors={['#6366f1']}
+                />
+                <div style={{
+                  padding: '1rem',
+                  borderTop: '1px solid #e5e7eb',
+                  textAlign: 'right'
+                }}>
+                  <button
+                    className="btn"
+                    onClick={() => setShowDatePicker(false)}
+                    style={{ fontSize: '0.875rem' }}
+                  >
+                    닫기
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 수업 선택 */}
@@ -239,6 +293,11 @@ function StudentAttendance() {
                   const thisMonth = getThisMonthRange();
                   setStartDate(thisMonth.start);
                   setEndDate(thisMonth.end);
+                  setDateRange([{
+                    startDate: thisMonth.startDate,
+                    endDate: thisMonth.endDate,
+                    key: 'selection'
+                  }]);
                   setSelectedClass('');
                   setSelectedStudent('');
                 }}
