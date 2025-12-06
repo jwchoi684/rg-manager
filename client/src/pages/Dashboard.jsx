@@ -338,48 +338,54 @@ function Dashboard() {
             </div>
           </div>
           <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
-            {attendanceByClass.map((item, idx) => {
-              const selectedDateAttendance = item.dailyAttendance.find(d => d.date === selectedDate);
-              const attendanceCount = selectedDateAttendance ? selectedDateAttendance.count : 0;
-              const attendanceRate = item.enrolledStudents > 0
-                ? Math.round((attendanceCount / item.enrolledStudents) * 100)
-                : 0;
+            {attendanceByClass
+              .filter((item) => {
+                const selectedDateAttendance = item.dailyAttendance.find(d => d.date === selectedDate);
+                const attendanceCount = selectedDateAttendance ? selectedDateAttendance.count : 0;
+                return attendanceCount > 0; // 출석률이 0이 아닌 수업만 표시
+              })
+              .map((item, idx) => {
+                const selectedDateAttendance = item.dailyAttendance.find(d => d.date === selectedDate);
+                const attendanceCount = selectedDateAttendance ? selectedDateAttendance.count : 0;
+                const attendanceRate = item.enrolledStudents > 0
+                  ? Math.round((attendanceCount / item.enrolledStudents) * 100)
+                  : 0;
 
-              return (
-                <div
-                  key={idx}
-                  className="card"
-                  style={{
-                    border: '2px solid',
-                    borderColor: getAttendanceColor(attendanceCount, item.enrolledStudents)
-                  }}
-                >
-                  <h4 style={{ margin: '0 0 0.5rem 0' }}>{item.class.name}</h4>
-                  <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>
-                    {item.class.schedule}
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#6366f1' }}>
-                        {attendanceCount} / {item.enrolledStudents}명
+                return (
+                  <div
+                    key={idx}
+                    className="card"
+                    style={{
+                      border: '2px solid',
+                      borderColor: getAttendanceColor(attendanceCount, item.enrolledStudents)
+                    }}
+                  >
+                    <h4 style={{ margin: '0 0 0.5rem 0' }}>{item.class.name}</h4>
+                    <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>
+                      {item.class.schedule}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#6366f1' }}>
+                          {attendanceCount} / {item.enrolledStudents}명
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '1.25rem',
+                          fontWeight: 'bold',
+                          color: getAttendanceColor(attendanceCount, item.enrolledStudents),
+                          padding: '0.5rem',
+                          backgroundColor: `${getAttendanceColor(attendanceCount, item.enrolledStudents)}20`,
+                          borderRadius: '4px'
+                        }}
+                      >
+                        {attendanceRate}%
                       </div>
                     </div>
-                    <div
-                      style={{
-                        fontSize: '1.25rem',
-                        fontWeight: 'bold',
-                        color: getAttendanceColor(attendanceCount, item.enrolledStudents),
-                        padding: '0.5rem',
-                        backgroundColor: `${getAttendanceColor(attendanceCount, item.enrolledStudents)}20`,
-                        borderRadius: '4px'
-                      }}
-                    >
-                      {attendanceRate}%
-                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </div>
       )}
