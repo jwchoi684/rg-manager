@@ -1,5 +1,8 @@
 import pkg from 'pg';
 const { Pool } = pkg;
+import bcrypt from 'bcrypt';
+
+const SALT_ROUNDS = 10;
 
 // PostgreSQL 연결 설정
 // Render 환경: DATABASE_URL 환경 변수 사용
@@ -103,28 +106,51 @@ const initDatabase = async () => {
     // 기본 관리자 계정 생성 (username: admin, password: admin123)
     const adminCheck = await client.query('SELECT * FROM users WHERE username = $1', ['admin']);
     if (adminCheck.rows.length === 0) {
+      const hashedAdminPassword = await bcrypt.hash('admin123', SALT_ROUNDS);
       await client.query(
         `INSERT INTO users (username, password, role, "createdAt")
          VALUES ($1, $2, $3, $4)`,
-        ['admin', 'admin123', 'admin', new Date().toISOString()]
+        ['admin', hashedAdminPassword, 'admin', new Date().toISOString()]
       );
       console.log('기본 관리자 계정 생성 완료 (username: admin, password: admin123)');
+    } else {
+      // 기존 admin 계정의 비밀번호가 평문이면 해싱된 비밀번호로 업데이트
+      const admin = adminCheck.rows[0];
+      if (admin.password === 'admin123') {
+        const hashedAdminPassword = await bcrypt.hash('admin123', SALT_ROUNDS);
+        await client.query(
+          'UPDATE users SET password = $1 WHERE username = $2',
+          [hashedAdminPassword, 'admin']
+        );
+        console.log('기존 관리자 계정 비밀번호 암호화 완료');
+      }
     }
 
     // 이재림 사용자 생성
     const jaerimCheck = await client.query('SELECT * FROM users WHERE username = $1', ['이재림']);
     let jaerimUserId;
     if (jaerimCheck.rows.length === 0) {
+      const hashedJaerimPassword = await bcrypt.hash('jaerim123', SALT_ROUNDS);
       const jaerimResult = await client.query(
         `INSERT INTO users (username, password, role, "createdAt")
          VALUES ($1, $2, $3, $4)
          RETURNING id`,
-        ['이재림', 'jaerim123', 'user', new Date().toISOString()]
+        ['이재림', hashedJaerimPassword, 'user', new Date().toISOString()]
       );
       jaerimUserId = jaerimResult.rows[0].id;
       console.log('이재림 사용자 계정 생성 완료 (username: 이재림, password: jaerim123)');
     } else {
       jaerimUserId = jaerimCheck.rows[0].id;
+      // 기존 이재림 계정의 비밀번호가 평문이면 해싱된 비밀번호로 업데이트
+      const jaerim = jaerimCheck.rows[0];
+      if (jaerim.password === 'jaerim123') {
+        const hashedJaerimPassword = await bcrypt.hash('jaerim123', SALT_ROUNDS);
+        await client.query(
+          'UPDATE users SET password = $1 WHERE username = $2',
+          [hashedJaerimPassword, '이재림']
+        );
+        console.log('기존 이재림 계정 비밀번호 암호화 완료');
+      }
     }
 
     // 기존 데이터를 이재림 사용자에게 할당
