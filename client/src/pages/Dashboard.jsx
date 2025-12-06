@@ -9,12 +9,30 @@ function Dashboard() {
   });
   const [classes, setClasses] = useState([]);
   const [attendanceByClass, setAttendanceByClass] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
     // 페이지 로드 시 스크롤을 맨 위로 이동
     window.scrollTo(0, 0);
     loadData();
   }, []);
+
+  // 화면 크기 감지
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // 날짜 변경시 출석률 다시 계산
+  useEffect(() => {
+    if (classes.length > 0) {
+      loadData();
+    }
+  }, [selectedDate]);
 
   const loadData = async () => {
     try {
@@ -28,13 +46,12 @@ function Dashboard() {
       const classesData = await classesRes.json();
       const attendance = await attendanceRes.json();
 
-      const today = new Date().toISOString().split('T')[0];
-      const todayAttendance = attendance.filter(a => a.date === today);
+      const selectedDateAttendance = attendance.filter(a => a.date === selectedDate);
 
       setStats({
         totalStudents: students.length,
         totalClasses: classesData.length,
-        todayAttendance: todayAttendance.length
+        todayAttendance: selectedDateAttendance.length
       });
 
       setClasses(classesData);
@@ -104,7 +121,15 @@ function Dashboard() {
           <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981' }}>{stats.totalClasses}개</p>
         </div>
         <div className="card">
-          <h3>오늘 출석</h3>
+          <h3>선택한 날짜 출석</h3>
+          <div style={{ marginBottom: '0.5rem' }}>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              style={{ width: isMobile ? '100%' : '180px' }}
+            />
+          </div>
           <p style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f59e0b' }}>{stats.todayAttendance}명</p>
         </div>
       </div>
@@ -191,12 +216,11 @@ function Dashboard() {
 
       {classes.length > 0 && (
         <div className="card" style={{ marginTop: '1rem' }}>
-          <h3>오늘의 수업별 출석률</h3>
+          <h3>선택한 날짜의 수업별 출석률</h3>
           <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
             {attendanceByClass.map((item, idx) => {
-              const today = new Date().toISOString().split('T')[0];
-              const todayAttendance = item.dailyAttendance.find(d => d.date === today);
-              const attendanceCount = todayAttendance ? todayAttendance.count : 0;
+              const selectedDateAttendance = item.dailyAttendance.find(d => d.date === selectedDate);
+              const attendanceCount = selectedDateAttendance ? selectedDateAttendance.count : 0;
               const attendanceRate = item.enrolledStudents > 0
                 ? Math.round((attendanceCount / item.enrolledStudents) * 100)
                 : 0;
