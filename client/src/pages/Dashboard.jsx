@@ -16,6 +16,21 @@ function Dashboard() {
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('all');
 
+  // 날짜 범위 선택 (기본값: 최근 7일)
+  const getDefaultDateRange = () => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 6); // 6일 전부터 오늘까지 = 7일
+    return {
+      start: startDate.toISOString().split('T')[0],
+      end: endDate.toISOString().split('T')[0]
+    };
+  };
+
+  const defaultRange = getDefaultDateRange();
+  const [startDate, setStartDate] = useState(defaultRange.start);
+  const [endDate, setEndDate] = useState(defaultRange.end);
+
   useEffect(() => {
     // 페이지 로드 시 스크롤을 맨 위로 이동
     window.scrollTo(0, 0);
@@ -38,6 +53,13 @@ function Dashboard() {
   useEffect(() => {
     loadData();
   }, [selectedUserId]);
+
+  // 날짜 범위 변경시 출석 현황 다시 계산
+  useEffect(() => {
+    if (classes.length > 0) {
+      loadData();
+    }
+  }, [startDate, endDate]);
 
   // 날짜 변경시 출석률 다시 계산
   useEffect(() => {
@@ -89,17 +111,18 @@ function Dashboard() {
 
       setClasses(classesData);
 
-      // 최근 7일간의 날짜 생성
-      const last7Days = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        last7Days.push(date.toISOString().split('T')[0]);
+      // 선택된 날짜 범위의 날짜 생성
+      const dateRange = [];
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        dateRange.push(d.toISOString().split('T')[0]);
       }
 
       // 수업별 출석 현황 계산
       const classAttendance = classesData.map(classItem => {
-        const dailyAttendance = last7Days.map(date => {
+        const dailyAttendance = dateRange.map(date => {
           const count = attendance.filter(a =>
             a.classId === classItem.id && a.date === date
           ).length;
@@ -195,7 +218,37 @@ function Dashboard() {
       </div>
 
       <div className="card" style={{ marginTop: '1rem' }}>
-        <h3>수업별 출석 현황 (최근 7일)</h3>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          marginBottom: '1rem'
+        }}>
+          <h3 style={{ margin: 0 }}>수업별 출석 현황</h3>
+          <div style={{
+            display: 'flex',
+            gap: '0.5rem',
+            alignItems: 'center',
+            flexWrap: 'wrap'
+          }}>
+            <label style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>기간:</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              style={{ width: isMobile ? '140px' : '150px' }}
+            />
+            <span>~</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              style={{ width: isMobile ? '140px' : '150px' }}
+            />
+          </div>
+        </div>
         {classes.length === 0 ? (
           <p style={{ textAlign: 'center', color: '#6b7280', padding: '2rem' }}>
             등록된 수업이 없습니다.
