@@ -48,6 +48,22 @@ const initDatabase = async () => {
       ADD COLUMN IF NOT EXISTS "displayOrder" INTEGER DEFAULT 0
     `);
 
+    // userId 컬럼 추가 (멀티테넌시)
+    await client.query(`
+      ALTER TABLE students
+      ADD COLUMN IF NOT EXISTS "userId" INTEGER
+    `);
+
+    await client.query(`
+      ALTER TABLE classes
+      ADD COLUMN IF NOT EXISTS "userId" INTEGER
+    `);
+
+    await client.query(`
+      ALTER TABLE attendance
+      ADD COLUMN IF NOT EXISTS "userId" INTEGER
+    `);
+
     // Attendance 테이블
     await client.query(`
       CREATE TABLE IF NOT EXISTS attendance (
@@ -94,6 +110,41 @@ const initDatabase = async () => {
       );
       console.log('기본 관리자 계정 생성 완료 (username: admin, password: admin123)');
     }
+
+    // 이재림 사용자 생성
+    const jaerimCheck = await client.query('SELECT * FROM users WHERE username = $1', ['이재림']);
+    let jaerimUserId;
+    if (jaerimCheck.rows.length === 0) {
+      const jaerimResult = await client.query(
+        `INSERT INTO users (username, password, role, "createdAt")
+         VALUES ($1, $2, $3, $4)
+         RETURNING id`,
+        ['이재림', 'jaerim123', 'user', new Date().toISOString()]
+      );
+      jaerimUserId = jaerimResult.rows[0].id;
+      console.log('이재림 사용자 계정 생성 완료 (username: 이재림, password: jaerim123)');
+    } else {
+      jaerimUserId = jaerimCheck.rows[0].id;
+    }
+
+    // 기존 데이터를 이재림 사용자에게 할당
+    await client.query(`
+      UPDATE students
+      SET "userId" = $1
+      WHERE "userId" IS NULL
+    `, [jaerimUserId]);
+
+    await client.query(`
+      UPDATE classes
+      SET "userId" = $1
+      WHERE "userId" IS NULL
+    `, [jaerimUserId]);
+
+    await client.query(`
+      UPDATE attendance
+      SET "userId" = $1
+      WHERE "userId" IS NULL
+    `, [jaerimUserId]);
 
     console.log('데이터베이스 초기화 완료');
   } catch (error) {

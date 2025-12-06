@@ -1,8 +1,18 @@
 import pool from '../database.js';
 
 class Student {
-  static async getAll() {
-    const result = await pool.query('SELECT * FROM students ORDER BY id');
+  static async getAll(userId, role) {
+    let query = 'SELECT * FROM students';
+    let params = [];
+
+    // Admin이 아닌 경우 userId로 필터링
+    if (role !== 'admin') {
+      query += ' WHERE "userId" = $1';
+      params.push(userId);
+    }
+
+    query += ' ORDER BY id';
+    const result = await pool.query(query, params);
 
     // classIds를 JSON 파싱
     return result.rows.map(student => ({
@@ -11,8 +21,17 @@ class Student {
     }));
   }
 
-  static async getById(id) {
-    const result = await pool.query('SELECT * FROM students WHERE id = $1', [id]);
+  static async getById(id, userId, role) {
+    let query = 'SELECT * FROM students WHERE id = $1';
+    let params = [id];
+
+    // Admin이 아닌 경우 userId로 추가 필터링
+    if (role !== 'admin') {
+      query += ' AND "userId" = $2';
+      params.push(userId);
+    }
+
+    const result = await pool.query(query, params);
 
     if (result.rows.length === 0) return null;
 
@@ -23,16 +42,16 @@ class Student {
     };
   }
 
-  static async create(data) {
+  static async create(data, userId) {
     const { name, birthdate, phone, parentPhone, classIds } = data;
     const createdAt = new Date().toISOString();
     const classIdsJson = JSON.stringify(classIds || []);
 
     const result = await pool.query(
-      `INSERT INTO students (name, birthdate, phone, "parentPhone", "classIds", "createdAt")
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO students (name, birthdate, phone, "parentPhone", "classIds", "userId", "createdAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [name, birthdate, phone, parentPhone, classIdsJson, createdAt]
+      [name, birthdate, phone, parentPhone, classIdsJson, userId, createdAt]
     );
 
     const newStudent = result.rows[0];
@@ -42,17 +61,23 @@ class Student {
     };
   }
 
-  static async update(id, data) {
+  static async update(id, data, userId, role) {
     const { name, birthdate, phone, parentPhone, classIds } = data;
     const classIdsJson = JSON.stringify(classIds || []);
 
-    const result = await pool.query(
-      `UPDATE students
+    let query = `UPDATE students
        SET name = $1, birthdate = $2, phone = $3, "parentPhone" = $4, "classIds" = $5
-       WHERE id = $6
-       RETURNING *`,
-      [name, birthdate, phone, parentPhone, classIdsJson, id]
-    );
+       WHERE id = $6`;
+    let params = [name, birthdate, phone, parentPhone, classIdsJson, id];
+
+    // Admin이 아닌 경우 userId로 추가 필터링
+    if (role !== 'admin') {
+      query += ' AND "userId" = $7';
+      params.push(userId);
+    }
+
+    query += ' RETURNING *';
+    const result = await pool.query(query, params);
 
     if (result.rows.length === 0) return null;
 
@@ -63,8 +88,17 @@ class Student {
     };
   }
 
-  static async delete(id) {
-    await pool.query('DELETE FROM students WHERE id = $1', [id]);
+  static async delete(id, userId, role) {
+    let query = 'DELETE FROM students WHERE id = $1';
+    let params = [id];
+
+    // Admin이 아닌 경우 userId로 추가 필터링
+    if (role !== 'admin') {
+      query += ' AND "userId" = $2';
+      params.push(userId);
+    }
+
+    await pool.query(query, params);
   }
 }
 

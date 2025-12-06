@@ -3,7 +3,9 @@ import { sendAttendanceEmail } from '../utils/mailer.js';
 
 export const getAttendance = async (req, res) => {
   try {
-    const attendance = await Attendance.getAll();
+    const userId = req.user.id;
+    const role = req.user.role;
+    const attendance = await Attendance.getAll(userId, role);
     res.json(attendance);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -12,7 +14,8 @@ export const getAttendance = async (req, res) => {
 
 export const checkAttendance = async (req, res) => {
   try {
-    const newRecord = await Attendance.create(req.body);
+    const userId = req.user.id;
+    const newRecord = await Attendance.create(req.body, userId);
     res.status(201).json(newRecord);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -22,7 +25,9 @@ export const checkAttendance = async (req, res) => {
 export const getAttendanceByDate = async (req, res) => {
   try {
     const { date } = req.params;
-    const attendance = await Attendance.getByDate(date);
+    const userId = req.user.id;
+    const role = req.user.role;
+    const attendance = await Attendance.getByDate(date, userId, role);
     res.json(attendance);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -32,7 +37,9 @@ export const getAttendanceByDate = async (req, res) => {
 export const deleteAttendance = async (req, res) => {
   try {
     const { id } = req.params;
-    await Attendance.delete(id);
+    const userId = req.user.id;
+    const role = req.user.role;
+    await Attendance.delete(id, userId, role);
     res.json({ message: '출석 기록이 삭제되었습니다.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -42,7 +49,9 @@ export const deleteAttendance = async (req, res) => {
 export const deleteAttendanceByDateAndClass = async (req, res) => {
   try {
     const { date, classId } = req.body;
-    await Attendance.deleteByDateAndClass(date, classId);
+    const userId = req.user.id;
+    const role = req.user.role;
+    await Attendance.deleteByDateAndClass(date, classId, userId, role);
     res.json({ message: '출석 기록이 삭제되었습니다.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
