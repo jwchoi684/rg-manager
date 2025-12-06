@@ -363,14 +363,21 @@ function StudentList() {
       </div>
 
       <div className="card" style={{ marginTop: "1rem" }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
-          <h3 style={{ margin: 0 }}>학생 목록 ({getSortedStudents().length}명)</h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: '1rem',
+          marginBottom: '1rem'
+        }}>
+          <h3 style={{ margin: 0, width: isMobile ? '100%' : 'auto' }}>학생 목록 ({getSortedStudents().length}명)</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: isMobile ? '100%' : 'auto' }}>
             <label style={{ fontWeight: 'bold', whiteSpace: 'nowrap' }}>반 선택:</label>
             <select
               value={classFilter}
               onChange={(e) => setClassFilter(e.target.value)}
-              style={{ minWidth: '150px' }}
+              style={{ minWidth: '150px', flex: isMobile ? 1 : 'none' }}
             >
               <option value="">전체 학생</option>
               {classes.map(cls => (
