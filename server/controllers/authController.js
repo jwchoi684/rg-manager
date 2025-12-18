@@ -91,3 +91,17 @@ export const deleteUser = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const verifyTokenEndpoint = async (req, res) => {
+  try {
+    // req.user is set by verifyToken middleware
+    const user = await User.getById(req.user.id);
+    if (!user) {
+      return res.status(401).json({ error: '사용자를 찾을 수 없습니다.', tokenExpired: true });
+    }
+    const { password: _, ...userWithoutPassword } = user;
+    res.json({ user: userWithoutPassword });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
