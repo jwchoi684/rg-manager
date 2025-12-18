@@ -18,11 +18,16 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const verifyStoredToken = async () => {
       const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
 
-      if (!storedToken) {
+      if (!storedToken || !storedUser) {
         setLoading(false);
         return;
       }
+
+      // 저장된 사용자 정보로 먼저 로그인 상태 설정 (빠른 UX)
+      setUser(JSON.parse(storedUser));
+      setToken(storedToken);
 
       try {
         const response = await fetch('/api/auth/verify', {
@@ -34,17 +39,17 @@ export const AuthProvider = ({ children }) => {
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
-          setToken(storedToken);
           localStorage.setItem('user', JSON.stringify(data.user));
         } else {
-          // Token is invalid or expired
+          // Token is invalid or expired - logout
+          setUser(null);
+          setToken(null);
           localStorage.removeItem('user');
           localStorage.removeItem('token');
         }
       } catch (error) {
-        console.error('Token verification failed:', error);
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
+        // 네트워크 오류 시 저장된 정보로 로그인 유지
+        console.error('Token verification failed (network error):', error);
       }
 
       setLoading(false);
