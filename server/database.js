@@ -105,8 +105,8 @@ const initDatabase = async () => {
 
     // 기본 관리자 계정 생성 (username: admin, password: admin123)
     const adminCheck = await client.query('SELECT * FROM users WHERE username = $1', ['admin']);
+    const hashedAdminPassword = await bcrypt.hash('admin123', SALT_ROUNDS);
     if (adminCheck.rows.length === 0) {
-      const hashedAdminPassword = await bcrypt.hash('admin123', SALT_ROUNDS);
       await client.query(
         `INSERT INTO users (username, password, role, "createdAt")
          VALUES ($1, $2, $3, $4)`,
@@ -114,16 +114,12 @@ const initDatabase = async () => {
       );
       console.log('기본 관리자 계정 생성 완료 (username: admin, password: admin123)');
     } else {
-      // 기존 admin 계정의 비밀번호가 평문이면 해싱된 비밀번호로 업데이트
-      const admin = adminCheck.rows[0];
-      if (admin.password === 'admin123') {
-        const hashedAdminPassword = await bcrypt.hash('admin123', SALT_ROUNDS);
-        await client.query(
-          'UPDATE users SET password = $1 WHERE username = $2',
-          [hashedAdminPassword, 'admin']
-        );
-        console.log('기존 관리자 계정 비밀번호 암호화 완료');
-      }
+      // admin 계정 비밀번호를 admin123으로 리셋
+      await client.query(
+        'UPDATE users SET password = $1 WHERE username = $2',
+        [hashedAdminPassword, 'admin']
+      );
+      console.log('관리자 계정 비밀번호 리셋 완료 (password: admin123)');
     }
 
     // 이재림 사용자 생성
