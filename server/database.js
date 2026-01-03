@@ -7,13 +7,13 @@ const SALT_ROUNDS = 10;
 // PostgreSQL 연결 설정
 // Render 환경: DATABASE_URL 환경 변수 사용
 // 로컬 환경: 기본 PostgreSQL 연결 또는 환경 변수
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://rg_manager_user:xgTkd8GYojqIOvkVluzIukCXriiAFNWU@dpg-d4ogj8a4i8rc73f3jeqg-a/rg_manager';
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://rg_manager_user:xgTkd8GYojqIOvkVluzIukCXriiAFNWU@dpg-d4ogj8a4i8rc73f3jeqg-a.oregon-postgres.render.com/rg_manager';
 
 console.log(`데이터베이스 연결: ${DATABASE_URL.replace(/:[^:@]+@/, ':****@')}`); // 비밀번호 숨김
 
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  ssl: { rejectUnauthorized: false }
 });
 
 // 데이터베이스 초기화
