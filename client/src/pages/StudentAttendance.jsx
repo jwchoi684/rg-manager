@@ -41,6 +41,10 @@ function StudentAttendance() {
   const [touchEnd, setTouchEnd] = useState(null);
   const [swipeOffset, setSwipeOffset] = useState({});
 
+  // 학생 검색 상태
+  const [studentSearchText, setStudentSearchText] = useState('');
+  const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -80,6 +84,21 @@ function StudentAttendance() {
       loadAttendanceRecords();
     }
   }, [startDate, endDate, selectedStudent, selectedClass, students]);
+
+  // 학생 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showStudentDropdown && !e.target.closest('.student-search-container')) {
+        setShowStudentDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showStudentDropdown]);
 
   const loadUsers = async () => {
     try {
@@ -180,12 +199,31 @@ function StudentAttendance() {
   };
 
   const getFilteredStudents = () => {
-    if (!selectedClass) {
-      return students;
+    let filtered = students;
+    if (selectedClass) {
+      filtered = filtered.filter(student =>
+        student.classIds && student.classIds.includes(parseInt(selectedClass))
+      );
     }
-    return students.filter(student =>
-      student.classIds && student.classIds.includes(parseInt(selectedClass))
-    );
+    if (studentSearchText) {
+      filtered = filtered.filter(s =>
+        s.name.toLowerCase().includes(studentSearchText.toLowerCase())
+      );
+    }
+    return filtered;
+  };
+
+  const handleSelectStudent = (studentId) => {
+    setSelectedStudent(studentId.toString());
+    const student = students.find(s => s.id === studentId);
+    setStudentSearchText(student ? student.name : '');
+    setShowStudentDropdown(false);
+  };
+
+  const handleClearStudent = () => {
+    setSelectedStudent('');
+    setStudentSearchText('');
+    setShowStudentDropdown(false);
   };
 
   const formatDisplayDate = (dateString) => {
@@ -281,6 +319,7 @@ function StudentAttendance() {
                 setEndDate(thisMonth.end);
                 setSelectedClass('');
                 setSelectedStudent('');
+                setStudentSearchText('');
               }}
             >
               초기화
@@ -314,6 +353,7 @@ function StudentAttendance() {
               onChange={(e) => {
                 setSelectedClass(e.target.value);
                 setSelectedStudent('');
+                setStudentSearchText('');
               }}
             >
               <option value="">전체 수업</option>
@@ -323,17 +363,124 @@ function StudentAttendance() {
             </select>
           </div>
 
-          <div className="form-group" style={{ marginBottom: 0 }}>
+          <div className="form-group student-search-container" style={{ marginBottom: 0, position: 'relative' }}>
             <label className="form-label">학생</label>
-            <select
-              value={selectedStudent}
-              onChange={(e) => setSelectedStudent(e.target.value)}
-            >
-              <option value="">전체 학생</option>
-              {getFilteredStudents().map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                placeholder="학생 이름 검색"
+                value={studentSearchText}
+                onChange={(e) => {
+                  setStudentSearchText(e.target.value);
+                  setSelectedStudent('');
+                  setShowStudentDropdown(true);
+                }}
+                onFocus={() => setShowStudentDropdown(true)}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+              />
+              {(selectedStudent || studentSearchText) && (
+                <button
+                  type="button"
+                  onClick={handleClearStudent}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'var(--color-gray-300)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    color: 'white',
+                    lineHeight: 1
+                  }}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            {showStudentDropdown && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  backgroundColor: 'white',
+                  border: '1px solid var(--color-gray-200)',
+                  borderRadius: 'var(--radius-md)',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+                  zIndex: 9999,
+                  WebkitOverflowScrolling: 'touch'
+                }}
+              >
+                <div
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleClearStudent();
+                  }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleClearStudent();
+                  }}
+                  style={{
+                    padding: 'var(--spacing-md)',
+                    cursor: 'pointer',
+                    backgroundColor: !selectedStudent ? 'var(--color-primary-bg)' : 'transparent',
+                    borderBottom: '1px solid var(--color-gray-100)',
+                    fontWeight: 500,
+                    color: 'var(--color-gray-600)'
+                  }}
+                >
+                  전체 학생
+                </div>
+                {getFilteredStudents().map(s => (
+                  <div
+                    key={s.id}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelectStudent(s.id);
+                    }}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                    }}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSelectStudent(s.id);
+                    }}
+                    style={{
+                      padding: 'var(--spacing-md)',
+                      cursor: 'pointer',
+                      backgroundColor: selectedStudent === s.id.toString() ? 'var(--color-primary-bg)' : 'transparent',
+                      borderBottom: '1px solid var(--color-gray-100)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 500, pointerEvents: 'none' }}>{s.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', pointerEvents: 'none' }}>
+                      {s.birthdate || '-'} ({calculateAge(s.birthdate)}세)
+                    </div>
+                  </div>
+                ))}
+                {getFilteredStudents().length === 0 && (
+                  <div style={{ padding: 'var(--spacing-md)', color: 'var(--color-gray-500)', textAlign: 'center' }}>
+                    검색 결과가 없습니다
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
