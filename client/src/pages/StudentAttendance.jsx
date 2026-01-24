@@ -41,12 +41,6 @@ function StudentAttendance() {
   const [touchEnd, setTouchEnd] = useState(null);
   const [swipeOffset, setSwipeOffset] = useState({});
 
-  // 보강 수업 추가 모달 상태
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [addFormStudent, setAddFormStudent] = useState('');
-  const [addFormClass, setAddFormClass] = useState('');
-  const [addFormDate, setAddFormDate] = useState(formatDate(new Date()));
-
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -167,56 +161,6 @@ function StudentAttendance() {
     }
   };
 
-  const handleAddAttendance = async () => {
-    if (!addFormStudent || !addFormClass || !addFormDate) {
-      alert('학생, 수업, 날짜를 모두 선택해주세요.');
-      return;
-    }
-
-    // 중복 체크
-    const duplicate = attendanceRecords.find(
-      r => r.studentId === parseInt(addFormStudent) &&
-           r.classId === parseInt(addFormClass) &&
-           r.date === addFormDate
-    );
-
-    if (duplicate) {
-      alert('이미 해당 날짜에 동일한 출석 기록이 있습니다.');
-      return;
-    }
-
-    try {
-      const response = await fetchWithAuth('/api/attendance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          studentId: parseInt(addFormStudent),
-          classId: parseInt(addFormClass),
-          date: addFormDate
-        })
-      });
-
-      if (response.ok) {
-        await loadAttendanceRecords();
-        setShowAddModal(false);
-        setAddFormStudent('');
-        setAddFormClass('');
-        setAddFormDate(formatDate(new Date()));
-        alert('출석이 추가되었습니다.');
-      }
-    } catch (error) {
-      console.error('출석 추가 실패:', error);
-      alert('출석 추가에 실패했습니다.');
-    }
-  };
-
-  const openAddModal = () => {
-    setAddFormStudent('');
-    setAddFormClass('');
-    setAddFormDate(formatDate(new Date()));
-    setShowAddModal(true);
-  };
-
   const getClassName = (classId) => {
     const classItem = classes.find(c => c.id === classId);
     return classItem ? classItem.name : '-';
@@ -296,118 +240,7 @@ function StudentAttendance() {
       {/* Page Header */}
       <div className="page-header">
         <h2 className="page-title">학생별 출석 조회</h2>
-        <button className="btn btn-primary" onClick={openAddModal}>
-          + 보강 출석 추가
-        </button>
       </div>
-
-      {/* Add Attendance Modal */}
-      {showAddModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: 'var(--spacing-lg)'
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowAddModal(false);
-          }}
-        >
-          <div
-            className="card"
-            style={{
-              width: '100%',
-              maxWidth: '400px',
-              maxHeight: '90vh',
-              overflow: 'auto'
-            }}
-          >
-            <div className="card-header">
-              <h3 className="card-title">보강 출석 추가</h3>
-              <button
-                onClick={() => setShowAddModal(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '1.5rem',
-                  cursor: 'pointer',
-                  color: 'var(--color-gray-500)',
-                  padding: '0',
-                  lineHeight: 1
-                }}
-              >
-                ×
-              </button>
-            </div>
-
-            <div style={{ marginTop: 'var(--spacing-lg)' }}>
-              <div className="form-group">
-                <label className="form-label">날짜 *</label>
-                <input
-                  type="date"
-                  value={addFormDate}
-                  onChange={(e) => setAddFormDate(e.target.value)}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">수업 *</label>
-                <select
-                  value={addFormClass}
-                  onChange={(e) => setAddFormClass(e.target.value)}
-                >
-                  <option value="">수업을 선택하세요</option>
-                  {classes.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">학생 *</label>
-                <select
-                  value={addFormStudent}
-                  onChange={(e) => setAddFormStudent(e.target.value)}
-                >
-                  <option value="">학생을 선택하세요</option>
-                  {students.map(s => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{
-                display: 'flex',
-                gap: 'var(--spacing-sm)',
-                marginTop: 'var(--spacing-xl)'
-              }}>
-                <button
-                  className="btn btn-secondary"
-                  style={{ flex: 1 }}
-                  onClick={() => setShowAddModal(false)}
-                >
-                  취소
-                </button>
-                <button
-                  className="btn btn-primary"
-                  style={{ flex: 1 }}
-                  onClick={handleAddAttendance}
-                >
-                  추가
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Admin User Filter */}
       {user?.role === 'admin' && (
