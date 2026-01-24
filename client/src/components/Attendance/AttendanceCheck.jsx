@@ -295,7 +295,7 @@ function AttendanceCheck() {
               width: '100%',
               maxWidth: '400px',
               maxHeight: '90vh',
-              overflow: 'auto'
+              overflow: 'visible'
             }}
           >
             <div className="card-header">
@@ -316,7 +316,7 @@ function AttendanceCheck() {
               </button>
             </div>
 
-            <div style={{ marginTop: 'var(--spacing-lg)' }} onClick={() => setShowStudentDropdown(false)}>
+            <div style={{ marginTop: 'var(--spacing-lg)', overflow: 'visible' }} onClick={() => setShowStudentDropdown(false)}>
               <div className="form-group">
                 <label className="form-label">날짜 *</label>
                 <input
@@ -365,11 +365,11 @@ function AttendanceCheck() {
                       right: 0,
                       maxHeight: '200px',
                       overflowY: 'auto',
-                      backgroundColor: 'var(--bg-primary)',
+                      backgroundColor: 'white',
                       border: '1px solid var(--color-gray-200)',
                       borderRadius: 'var(--radius-md)',
-                      boxShadow: 'var(--shadow-lg)',
-                      zIndex: 10,
+                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+                      zIndex: 9999,
                       WebkitOverflowScrolling: 'touch'
                     }}
                   >
