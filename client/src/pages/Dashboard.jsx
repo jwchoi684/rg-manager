@@ -23,6 +23,7 @@ function Dashboard() {
   const [monthlyDistinctStudents, setMonthlyDistinctStudents] = useState([]);
   const [classDistinctStudents, setClassDistinctStudents] = useState([]);
   const [weeklyAttendanceData, setWeeklyAttendanceData] = useState([]);
+  const [weeklyDistinctStudents, setWeeklyDistinctStudents] = useState([]);
   const [monthlyAttendanceData, setMonthlyAttendanceData] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [users, setUsers] = useState([]);
@@ -186,6 +187,7 @@ function Dashboard() {
 
       // 주별 출석 수 그래프 데이터 (최근 8주)
       const weeklyChartData = [];
+      const weeklyStudentsData = [];
       for (let i = 7; i >= 0; i--) {
         const weekEnd = new Date();
         weekEnd.setDate(weekEnd.getDate() - (i * 7));
@@ -193,9 +195,12 @@ function Dashboard() {
         weekStart.setDate(weekStart.getDate() - 6);
 
         let weekCount = 0;
+        const weekStudentIds = new Set();
         for (let d = new Date(weekStart); d <= weekEnd; d.setDate(d.getDate() + 1)) {
           const dateStr = d.toISOString().split('T')[0];
-          weekCount += attendance.filter(a => a.date === dateStr).length;
+          const dayAttendance = attendance.filter(a => a.date === dateStr);
+          weekCount += dayAttendance.length;
+          dayAttendance.forEach(a => weekStudentIds.add(a.studentId));
         }
 
         const weekLabel = `${weekStart.getMonth() + 1}/${weekStart.getDate()}`;
@@ -203,8 +208,13 @@ function Dashboard() {
           week: weekLabel,
           출석수: weekCount
         });
+        weeklyStudentsData.push({
+          week: weekLabel,
+          학생수: weekStudentIds.size
+        });
       }
       setWeeklyAttendanceData(weeklyChartData);
+      setWeeklyDistinctStudents(weeklyStudentsData);
 
       // 월별 출석 수 그래프 데이터 (최근 6개월)
       const monthlyChartData = [];
@@ -408,53 +418,111 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Monthly Distinct Students Chart */}
-      <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
-        <h3 className="card-title" style={{ marginBottom: 'var(--spacing-lg)' }}>
-          월별 수업 참여 학생 수
-        </h3>
-        <div style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)', marginBottom: 'var(--spacing-lg)' }}>
-          매월 1회 이상 출석한 고유 학생 수 (최근 6개월)
-        </div>
-        {monthlyDistinctStudents.length > 0 ? (
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={monthlyDistinctStudents} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-gray-200)" />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 12, fill: 'var(--color-gray-600)' }}
-                tickLine={false}
-                axisLine={{ stroke: 'var(--color-gray-200)' }}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fill: 'var(--color-gray-600)' }}
-                tickLine={false}
-                axisLine={{ stroke: 'var(--color-gray-200)' }}
-                allowDecimals={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'var(--bg-secondary)',
-                  border: '1px solid var(--color-gray-200)',
-                  borderRadius: 'var(--radius-md)',
-                  boxShadow: 'var(--shadow-md)'
-                }}
-                labelStyle={{ color: 'var(--color-gray-700)', fontWeight: 600 }}
-                formatter={(value) => [`${value}명`, '참여 학생']}
-              />
-              <Bar
-                dataKey="학생수"
-                fill="var(--color-primary)"
-                radius={[4, 4, 0, 0]}
-                maxBarSize={50}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="empty-state" style={{ padding: 'var(--spacing-xl)' }}>
-            <div className="empty-state-description">데이터를 불러오는 중...</div>
+      {/* Weekly & Monthly Distinct Students Charts */}
+      <div
+        className="grid"
+        style={{
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+          marginBottom: 'var(--spacing-lg)'
+        }}
+      >
+        {/* Weekly Distinct Students Chart */}
+        <div className="card">
+          <h3 className="card-title" style={{ marginBottom: 'var(--spacing-lg)' }}>
+            주별 참여 학생 수
+          </h3>
+          <div style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)', marginBottom: 'var(--spacing-lg)' }}>
+            매주 1회 이상 출석한 고유 학생 수 (최근 8주)
           </div>
-        )}
+          {weeklyDistinctStudents.length > 0 ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={weeklyDistinctStudents} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-gray-200)" />
+                <XAxis
+                  dataKey="week"
+                  tick={{ fontSize: 10, fill: 'var(--color-gray-600)' }}
+                  tickLine={false}
+                  axisLine={{ stroke: 'var(--color-gray-200)' }}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: 'var(--color-gray-600)' }}
+                  tickLine={false}
+                  axisLine={{ stroke: 'var(--color-gray-200)' }}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--bg-secondary)',
+                    border: '1px solid var(--color-gray-200)',
+                    borderRadius: 'var(--radius-md)',
+                    boxShadow: 'var(--shadow-md)'
+                  }}
+                  labelStyle={{ color: 'var(--color-gray-700)', fontWeight: 600 }}
+                  formatter={(value) => [`${value}명`, '참여 학생']}
+                />
+                <Bar
+                  dataKey="학생수"
+                  fill="var(--color-primary)"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={35}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="empty-state" style={{ padding: 'var(--spacing-xl)' }}>
+              <div className="empty-state-description">데이터를 불러오는 중...</div>
+            </div>
+          )}
+        </div>
+
+        {/* Monthly Distinct Students Chart */}
+        <div className="card">
+          <h3 className="card-title" style={{ marginBottom: 'var(--spacing-lg)' }}>
+            월별 참여 학생 수
+          </h3>
+          <div style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)', marginBottom: 'var(--spacing-lg)' }}>
+            매월 1회 이상 출석한 고유 학생 수 (최근 6개월)
+          </div>
+          {monthlyDistinctStudents.length > 0 ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={monthlyDistinctStudents} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-gray-200)" />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 11, fill: 'var(--color-gray-600)' }}
+                  tickLine={false}
+                  axisLine={{ stroke: 'var(--color-gray-200)' }}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: 'var(--color-gray-600)' }}
+                  tickLine={false}
+                  axisLine={{ stroke: 'var(--color-gray-200)' }}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--bg-secondary)',
+                    border: '1px solid var(--color-gray-200)',
+                    borderRadius: 'var(--radius-md)',
+                    boxShadow: 'var(--shadow-md)'
+                  }}
+                  labelStyle={{ color: 'var(--color-gray-700)', fontWeight: 600 }}
+                  formatter={(value) => [`${value}명`, '참여 학생']}
+                />
+                <Bar
+                  dataKey="학생수"
+                  fill="var(--color-success)"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={50}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="empty-state" style={{ padding: 'var(--spacing-xl)' }}>
+              <div className="empty-state-description">데이터를 불러오는 중...</div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Class Distinct Students Chart */}
