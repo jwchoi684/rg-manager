@@ -7,12 +7,11 @@ function ClassStudentManagement() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const classItem = location.state?.classItem; // 전달된 수업 데이터
+  const classItem = location.state?.classItem;
 
   const [students, setStudents] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-  // 화면 크기 감지
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -21,7 +20,6 @@ function ClassStudentManagement() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // 나이 계산 함수
   const calculateAge = (birthdate) => {
     if (!birthdate) return '-';
     const today = new Date();
@@ -35,11 +33,9 @@ function ClassStudentManagement() {
   };
 
   useEffect(() => {
-    // 페이지 로드 시 스크롤을 맨 위로 이동
     window.scrollTo(0, 0);
 
     if (!classItem) {
-      // classItem이 없으면 수업 목록으로 이동
       navigate('/classes');
       return;
     }
@@ -113,112 +109,155 @@ function ClassStudentManagement() {
     return null;
   }
 
+  const studentsInClass = getStudentsInClass();
+  const studentsNotInClass = getStudentsNotInClass();
+
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2>{classItem.name} - 학생 관리</h2>
+    <div className="animate-fadeIn">
+      {/* Page Header */}
+      <div className="page-header">
+        <h2 className="page-title">{classItem.name} - 학생 관리</h2>
         <button
-          className="btn"
+          className="btn btn-secondary"
           onClick={() => navigate('/classes')}
-          style={{ backgroundColor: '#6b7280', color: 'white' }}
         >
           목록으로
         </button>
       </div>
 
-      <div className="card" style={{ marginBottom: '1rem', backgroundColor: '#f9fafb' }}>
-        <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-          <div><strong>수업 시간:</strong> {classItem.schedule}</div>
-          <div><strong>시간:</strong> {classItem.duration}</div>
-          {classItem.instructor && <div><strong>강사:</strong> {classItem.instructor}</div>}
+      {/* Class Info Card */}
+      <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
+        <div className="info-box" style={{ margin: 0 }}>
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 'var(--spacing-lg)',
+            fontSize: '0.9375rem'
+          }}>
+            <div>
+              <span style={{ color: 'var(--color-gray-500)' }}>수업 시간</span>
+              <span style={{ marginLeft: 'var(--spacing-sm)', fontWeight: 600 }}>{classItem.schedule}</span>
+            </div>
+            <div>
+              <span style={{ color: 'var(--color-gray-500)' }}>시간</span>
+              <span style={{ marginLeft: 'var(--spacing-sm)', fontWeight: 600 }}>{classItem.duration}</span>
+            </div>
+            {classItem.instructor && (
+              <div>
+                <span style={{ color: 'var(--color-gray-500)' }}>강사</span>
+                <span style={{ marginLeft: 'var(--spacing-sm)', fontWeight: 600 }}>{classItem.instructor}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem' }}>
-        {/* 등록된 학생 */}
+      {/* Student Lists Grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+        gap: 'var(--spacing-lg)'
+      }}>
+        {/* Enrolled Students */}
         <div className="card">
-          <h3 style={{ marginBottom: '0.5rem', color: '#10b981' }}>
-            등록된 학생 ({getStudentsInClass().length}명)
-          </h3>
-          <div style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '1rem', backgroundColor: 'white' }}>
-            {getStudentsInClass().length === 0 ? (
-              <p style={{ color: '#6b7280', textAlign: 'center', padding: '2rem 0' }}>등록된 학생이 없습니다.</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {getStudentsInClass().map(student => (
-                  <div
-                    key={student.id}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '0.75rem',
-                      backgroundColor: '#d1fae5',
-                      borderRadius: '4px',
-                      border: '1px solid #10b981'
-                    }}
-                  >
-                    <div>
-                      <strong>{student.name}</strong>
-                      <span style={{ marginLeft: '0.5rem', color: '#6b7280', fontSize: '0.875rem' }}>
-                        ({calculateAge(student.birthdate)}세)
-                      </span>
-                    </div>
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => removeStudentFromClass(student.id)}
-                      style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
-                    >
-                      제외
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+          <div className="card-header">
+            <h3 className="card-title">
+              등록된 학생
+              <span className="badge badge-success" style={{ marginLeft: '8px' }}>
+                {studentsInClass.length}명
+              </span>
+            </h3>
           </div>
+
+          {studentsInClass.length > 0 ? (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--spacing-sm)',
+              marginTop: 'var(--spacing-lg)'
+            }}>
+              {studentsInClass.map(student => (
+                <div
+                  key={student.id}
+                  className="list-item"
+                  style={{
+                    borderLeft: '4px solid var(--color-success)',
+                    marginBottom: 0
+                  }}
+                >
+                  <div className="list-item-content">
+                    <div className="list-item-title">{student.name}</div>
+                    <div className="list-item-subtitle">
+                      {student.birthdate} ({calculateAge(student.birthdate)}세)
+                    </div>
+                  </div>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => removeStudentFromClass(student.id)}
+                  >
+                    제외
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state" style={{ padding: 'var(--spacing-2xl) var(--spacing-lg)' }}>
+              <div className="empty-state-icon">👥</div>
+              <div className="empty-state-title">등록된 학생이 없습니다</div>
+              <div className="empty-state-description">오른쪽에서 학생을 등록해주세요.</div>
+            </div>
+          )}
         </div>
 
-        {/* 등록 가능한 학생 */}
+        {/* Available Students */}
         <div className="card">
-          <h3 style={{ marginBottom: '0.5rem', color: '#6366f1' }}>
-            등록 가능한 학생 ({getStudentsNotInClass().length}명)
-          </h3>
-          <div style={{ border: '1px solid #e5e7eb', borderRadius: '4px', padding: '1rem', backgroundColor: 'white' }}>
-            {getStudentsNotInClass().length === 0 ? (
-              <p style={{ color: '#6b7280', textAlign: 'center', padding: '2rem 0' }}>등록 가능한 학생이 없습니다.</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {getStudentsNotInClass().map(student => (
-                  <div
-                    key={student.id}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '0.75rem',
-                      backgroundColor: '#f3f4f6',
-                      borderRadius: '4px',
-                      border: '1px solid #e5e7eb'
-                    }}
-                  >
-                    <div>
-                      <strong>{student.name}</strong>
-                      <span style={{ marginLeft: '0.5rem', color: '#6b7280', fontSize: '0.875rem' }}>
-                        ({calculateAge(student.birthdate)}세)
-                      </span>
-                    </div>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => addStudentToClass(student.id)}
-                      style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
-                    >
-                      등록
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+          <div className="card-header">
+            <h3 className="card-title">
+              등록 가능한 학생
+              <span className="badge badge-primary" style={{ marginLeft: '8px' }}>
+                {studentsNotInClass.length}명
+              </span>
+            </h3>
           </div>
+
+          {studentsNotInClass.length > 0 ? (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--spacing-sm)',
+              marginTop: 'var(--spacing-lg)'
+            }}>
+              {studentsNotInClass.map(student => (
+                <div
+                  key={student.id}
+                  className="list-item"
+                  style={{
+                    borderLeft: '4px solid var(--color-gray-300)',
+                    marginBottom: 0
+                  }}
+                >
+                  <div className="list-item-content">
+                    <div className="list-item-title">{student.name}</div>
+                    <div className="list-item-subtitle">
+                      {student.birthdate} ({calculateAge(student.birthdate)}세)
+                    </div>
+                  </div>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => addStudentToClass(student.id)}
+                  >
+                    등록
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state" style={{ padding: 'var(--spacing-2xl) var(--spacing-lg)' }}>
+              <div className="empty-state-icon">✓</div>
+              <div className="empty-state-title">모든 학생이 등록되어 있습니다</div>
+              <div className="empty-state-description">등록 가능한 학생이 없습니다.</div>
+            </div>
+          )}
         </div>
       </div>
     </div>

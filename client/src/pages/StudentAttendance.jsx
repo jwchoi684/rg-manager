@@ -11,7 +11,6 @@ function StudentAttendance() {
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('all');
 
-  // 날짜를 YYYY-MM-DD 형식으로 변환 (타임존 문제 해결)
   const formatDate = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -19,7 +18,6 @@ function StudentAttendance() {
     return `${year}-${month}-${day}`;
   };
 
-  // 이번 달 시작일과 종료일 계산
   const getThisMonthRange = () => {
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -39,7 +37,6 @@ function StudentAttendance() {
   const [selectedClass, setSelectedClass] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-  // 화면 크기 감지
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -48,7 +45,6 @@ function StudentAttendance() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // 나이 계산 함수
   const calculateAge = (birthdate) => {
     if (!birthdate) return '-';
     const today = new Date();
@@ -61,15 +57,7 @@ function StudentAttendance() {
     return age;
   };
 
-  // 요일 변환 함수
-  const getDayOfWeek = (dateString) => {
-    const days = ['일', '월', '화', '수', '목', '금', '토'];
-    const date = new Date(dateString);
-    return days[date.getDay()];
-  };
-
   useEffect(() => {
-    // 페이지 로드 시 스크롤을 맨 위로 이동
     window.scrollTo(0, 0);
     if (user?.role === 'admin') {
       loadUsers();
@@ -78,7 +66,6 @@ function StudentAttendance() {
   }, []);
 
   useEffect(() => {
-    // 선택된 사용자가 변경되면 데이터 다시 로드
     loadData();
     setSelectedStudent('');
     setSelectedClass('');
@@ -130,22 +117,18 @@ function StudentAttendance() {
       const response = await fetchWithAuth(url);
       let records = await response.json();
 
-      // 기간 필터
       if (startDate && endDate) {
         records = records.filter(r => r.date >= startDate && r.date <= endDate);
       }
 
-      // 학생 필터
       if (selectedStudent) {
         records = records.filter(r => r.studentId === parseInt(selectedStudent));
       }
 
-      // 수업 필터
       if (selectedClass) {
         records = records.filter(r => r.classId === parseInt(selectedClass));
       }
 
-      // 날짜 역순 정렬 (최신순)
       records.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       setAttendanceRecords(records);
@@ -192,7 +175,6 @@ function StudentAttendance() {
     return students.find(s => s.id === studentId);
   };
 
-  // 필터링된 학생 목록 (선택된 수업에 속한 학생들만)
   const getFilteredStudents = () => {
     if (!selectedClass) {
       return students;
@@ -202,56 +184,75 @@ function StudentAttendance() {
     );
   };
 
-  return (
-    <div>
-      <h2>학생별 출석 조회</h2>
+  const formatDisplayDate = (dateString) => {
+    const date = new Date(dateString);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+    const weekday = weekdays[date.getDay()];
+    return `${month}/${day}(${weekday})`;
+  };
 
-      {/* 관리자용 사용자 선택 */}
+  return (
+    <div className="animate-fadeIn">
+      {/* Page Header */}
+      <div className="page-header">
+        <h2 className="page-title">학생별 출석 조회</h2>
+      </div>
+
+      {/* Admin User Filter */}
       {user?.role === 'admin' && (
-        <div className="card" style={{ marginTop: "1rem" }}>
+        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: 'var(--spacing-md)',
             flexWrap: 'wrap'
           }}>
-            <label style={{
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap'
-            }}>
-              사용자 선택:
+            <label className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>
+              사용자 선택
             </label>
             <select
               value={selectedUserId}
               onChange={(e) => setSelectedUserId(e.target.value)}
-              style={{
-                minWidth: '200px',
-                flex: 1
-              }}
+              style={{ flex: 1, minWidth: '200px', maxWidth: isMobile ? '100%' : '300px' }}
             >
               <option value="all">전체 사용자</option>
               {users.map(u => (
-                <option key={u.id} value={u.id}>
-                  {u.username}
-                </option>
+                <option key={u.id} value={u.id}>{u.username}</option>
               ))}
             </select>
           </div>
         </div>
       )}
 
-      {/* 필터 영역 */}
-      <div className="card" style={{ marginTop: '1rem' }}>
-        <h3>조회 조건</h3>
+      {/* Filter Card */}
+      <div className="card">
+        <div className="card-header">
+          <h3 className="card-title">조회 조건</h3>
+          {(selectedStudent || selectedClass || startDate !== getThisMonthRange().start || endDate !== getThisMonthRange().end) && (
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => {
+                const thisMonth = getThisMonthRange();
+                setStartDate(thisMonth.start);
+                setEndDate(thisMonth.end);
+                setSelectedClass('');
+                setSelectedStudent('');
+              }}
+            >
+              초기화
+            </button>
+          )}
+        </div>
+
         <div style={{
-          marginTop: '1rem',
-          display: 'flex',
-          gap: '1rem',
-          flexWrap: 'wrap',
-          flexDirection: isMobile ? 'column' : 'row'
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'auto 1fr 1fr',
+          gap: 'var(--spacing-lg)',
+          marginTop: 'var(--spacing-lg)'
         }}>
-          {/* 날짜 범위 선택 */}
-          <div style={{ flex: isMobile ? '1' : '0 0 auto' }}>
+          <div>
             <DateRangePicker
               startDate={startDate}
               endDate={endDate}
@@ -264,18 +265,14 @@ function StudentAttendance() {
             />
           </div>
 
-          {/* 수업 선택 */}
-          <div style={{ flex: isMobile ? '1' : '0 0 auto' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              수업
-            </label>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">수업</label>
             <select
               value={selectedClass}
               onChange={(e) => {
                 setSelectedClass(e.target.value);
-                setSelectedStudent(''); // 수업 변경 시 학생 선택 초기화
+                setSelectedStudent('');
               }}
-              style={{ width: isMobile ? '100%' : '180px' }}
             >
               <option value="">전체 수업</option>
               {classes.map(c => (
@@ -284,15 +281,11 @@ function StudentAttendance() {
             </select>
           </div>
 
-          {/* 학생 선택 */}
-          <div style={{ flex: isMobile ? '1' : '0 0 auto' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              학생
-            </label>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">학생</label>
             <select
               value={selectedStudent}
               onChange={(e) => setSelectedStudent(e.target.value)}
-              style={{ width: isMobile ? '100%' : '180px' }}
             >
               <option value="">전체 학생</option>
               {getFilteredStudents().map(s => (
@@ -300,143 +293,144 @@ function StudentAttendance() {
               ))}
             </select>
           </div>
-
-          {/* 필터 초기화 버튼 */}
-          {(selectedStudent || selectedClass || startDate !== getThisMonthRange().start || endDate !== getThisMonthRange().end) && (
-            <div style={{ flex: isMobile ? '1' : '0 0 auto', display: 'flex', alignItems: 'flex-end' }}>
-              <button
-                className="btn"
-                onClick={() => {
-                  const thisMonth = getThisMonthRange();
-                  setStartDate(thisMonth.start);
-                  setEndDate(thisMonth.end);
-                  setSelectedClass('');
-                  setSelectedStudent('');
-                }}
-                style={{ width: isMobile ? '100%' : 'auto' }}
-              >
-                초기화
-              </button>
-            </div>
-          )}
         </div>
 
-        {/* 선택된 조건 표시 */}
-        <div style={{
-          marginTop: '1rem',
-          padding: '0.75rem',
-          backgroundColor: '#e0e7ff',
-          borderRadius: '4px',
-          border: '2px solid #6366f1'
-        }}>
-          <strong style={{ color: '#4338ca' }}>
+        {/* Selected Filter Info */}
+        <div className="info-box" style={{ marginTop: 'var(--spacing-lg)' }}>
+          <div className="info-box-title">
             {startDate} ~ {endDate}
-            {selectedClass && ` - ${getClassName(parseInt(selectedClass))}`}
-            {selectedStudent && ` - ${getStudentName(parseInt(selectedStudent))}`}
-          </strong>
+            {selectedClass && ` | ${getClassName(parseInt(selectedClass))}`}
+            {selectedStudent && ` | ${getStudentName(parseInt(selectedStudent))}`}
+          </div>
         </div>
       </div>
 
-      {/* 출석 통계 */}
-      <div className="card" style={{ marginTop: '1rem' }}>
-        <h3>출석 현황</h3>
-        <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#10b981', margin: '0.5rem 0 0 0' }}>
-          총 {attendanceRecords.length}명 출석
-        </p>
+      {/* Stats Card */}
+      <div className="card" style={{ marginTop: 'var(--spacing-lg)' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--spacing-md)' }}>
+          <h3 className="card-title">출석 현황</h3>
+          <span style={{
+            fontSize: '1.75rem',
+            fontWeight: 700,
+            color: 'var(--color-success)'
+          }}>
+            {attendanceRecords.length}
+          </span>
+          <span style={{ color: 'var(--color-gray-500)' }}>명 출석</span>
+        </div>
       </div>
 
-      {/* 출석 학생 목록 */}
-      <div className="card" style={{ marginTop: '1rem' }}>
-        <h3 style={{ color: '#10b981' }}>출석 학생 목록</h3>
+      {/* Attendance List */}
+      <div className="card" style={{ marginTop: 'var(--spacing-lg)' }}>
+        <div className="card-header">
+          <h3 className="card-title">
+            출석 기록
+            <span className="badge badge-success" style={{ marginLeft: '8px' }}>
+              {attendanceRecords.length}건
+            </span>
+          </h3>
+        </div>
+
         {attendanceRecords.length > 0 ? (
-          <div style={{ marginTop: '1rem' }}>
-            {/* 데스크탑 - 테이블 */}
+          <>
+            {/* Desktop Table */}
             {!isMobile && (
-              <table>
-                <thead>
-                  <tr>
-                    <th>출석 날짜</th>
-                    <th>이름</th>
-                    <th>생년월일</th>
-                    <th>수업</th>
-                    <th>관리</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {attendanceRecords.map(record => {
-                    const student = getStudentInfo(record.studentId);
-                    const classInfo = getClassInfo(record.classId);
-                    return (
-                      <tr key={record.id}>
-                        <td>{record.date}</td>
-                        <td>{student?.name || '-'}</td>
-                        <td>
-                          {student?.birthdate || '-'}
-                          {student?.birthdate && (
-                            <span style={{ color: '#6b7280', marginLeft: '0.5rem' }}>
-                              ({calculateAge(student.birthdate)}세)
+              <div className="table-container" style={{ marginTop: 'var(--spacing-lg)' }}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>출석 날짜</th>
+                      <th>이름</th>
+                      <th>생년월일 / 나이</th>
+                      <th>수업</th>
+                      <th style={{ width: '80px' }}>관리</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attendanceRecords.map(record => {
+                      const student = getStudentInfo(record.studentId);
+                      const classInfo = getClassInfo(record.classId);
+                      return (
+                        <tr key={record.id}>
+                          <td>
+                            <span style={{ fontWeight: 600 }}>{formatDisplayDate(record.date)}</span>
+                          </td>
+                          <td>
+                            <span style={{ fontWeight: 600, color: 'var(--color-gray-900)' }}>
+                              {student?.name || '-'}
                             </span>
-                          )}
-                        </td>
-                        <td>
-                          <div>{classInfo?.name || '-'}</div>
-                          {classInfo?.schedule && (
-                            <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                              {classInfo.schedule}
-                            </div>
-                          )}
-                        </td>
-                        <td>
-                          <button
-                            className="btn btn-danger"
-                            onClick={() => handleDeleteAttendance(record.id)}
-                            style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
-                          >
-                            삭제
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          </td>
+                          <td>
+                            <span>{student?.birthdate || '-'}</span>
+                            {student?.birthdate && (
+                              <span className="badge badge-gray" style={{ marginLeft: '8px' }}>
+                                {calculateAge(student.birthdate)}세
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            <div style={{ fontWeight: 500 }}>{classInfo?.name || '-'}</div>
+                            {classInfo?.schedule && (
+                              <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>
+                                {classInfo.schedule}
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => handleDeleteAttendance(record.id)}
+                            >
+                              삭제
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
 
-            {/* 모바일 - 카드 */}
+            {/* Mobile Cards */}
             {isMobile && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'var(--spacing-md)',
+                marginTop: 'var(--spacing-lg)'
+              }}>
                 {attendanceRecords.map(record => {
                   const student = getStudentInfo(record.studentId);
                   const classInfo = getClassInfo(record.classId);
                   return (
                     <div
                       key={record.id}
+                      className="list-item"
                       style={{
-                        padding: '0.75rem',
-                        backgroundColor: '#d1fae5',
-                        borderRadius: '8px',
-                        border: '1px solid #10b981',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
+                        borderLeft: '4px solid var(--color-success)',
+                        marginBottom: 0
                       }}
                     >
-                      <div>
-                        <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                          {record.date} - {student?.name || '-'}
+                      <div className="list-item-content">
+                        <div className="list-item-title">
+                          {student?.name || '-'}
                         </div>
-                        <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                          {student?.birthdate} ({calculateAge(student?.birthdate)}세)
+                        <div className="list-item-subtitle">
+                          {formatDisplayDate(record.date)} | {student?.birthdate} ({calculateAge(student?.birthdate)}세)
                         </div>
-                        <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '0.25rem' }}>
+                        <div style={{
+                          fontSize: '0.75rem',
+                          color: 'var(--color-success)',
+                          marginTop: '4px'
+                        }}>
                           {classInfo?.name || '-'}
                           {classInfo?.schedule && ` - ${classInfo.schedule}`}
                         </div>
                       </div>
                       <button
-                        className="btn btn-danger"
+                        className="btn btn-danger btn-sm"
                         onClick={() => handleDeleteAttendance(record.id)}
-                        style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem' }}
                       >
                         삭제
                       </button>
@@ -445,11 +439,13 @@ function StudentAttendance() {
                 })}
               </div>
             )}
-          </div>
+          </>
         ) : (
-          <p style={{ textAlign: 'center', color: '#6b7280', padding: '1rem' }}>
-            출석한 학생이 없습니다.
-          </p>
+          <div className="empty-state">
+            <div className="empty-state-icon">📋</div>
+            <div className="empty-state-title">출석 기록이 없습니다</div>
+            <div className="empty-state-description">선택한 조건에 해당하는 출석 기록이 없습니다.</div>
+          </div>
         )}
       </div>
     </div>

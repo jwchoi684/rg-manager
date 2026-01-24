@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../utils/api';
-import { DateRange } from 'react-date-range';
-import 'react-date-range/dist/styles.css';
-import 'react-date-range/dist/theme/default.css';
-import { ko } from 'date-fns/locale';
+import DateRangePicker from '../components/common/DateRangePicker';
 
 function Logs() {
-  // 날짜를 YYYY-MM-DD 형식으로 변환 (타임존 문제 해결)
   const formatDateOnly = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -14,7 +10,6 @@ function Logs() {
     return `${year}-${month}-${day}`;
   };
 
-  // 이번 달 시작일과 종료일 계산
   const getThisMonthRange = () => {
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -32,12 +27,6 @@ function Logs() {
   const [allLogs, setAllLogs] = useState([]);
   const [startDate, setStartDate] = useState(thisMonth.start);
   const [endDate, setEndDate] = useState(thisMonth.end);
-  const [dateRange, setDateRange] = useState({
-    startDate: thisMonth.startDate,
-    endDate: thisMonth.endDate,
-    key: 'selection'
-  });
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
@@ -53,31 +42,6 @@ function Logs() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // 날짜 선택기 외부 클릭 감지 (데스크탑 전용)
-  useEffect(() => {
-    if (isMobile) return;
-    const handleClickOutside = (event) => {
-      if (showDatePicker && !event.target.closest('.date-picker-container')) {
-        setShowDatePicker(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showDatePicker, isMobile]);
-
-  // 모바일에서 모달 열릴 때 body 스크롤 방지
-  useEffect(() => {
-    if (isMobile && showDatePicker) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [showDatePicker, isMobile]);
-
-  // 날짜 범위 변경 시 필터링
   useEffect(() => {
     filterLogs();
   }, [startDate, endDate, allLogs]);
@@ -120,6 +84,13 @@ function Logs() {
     return actionMap[action] || action;
   };
 
+  const getActionBadgeClass = (action) => {
+    if (action.includes('DELETE')) return 'badge-danger';
+    if (action.includes('CREATE') || action === 'SIGNUP') return 'badge-success';
+    if (action.includes('UPDATE') || action === 'REORDER_CLASSES') return 'badge-warning';
+    return 'badge-gray';
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const year = date.getFullYear();
@@ -128,155 +99,161 @@ function Logs() {
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const seconds = String(date.getSeconds()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`;
+  };
+
+  const formatDisplayDate = (dateString) => {
+    const date = new Date(dateString);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${month}/${day} ${hours}:${minutes}`;
   };
 
   return (
-    <div>
-      <h2>시스템 로그</h2>
+    <div className="animate-fadeIn">
+      {/* Page Header */}
+      <div className="page-header">
+        <h2 className="page-title">시스템 로그</h2>
+      </div>
 
-      {/* 날짜 범위 선택 */}
-      <div className="card" style={{ marginTop: '1rem' }}>
-        <h3>조회 기간</h3>
-        <div className="date-picker-container" style={{ marginTop: '1rem', position: 'relative' }}>
-          <button
-            className="btn"
-            onClick={() => setShowDatePicker(!showDatePicker)}
-            style={{
-              width: isMobile ? '100%' : 'auto',
-              minWidth: '200px',
-              textAlign: 'left',
-              padding: '0.5rem 1rem'
-            }}
-          >
-            {startDate} ~ {endDate}
-          </button>
-          {showDatePicker && (
-            <>
-              {/* 모바일: 전체 화면 오버레이 */}
-              {isMobile && (
-                <div
-                  style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    zIndex: 999
-                  }}
-                  onClick={() => setShowDatePicker(false)}
-                />
-              )}
-              <div style={{
-                position: isMobile ? 'fixed' : 'absolute',
-                top: isMobile ? '50%' : '100%',
-                left: isMobile ? '50%' : 0,
-                transform: isMobile ? 'translate(-50%, -50%)' : 'none',
-                zIndex: 1000,
-                backgroundColor: 'white',
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                borderRadius: '8px',
-                marginTop: isMobile ? 0 : '0.5rem',
-                maxWidth: isMobile ? '95vw' : 'none',
-                maxHeight: isMobile ? '90vh' : 'none',
-                overflow: isMobile ? 'auto' : 'visible'
-              }}>
-                <DateRange
-                  ranges={[dateRange]}
-                  onChange={(item) => {
-                    setDateRange(item.selection);
-                    setStartDate(formatDateOnly(item.selection.startDate));
-                    setEndDate(formatDateOnly(item.selection.endDate));
-                  }}
-                  months={isMobile ? 1 : 2}
-                  direction={isMobile ? 'vertical' : 'horizontal'}
-                  locale={ko}
-                  rangeColors={['#6366f1']}
-                />
-                <div style={{
-                  padding: '1rem',
-                  borderTop: '1px solid #e5e7eb',
-                  textAlign: 'right'
-                }}>
-                  <button
-                    className="btn"
-                    onClick={() => setShowDatePicker(false)}
-                    style={{ fontSize: '0.875rem' }}
-                  >
-                    닫기
-                  </button>
-                </div>
-              </div>
-            </>
+      {/* Filter Card */}
+      <div className="card">
+        <div className="card-header">
+          <h3 className="card-title">조회 기간</h3>
+          {(startDate !== getThisMonthRange().start || endDate !== getThisMonthRange().end) && (
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => {
+                const thisMonth = getThisMonthRange();
+                setStartDate(thisMonth.start);
+                setEndDate(thisMonth.end);
+              }}
+            >
+              초기화
+            </button>
           )}
+        </div>
+
+        <div style={{ marginTop: 'var(--spacing-lg)' }}>
+          <DateRangePicker
+            startDate={startDate}
+            endDate={endDate}
+            onDateChange={(newStartDate, newEndDate) => {
+              setStartDate(newStartDate);
+              setEndDate(newEndDate);
+            }}
+            isMobile={isMobile}
+            label=""
+          />
         </div>
       </div>
 
-      <div className="card" style={{ marginTop: '1rem' }}>
-        <h3>로그 목록 ({logs.length}개)</h3>
+      {/* Logs Card */}
+      <div className="card" style={{ marginTop: 'var(--spacing-lg)' }}>
+        <div className="card-header">
+          <h3 className="card-title">
+            로그 목록
+            <span className="badge badge-primary" style={{ marginLeft: '8px' }}>
+              {logs.length}개
+            </span>
+          </h3>
+        </div>
+
         {logs.length > 0 ? (
-          <div style={{ marginTop: '1rem' }}>
-            {/* 데스크탑 - 테이블 */}
+          <>
+            {/* Desktop Table */}
             {!isMobile && (
-              <table>
-                <thead>
-                  <tr>
-                    <th>시간</th>
-                    <th>사용자</th>
-                    <th>작업</th>
-                    <th>상세</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {logs.map(log => (
-                    <tr key={log.id}>
-                      <td style={{ whiteSpace: 'nowrap' }}>{formatDate(log.createdAt)}</td>
-                      <td>{log.username}</td>
-                      <td>{getActionText(log.action)}</td>
-                      <td>{log.details || '-'}</td>
+              <div className="table-container" style={{ marginTop: 'var(--spacing-lg)' }}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th style={{ width: '180px' }}>시간</th>
+                      <th style={{ width: '120px' }}>사용자</th>
+                      <th style={{ width: '140px' }}>작업</th>
+                      <th>상세</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {logs.map(log => (
+                      <tr key={log.id}>
+                        <td>
+                          <span style={{ color: 'var(--color-gray-600)', fontSize: '0.875rem' }}>
+                            {formatDate(log.createdAt)}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ fontWeight: 600 }}>{log.username}</span>
+                        </td>
+                        <td>
+                          <span className={`badge ${getActionBadgeClass(log.action)}`}>
+                            {getActionText(log.action)}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ color: 'var(--color-gray-600)' }}>
+                            {log.details || '-'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
 
-            {/* 모바일 - 카드 */}
+            {/* Mobile Cards */}
             {isMobile && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'var(--spacing-sm)',
+                marginTop: 'var(--spacing-lg)'
+              }}>
                 {logs.map(log => (
                   <div
                     key={log.id}
+                    className="list-item"
                     style={{
-                      padding: '0.75rem',
-                      backgroundColor: '#f3f4f6',
-                      borderRadius: '8px',
-                      border: '1px solid #d1d5db'
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      gap: 'var(--spacing-xs)',
+                      marginBottom: 0
                     }}
                   >
-                    <div style={{ fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                      {getActionText(log.action)}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      width: '100%'
+                    }}>
+                      <span className={`badge ${getActionBadgeClass(log.action)}`}>
+                        {getActionText(log.action)}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>
+                        {formatDisplayDate(log.createdAt)}
+                      </span>
                     </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                      사용자: {log.username}
+                    <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                      {log.username}
                     </div>
                     {log.details && (
-                      <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                      <div style={{ fontSize: '0.8125rem', color: 'var(--color-gray-600)' }}>
                         {log.details}
                       </div>
                     )}
-                    <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>
-                      {formatDate(log.createdAt)}
-                    </div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
+          </>
         ) : (
-          <p style={{ textAlign: 'center', color: '#6b7280', padding: '1rem' }}>
-            로그가 없습니다.
-          </p>
+          <div className="empty-state">
+            <div className="empty-state-icon">📋</div>
+            <div className="empty-state-title">로그가 없습니다</div>
+            <div className="empty-state-description">선택한 기간에 해당하는 로그가 없습니다.</div>
+          </div>
         )}
       </div>
     </div>

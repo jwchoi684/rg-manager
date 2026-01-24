@@ -13,7 +13,6 @@ function ClassList() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [draggedIndex, setDraggedIndex] = useState(null);
 
-  // 화면 크기 감지
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -22,21 +21,7 @@ function ClassList() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // 나이 계산 함수
-  const calculateAge = (birthdate) => {
-    if (!birthdate) return '-';
-    const today = new Date();
-    const birth = new Date(birthdate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
   useEffect(() => {
-    // 페이지 로드 시 스크롤을 맨 위로 이동
     window.scrollTo(0, 0);
     if (user?.role === 'admin') {
       loadUsers();
@@ -46,7 +31,6 @@ function ClassList() {
   }, []);
 
   useEffect(() => {
-    // 선택된 사용자가 변경되면 데이터 다시 로드
     loadClasses();
     loadStudents();
   }, [selectedUserId]);
@@ -94,7 +78,6 @@ function ClassList() {
   const handleDelete = async (id) => {
     if (confirm('정말 삭제하시겠습니까?')) {
       try {
-        // 수업 삭제 시 학생들의 classIds에서도 제거
         for (const student of students) {
           if (student.classIds && student.classIds.includes(id)) {
             const updatedClassIds = student.classIds.filter(classId => classId !== id);
@@ -160,174 +143,165 @@ function ClassList() {
       } catch (error) {
         console.error('순서 업데이트 실패:', error);
         alert('순서 업데이트에 실패했습니다.');
-        await loadClasses(); // 실패 시 원래 순서로 복구
+        await loadClasses();
       }
     }
     setDraggedIndex(null);
   };
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2>수업 관리</h2>
-        <button
-          className="btn btn-primary"
-          onClick={() => navigate('/classes/new')}
-        >
-          새 수업 등록
+    <div className="animate-fadeIn">
+      {/* Page Header */}
+      <div className="page-header">
+        <h2 className="page-title">수업 관리</h2>
+        <button className="btn btn-primary" onClick={() => navigate('/classes/new')}>
+          + 새 수업 등록
         </button>
       </div>
 
-      {/* 관리자용 사용자 선택 */}
+      {/* Admin User Filter */}
       {user?.role === 'admin' && (
-        <div className="card" style={{ marginTop: "1rem" }}>
+        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: 'var(--spacing-md)',
             flexWrap: 'wrap'
           }}>
-            <label style={{
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap'
-            }}>
-              사용자 선택:
+            <label className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>
+              사용자 선택
             </label>
             <select
               value={selectedUserId}
               onChange={(e) => setSelectedUserId(e.target.value)}
-              style={{
-                minWidth: '200px',
-                flex: 1
-              }}
+              style={{ flex: 1, minWidth: '200px', maxWidth: isMobile ? '100%' : '300px' }}
             >
               <option value="all">전체 사용자</option>
               {users.map(u => (
-                <option key={u.id} value={u.id}>
-                  {u.username}
-                </option>
+                <option key={u.id} value={u.id}>{u.username}</option>
               ))}
             </select>
           </div>
         </div>
       )}
 
-      <div className="card" style={{ marginTop: '1rem' }}>
-        <h3>수업 목록 ({classes.length}개)</h3>
+      {/* Class List Card */}
+      <div className="card">
+        <div className="card-header">
+          <h3 className="card-title">
+            수업 목록 <span className="badge badge-success" style={{ marginLeft: '8px' }}>{classes.length}개</span>
+          </h3>
+        </div>
 
-        {/* 데스크탑 뷰 - 테이블 */}
+        {/* Desktop View - Table */}
         {!isMobile && (
-          <table style={{ marginTop: '1rem' }}>
-            <thead>
-              <tr>
-                <th>수업명</th>
-                <th>수업 시간</th>
-                <th>시간</th>
-                <th>강사</th>
-                <th>등록 학생</th>
-                <th>관리</th>
-              </tr>
-            </thead>
-            <tbody>
-              {classes.map((classItem, index) => (
-                <tr
-                  key={classItem.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, index)}
-                  onDragOver={(e) => handleDragOver(e, index)}
-                  onDragEnd={handleDragEnd}
-                  style={{
-                    cursor: 'move',
-                    opacity: draggedIndex === index ? 0.5 : 1,
-                    backgroundColor: draggedIndex === index ? '#f0f9ff' : 'transparent'
-                  }}
-                >
-                  <td>
-                    <span style={{ marginRight: '0.5rem', color: '#6b7280', cursor: 'grab' }}>⋮⋮</span>
-                    {classItem.name}
-                  </td>
-                  <td>{classItem.schedule}</td>
-                  <td>{classItem.duration}</td>
-                  <td>{classItem.instructor || '-'}</td>
-                  <td>{getStudentsInClass(classItem.id).length}명</td>
-                  <td>
-                    <button className="btn btn-primary" onClick={() => handleEdit(classItem)} style={{ marginRight: '0.5rem' }}>
-                      수정
-                    </button>
-                    <button
-                      className="btn btn-success"
-                      onClick={() => handleManageStudents(classItem)}
-                      style={{ marginRight: '0.5rem' }}
-                    >
-                      학생 관리
-                    </button>
-                    <button className="btn btn-danger" onClick={() => handleDelete(classItem.id)}>
-                      삭제
-                    </button>
-                  </td>
+          <div className="table-container" style={{ marginTop: 'var(--spacing-lg)' }}>
+            <table>
+              <thead>
+                <tr>
+                  <th style={{ width: '40px' }}></th>
+                  <th>수업명</th>
+                  <th>수업 시간</th>
+                  <th>시간</th>
+                  <th>강사</th>
+                  <th style={{ textAlign: 'center' }}>등록 학생</th>
+                  <th style={{ width: '220px' }}>관리</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {classes.map((classItem, index) => (
+                  <tr
+                    key={classItem.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragEnd={handleDragEnd}
+                    style={{
+                      opacity: draggedIndex === index ? 0.5 : 1,
+                      backgroundColor: draggedIndex === index ? 'var(--color-primary-bg)' : 'transparent'
+                    }}
+                  >
+                    <td>
+                      <span style={{ cursor: 'grab', color: 'var(--color-gray-400)', fontSize: '1rem' }}>⋮⋮</span>
+                    </td>
+                    <td>
+                      <span style={{ fontWeight: 600, color: 'var(--color-gray-900)' }}>{classItem.name}</span>
+                    </td>
+                    <td>{classItem.schedule}</td>
+                    <td>{classItem.duration}</td>
+                    <td>{classItem.instructor || '-'}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className="badge badge-primary">{getStudentsInClass(classItem.id).length}명</span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                        <button className="btn btn-secondary btn-sm" onClick={() => handleEdit(classItem)}>
+                          수정
+                        </button>
+                        <button className="btn btn-primary btn-sm" onClick={() => handleManageStudents(classItem)}>
+                          학생 관리
+                        </button>
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(classItem.id)}>
+                          삭제
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
-        {/* 모바일 뷰 - 카드 */}
+        {/* Mobile View - Cards */}
         {isMobile && (
-          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)', marginTop: 'var(--spacing-lg)' }}>
             {classes.map((classItem, index) => (
               <div
                 key={classItem.id}
+                className="list-item"
                 draggable
                 onDragStart={(e) => handleDragStart(e, index)}
                 onDragOver={(e) => handleDragOver(e, index)}
                 onDragEnd={handleDragEnd}
                 style={{
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  padding: '1rem',
-                  backgroundColor: draggedIndex === index ? '#f0f9ff' : 'white',
+                  flexDirection: 'column',
+                  alignItems: 'stretch',
                   opacity: draggedIndex === index ? 0.5 : 1,
-                  cursor: 'move'
+                  backgroundColor: draggedIndex === index ? 'var(--color-primary-bg)' : 'var(--bg-secondary)'
                 }}
               >
-                <div style={{ marginBottom: '0.75rem' }}>
-                  <div style={{ fontWeight: 'bold', fontSize: '1.125rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: '#6b7280', cursor: 'grab' }}>⋮⋮</span>
-                    {classItem.name}
-                  </div>
-                  <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>
-                    수업 시간: {classItem.schedule}
-                  </div>
-                  <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>
-                    시간: {classItem.duration}
-                  </div>
-                  <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>
-                    강사: {classItem.instructor || '-'}
-                  </div>
-                  <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                    등록 학생: {getStudentsInClass(classItem.id).length}명
+                <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: 'var(--spacing-md)' }}>
+                  <span style={{
+                    cursor: 'grab',
+                    color: 'var(--color-gray-400)',
+                    fontSize: '1.25rem',
+                    marginRight: 'var(--spacing-md)',
+                    marginTop: '2px'
+                  }}>⋮⋮</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <div className="list-item-title">{classItem.name}</div>
+                        <div className="list-item-subtitle">{classItem.schedule}</div>
+                      </div>
+                      <span className="badge badge-primary">{getStudentsInClass(classItem.id).length}명</span>
+                    </div>
+                    <div style={{ marginTop: 'var(--spacing-sm)', fontSize: '0.8125rem', color: 'var(--color-gray-500)' }}>
+                      <span>시간: {classItem.duration}</span>
+                      <span style={{ margin: '0 8px' }}>|</span>
+                      <span>강사: {classItem.instructor || '-'}</span>
+                    </div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => handleEdit(classItem)}
-                    style={{ width: '100%' }}
-                  >
+                <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                  <button className="btn btn-secondary" onClick={() => handleEdit(classItem)} style={{ flex: 1 }}>
                     수정
                   </button>
-                  <button
-                    className="btn btn-success"
-                    onClick={() => handleManageStudents(classItem)}
-                    style={{ width: '100%' }}
-                  >
+                  <button className="btn btn-primary" onClick={() => handleManageStudents(classItem)} style={{ flex: 1 }}>
                     학생 관리
                   </button>
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => handleDelete(classItem.id)}
-                    style={{ width: '100%' }}
-                  >
+                  <button className="btn btn-danger" onClick={() => handleDelete(classItem.id)} style={{ flex: 1 }}>
                     삭제
                   </button>
                 </div>
@@ -336,10 +310,13 @@ function ClassList() {
           </div>
         )}
 
+        {/* Empty State */}
         {classes.length === 0 && (
-          <p style={{ textAlign: 'center', color: '#6b7280', marginTop: '1rem' }}>
-            등록된 수업이 없습니다.
-          </p>
+          <div className="empty-state">
+            <div className="empty-state-icon">📚</div>
+            <div className="empty-state-title">등록된 수업이 없습니다</div>
+            <div className="empty-state-description">새 수업을 등록하여 시작하세요.</div>
+          </div>
         )}
       </div>
     </div>

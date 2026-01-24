@@ -15,7 +15,6 @@ function StudentList() {
   const [classFilter, setClassFilter] = useState('');
   const [searchName, setSearchName] = useState('');
 
-  // 화면 크기 감지
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -24,24 +23,19 @@ function StudentList() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // 나이 계산 함수
   const calculateAge = (birthdate) => {
     if (!birthdate) return "-";
     const today = new Date();
     const birth = new Date(birthdate);
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birth.getDate())
-    ) {
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
       age--;
     }
     return age;
   };
 
   useEffect(() => {
-    // 페이지 로드 시 스크롤을 맨 위로 이동
     window.scrollTo(0, 0);
     if (user?.role === 'admin') {
       loadUsers();
@@ -51,7 +45,6 @@ function StudentList() {
   }, []);
 
   useEffect(() => {
-    // 선택된 사용자가 변경되면 데이터 다시 로드
     loadStudents();
     loadClasses();
   }, [selectedUserId]);
@@ -134,21 +127,18 @@ function StudentList() {
   const getSortedStudents = () => {
     let sortedStudents = [...students];
 
-    // 이름 검색 필터링
     if (searchName) {
       sortedStudents = sortedStudents.filter(student =>
         student.name.toLowerCase().includes(searchName.toLowerCase())
       );
     }
 
-    // 반별 필터링
     if (classFilter) {
       sortedStudents = sortedStudents.filter(student =>
         student.classIds && student.classIds.includes(parseInt(classFilter))
       );
     }
 
-    // 정렬
     if (sortConfig.key) {
       sortedStudents.sort((a, b) => {
         let aValue, bValue;
@@ -181,292 +171,243 @@ function StudentList() {
   };
 
   const getSortIcon = (key) => {
-    if (sortConfig.key !== key) {
-      return '⇅';
-    }
+    if (sortConfig.key !== key) return '↕';
     return sortConfig.direction === 'asc' ? '↑' : '↓';
   };
 
+  const sortedStudents = getSortedStudents();
+
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2>학생 관리</h2>
-        <button
-          className="btn btn-primary"
-          onClick={() => navigate('/students/new')}
-        >
-          새 학생 등록
+    <div className="animate-fadeIn">
+      {/* Page Header */}
+      <div className="page-header">
+        <h2 className="page-title">학생 관리</h2>
+        <button className="btn btn-primary" onClick={() => navigate('/students/new')}>
+          + 새 학생 등록
         </button>
       </div>
 
-      {/* 관리자용 사용자 선택 */}
+      {/* Admin User Filter */}
       {user?.role === 'admin' && (
-        <div className="card" style={{ marginTop: "1rem" }}>
+        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: 'var(--spacing-md)',
             flexWrap: 'wrap'
           }}>
-            <label style={{
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap'
-            }}>
-              사용자 선택:
+            <label className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>
+              사용자 선택
             </label>
             <select
               value={selectedUserId}
               onChange={(e) => setSelectedUserId(e.target.value)}
-              style={{
-                minWidth: '200px',
-                flex: 1
-              }}
+              style={{ flex: 1, minWidth: '200px', maxWidth: isMobile ? '100%' : '300px' }}
             >
               <option value="all">전체 사용자</option>
               {users.map(u => (
-                <option key={u.id} value={u.id}>
-                  {u.username}
-                </option>
+                <option key={u.id} value={u.id}>{u.username}</option>
               ))}
             </select>
           </div>
         </div>
       )}
 
-      <div className="card" style={{ marginTop: "1rem" }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+      {/* Student List Card */}
+      <div className="card">
+        {/* Filter Bar */}
+        <div className="card-header" style={{
           flexDirection: isMobile ? 'column' : 'row',
-          gap: '1rem',
-          marginBottom: '1rem'
+          alignItems: isMobile ? 'stretch' : 'center',
+          gap: 'var(--spacing-md)'
         }}>
-          <h3 style={{ margin: 0, width: isMobile ? '100%' : 'auto' }}>학생 목록 ({getSortedStudents().length}명)</h3>
+          <h3 className="card-title">
+            학생 목록 <span className="badge badge-primary" style={{ marginLeft: '8px' }}>{sortedStudents.length}명</span>
+          </h3>
           <div style={{
             display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            width: isMobile ? '100%' : 'auto',
-            minWidth: 0,
-            maxWidth: '100%',
-            flexWrap: 'wrap'
+            gap: 'var(--spacing-sm)',
+            flexWrap: 'wrap',
+            flex: isMobile ? '1' : '0 0 auto'
           }}>
-            <input
-              type="text"
-              placeholder="이름 검색"
-              value={searchName}
-              onChange={(e) => setSearchName(e.target.value)}
-              style={{
-                minWidth: isMobile ? 0 : '150px',
-                width: isMobile ? '100%' : '150px',
-                maxWidth: '100%',
-                boxSizing: 'border-box'
-              }}
-            />
-            <label style={{
-              fontWeight: 'bold',
-              whiteSpace: 'nowrap',
-              display: isMobile ? 'none' : 'block'
-            }}>
-              반 선택:
-            </label>
+            <div className="search-input" style={{ flex: isMobile ? '1' : '0 0 150px' }}>
+              <input
+                type="text"
+                placeholder="이름 검색"
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+              />
+            </div>
             <select
               value={classFilter}
               onChange={(e) => setClassFilter(e.target.value)}
-              style={{
-                minWidth: isMobile ? 0 : '150px',
-                width: isMobile ? '100%' : '150px',
-                maxWidth: '100%',
-                boxSizing: 'border-box'
-              }}
+              style={{ flex: isMobile ? '1' : '0 0 150px' }}
             >
-              <option value="">전체 학생</option>
+              <option value="">전체 수업</option>
               {classes.map(cls => (
-                <option key={cls.id} value={cls.id}>
-                  {cls.name}
-                </option>
+                <option key={cls.id} value={cls.id}>{cls.name}</option>
               ))}
             </select>
           </div>
         </div>
 
-        {/* 데스크탑 뷰 - 테이블 */}
+        {/* Desktop View - Table */}
         {!isMobile && (
-          <table style={{ marginTop: "1rem" }}>
-            <thead>
-              <tr>
-                <th>
-                  <span
-                    onClick={() => handleSort('name')}
-                    style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                  >
-                    이름 <span style={{ fontSize: '0.875rem' }}>{getSortIcon('name')}</span>
-                  </span>
-                </th>
-                <th>
-                  <span
-                    onClick={() => handleSort('birthdate')}
-                    style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                  >
-                    생년월일 / 나이 <span style={{ fontSize: '0.875rem' }}>{getSortIcon('birthdate')}</span>
-                  </span>
-                </th>
-                <th>
-                  <span
-                    onClick={() => handleSort('classes')}
-                    style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                  >
-                    수강 수업 <span style={{ fontSize: '0.875rem' }}>{getSortIcon('classes')}</span>
-                  </span>
-                </th>
-                <th>관리</th>
-              </tr>
-            </thead>
-            <tbody>
-              {getSortedStudents().map((student) => (
-                <tr key={student.id}>
-                  <td>{student.name}</td>
-                  <td>
-                    {student.birthdate || "-"}
-                    {student.birthdate && (
-                      <span style={{ color: "#6b7280", marginLeft: "0.5rem" }}>
-                        ({calculateAge(student.birthdate)}세)
-                      </span>
-                    )}
-                  </td>
-                  <td>{getClassNames(student.classIds)}</td>
-                  <td>
+          <div className="table-container" style={{ marginTop: 'var(--spacing-lg)' }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>
+                    <span
+                      className={`sortable ${sortConfig.key === 'name' ? 'active' : ''}`}
+                      onClick={() => handleSort('name')}
+                    >
+                      이름 <span className="sort-icon">{getSortIcon('name')}</span>
+                    </span>
+                  </th>
+                  <th>
+                    <span
+                      className={`sortable ${sortConfig.key === 'birthdate' ? 'active' : ''}`}
+                      onClick={() => handleSort('birthdate')}
+                    >
+                      생년월일 / 나이 <span className="sort-icon">{getSortIcon('birthdate')}</span>
+                    </span>
+                  </th>
+                  <th>
+                    <span
+                      className={`sortable ${sortConfig.key === 'classes' ? 'active' : ''}`}
+                      onClick={() => handleSort('classes')}
+                    >
+                      수강 수업 <span className="sort-icon">{getSortIcon('classes')}</span>
+                    </span>
+                  </th>
+                  <th style={{ width: '160px' }}>관리</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedStudents.map((student) => (
+                  <tr key={student.id}>
+                    <td>
+                      <span style={{ fontWeight: 600, color: 'var(--color-gray-900)' }}>{student.name}</span>
+                    </td>
+                    <td>
+                      <span>{student.birthdate || "-"}</span>
+                      {student.birthdate && (
+                        <span className="badge badge-gray" style={{ marginLeft: '8px' }}>
+                          {calculateAge(student.birthdate)}세
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <span style={{ color: 'var(--color-gray-600)' }}>{getClassNames(student.classIds)}</span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                        <button className="btn btn-secondary btn-sm" onClick={() => handleEdit(student)}>
+                          수정
+                        </button>
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(student.id)}>
+                          삭제
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Mobile View - Cards */}
+        {isMobile && (
+          <>
+            {/* Mobile Sort Buttons */}
+            <div style={{
+              display: 'flex',
+              gap: 'var(--spacing-sm)',
+              flexWrap: 'wrap',
+              marginTop: 'var(--spacing-lg)',
+              marginBottom: 'var(--spacing-md)'
+            }}>
+              <button
+                onClick={() => handleSort('name')}
+                className={`tag ${sortConfig.key === 'name' ? 'active' : ''}`}
+              >
+                이름 {getSortIcon('name')}
+              </button>
+              <button
+                onClick={() => handleSort('birthdate')}
+                className={`tag ${sortConfig.key === 'birthdate' ? 'active' : ''}`}
+              >
+                생년월일 {getSortIcon('birthdate')}
+              </button>
+              <button
+                onClick={() => handleSort('classes')}
+                className={`tag ${sortConfig.key === 'classes' ? 'active' : ''}`}
+              >
+                수강 수업 {getSortIcon('classes')}
+              </button>
+            </div>
+
+            {/* Student Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+              {sortedStudents.map((student) => (
+                <div key={student.id} className="list-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
+                    <div
+                      className="list-item-icon"
+                      style={{ backgroundColor: 'var(--color-primary-bg)', color: 'var(--color-primary)' }}
+                    >
+                      👤
+                    </div>
+                    <div className="list-item-content">
+                      <div className="list-item-title">{student.name}</div>
+                      <div className="list-item-subtitle">
+                        {student.birthdate || "-"} ({calculateAge(student.birthdate)}세)
+                      </div>
+                      <div className="list-item-subtitle" style={{ marginTop: '2px' }}>
+                        {getClassNames(student.classIds)}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
                     <button
-                      className="btn btn-primary"
+                      className="btn btn-secondary"
                       onClick={() => handleEdit(student)}
-                      style={{ marginRight: "0.5rem" }}
+                      style={{ flex: 1 }}
                     >
                       수정
                     </button>
                     <button
                       className="btn btn-danger"
                       onClick={() => handleDelete(student.id)}
+                      style={{ flex: 1 }}
                     >
                       삭제
                     </button>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
-        )}
-
-        {/* 모바일 뷰 - 카드 */}
-        {isMobile && (
-          <>
-            {/* 모바일 정렬 버튼 */}
-            <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              <button
-                onClick={() => handleSort('name')}
-                className="btn"
-                style={{
-                  fontSize: "0.875rem",
-                  backgroundColor: sortConfig.key === 'name' ? '#6366f1' : '#e5e7eb',
-                  color: sortConfig.key === 'name' ? 'white' : '#374151'
-                }}
-              >
-                이름 {getSortIcon('name')}
-              </button>
-              <button
-                onClick={() => handleSort('birthdate')}
-                className="btn"
-                style={{
-                  fontSize: "0.875rem",
-                  backgroundColor: sortConfig.key === 'birthdate' ? '#6366f1' : '#e5e7eb',
-                  color: sortConfig.key === 'birthdate' ? 'white' : '#374151'
-                }}
-              >
-                생년월일 {getSortIcon('birthdate')}
-              </button>
-              <button
-                onClick={() => handleSort('classes')}
-                className="btn"
-                style={{
-                  fontSize: "0.875rem",
-                  backgroundColor: sortConfig.key === 'classes' ? '#6366f1' : '#e5e7eb',
-                  color: sortConfig.key === 'classes' ? 'white' : '#374151'
-                }}
-              >
-                수강 수업 {getSortIcon('classes')}
-              </button>
-            </div>
-
-            <div
-              style={{
-                marginTop: "0.5rem",
-                display: "flex",
-                flexDirection: "column",
-                gap: "1rem",
-              }}
-            >
-              {getSortedStudents().map((student) => (
-              <div
-                key={student.id}
-                style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "8px",
-                  padding: "1rem",
-                  backgroundColor: "white",
-                }}
-              >
-                <div style={{ marginBottom: "0.75rem" }}>
-                  <div
-                    style={{
-                      fontWeight: "bold",
-                      fontSize: "1.125rem",
-                      marginBottom: "0.5rem",
-                    }}
-                  >
-                    {student.name}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.875rem",
-                      color: "#6b7280",
-                      marginBottom: "0.25rem",
-                    }}
-                  >
-                    생년월일: {student.birthdate || "-"} (
-                    {calculateAge(student.birthdate)}세)
-                  </div>
-                  <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
-                    수강 수업: {getClassNames(student.classIds)}
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => handleEdit(student)}
-                    style={{ flex: 1 }}
-                  >
-                    수정
-                  </button>
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => handleDelete(student.id)}
-                    style={{ flex: 1 }}
-                  >
-                    삭제
-                  </button>
-                </div>
-              </div>
-            ))}
             </div>
           </>
         )}
 
+        {/* Empty State */}
         {students.length === 0 && (
-          <p
-            style={{ textAlign: "center", color: "#6b7280", marginTop: "1rem" }}
-          >
-            등록된 학생이 없습니다.
-          </p>
+          <div className="empty-state">
+            <div className="empty-state-icon">👥</div>
+            <div className="empty-state-title">등록된 학생이 없습니다</div>
+            <div className="empty-state-description">새 학생을 등록하여 시작하세요.</div>
+          </div>
+        )}
+
+        {/* No Results */}
+        {students.length > 0 && sortedStudents.length === 0 && (
+          <div className="empty-state">
+            <div className="empty-state-icon">🔍</div>
+            <div className="empty-state-title">검색 결과가 없습니다</div>
+            <div className="empty-state-description">다른 검색어나 필터를 사용해보세요.</div>
+          </div>
         )}
       </div>
     </div>

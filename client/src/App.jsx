@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Routes, Route, Link, Navigate } from 'react-router-dom';
+import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import StudentList from './components/Students/StudentList';
 import StudentForm from './pages/Students/StudentForm';
@@ -18,9 +18,20 @@ function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-      로딩 중...
-    </div>;
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        backgroundColor: 'var(--bg-primary)'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="skeleton" style={{ width: 48, height: 48, borderRadius: '50%', margin: '0 auto 16px' }}></div>
+          <div style={{ color: 'var(--color-gray-500)', fontSize: '0.9375rem' }}>로딩 중...</div>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
@@ -33,6 +44,7 @@ function ProtectedRoute({ children }) {
 function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
+  const location = useLocation();
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -47,6 +59,13 @@ function App() {
     closeMobileMenu();
   };
 
+  const isActive = (path) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
+  };
+
   if (!user) {
     return (
       <Routes>
@@ -57,37 +76,58 @@ function App() {
     );
   }
 
+  const navLinks = [
+    { path: '/', label: '대시보드', icon: '📊' },
+    { path: '/students', label: '학생 관리', icon: '👥' },
+    { path: '/classes', label: '수업 관리', icon: '📚' },
+    { path: '/attendance', label: '출석 체크', icon: '✓' },
+    { path: '/student-attendance', label: '학생별 출석', icon: '📋' },
+  ];
+
+  const adminLinks = [
+    { path: '/logs', label: '로그', icon: '📝' },
+    { path: '/admin', label: '관리자', icon: '⚙️' },
+  ];
+
   return (
     <div className="app">
       <header className="app-header">
-        <h1>리듬체조 출석 관리</h1>
-        <button className="mobile-menu-button" onClick={toggleMobileMenu}>
-          {mobileMenuOpen ? '✕' : '☰'}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h1 style={{ marginBottom: 0 }}>리듬체조 출석</h1>
+          <button className="mobile-menu-button" onClick={toggleMobileMenu}>
+            {mobileMenuOpen ? '✕' : '☰'}
+          </button>
+        </div>
         <nav className={mobileMenuOpen ? 'mobile-open' : ''}>
-          <Link to="/" onClick={closeMobileMenu}>대시보드</Link>
-          <Link to="/students" onClick={closeMobileMenu}>학생 관리</Link>
-          <Link to="/classes" onClick={closeMobileMenu}>수업 관리</Link>
-          <Link to="/attendance" onClick={closeMobileMenu}>출석 체크</Link>
-          <Link to="/student-attendance" onClick={closeMobileMenu}>학생별 출석</Link>
-          {user?.role === 'admin' && (
-            <>
-              <Link to="/logs" onClick={closeMobileMenu}>로그</Link>
-              <Link to="/admin" onClick={closeMobileMenu}>관리자</Link>
-            </>
-          )}
+          {navLinks.map(link => (
+            <Link
+              key={link.path}
+              to={link.path}
+              onClick={closeMobileMenu}
+              className={isActive(link.path) ? 'active' : ''}
+            >
+              {link.label}
+            </Link>
+          ))}
+          {user?.role === 'admin' && adminLinks.map(link => (
+            <Link
+              key={link.path}
+              to={link.path}
+              onClick={closeMobileMenu}
+              className={isActive(link.path) ? 'active' : ''}
+            >
+              {link.label}
+            </Link>
+          ))}
           <button
             onClick={handleLogout}
+            className="btn btn-ghost"
             style={{
-              background: 'none',
-              border: 'none',
-              color: 'inherit',
-              cursor: 'pointer',
-              padding: '0.5rem 1rem',
-              fontSize: 'inherit'
+              marginLeft: 'auto',
+              fontSize: '0.875rem',
             }}
           >
-            로그아웃 ({user?.username})
+            로그아웃
           </button>
         </nav>
       </header>
