@@ -26,6 +26,7 @@ function Dashboard() {
   const [monthlyTotal, setMonthlyTotal] = useState(0);
   const [yearlyTotal, setYearlyTotal] = useState(0);
   const [monthlyDistinctStudents, setMonthlyDistinctStudents] = useState([]);
+  const [classDistinctStudents, setClassDistinctStudents] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('all');
@@ -201,6 +202,17 @@ function Dashboard() {
         });
       }
       setMonthlyDistinctStudents(monthlyStudents);
+
+      // 수업별 고유 학생 수 계산
+      const classStudents = classesData.map(classItem => {
+        const classAttendance = attendance.filter(a => a.classId === classItem.id);
+        const distinctStudents = new Set(classAttendance.map(a => a.studentId));
+        return {
+          name: classItem.name,
+          학생수: distinctStudents.size
+        };
+      }).sort((a, b) => b.학생수 - a.학생수);
+      setClassDistinctStudents(classStudents);
     } catch (error) {
       console.error('데이터 로드 실패:', error);
     }
@@ -347,6 +359,58 @@ function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Class Distinct Students Chart */}
+      {classDistinctStudents.length > 0 && (
+        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
+          <h3 className="card-title" style={{ marginBottom: 'var(--spacing-lg)' }}>
+            수업별 참여 학생 수
+          </h3>
+          <div style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)', marginBottom: 'var(--spacing-lg)' }}>
+            각 수업에 1회 이상 출석한 고유 학생 수 (전체 기간)
+          </div>
+          <ResponsiveContainer width="100%" height={Math.max(200, classDistinctStudents.length * 45)}>
+            <BarChart
+              data={classDistinctStudents}
+              layout="vertical"
+              margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-gray-200)" />
+              <XAxis
+                type="number"
+                tick={{ fontSize: 11, fill: 'var(--color-gray-600)' }}
+                tickLine={false}
+                axisLine={{ stroke: 'var(--color-gray-200)' }}
+                allowDecimals={false}
+              />
+              <YAxis
+                type="category"
+                dataKey="name"
+                tick={{ fontSize: 12, fill: 'var(--color-gray-700)' }}
+                tickLine={false}
+                axisLine={{ stroke: 'var(--color-gray-200)' }}
+                width={100}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  border: '1px solid var(--color-gray-200)',
+                  borderRadius: 'var(--radius-md)',
+                  boxShadow: 'var(--shadow-md)'
+                }}
+                labelStyle={{ color: 'var(--color-gray-700)', fontWeight: 600 }}
+                formatter={(value) => [`${value}명`, '참여 학생']}
+              />
+              <Bar
+                dataKey="학생수"
+                fill="var(--color-success)"
+                radius={[0, 4, 4, 0]}
+                maxBarSize={30}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* Attendance by Class */}
       <div className="card">
