@@ -1128,6 +1128,18 @@ tbody tr:last-child td {
     font-size: 0.9375rem;
   }
 
+  /* iOS Safari 자동 확대 방지 - 16px 이상 필요 */
+  input[type="text"],
+  input[type="password"],
+  input[type="number"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="date"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
   table {
     font-size: 0.875rem;
   }
