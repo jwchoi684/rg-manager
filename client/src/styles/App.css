@@ -1251,8 +1251,8 @@ tbody tr:last-child td {
 }
 
 .swipeable-action-btn {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   border: none;
   display: flex;
@@ -1260,7 +1260,6 @@ tbody tr:last-child td {
   justify-content: center;
   cursor: pointer;
   transition: transform 0.2s ease, opacity 0.2s ease;
-  font-size: 1.5rem;
 }
 
 .swipeable-action-btn.delete {
