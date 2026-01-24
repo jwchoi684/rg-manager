@@ -2,6 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import DateRangePicker from '../components/common/DateRangePicker';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend
+} from 'recharts';
 
 function Dashboard() {
   const { user } = useAuth();
@@ -13,6 +23,8 @@ function Dashboard() {
   const [classes, setClasses] = useState([]);
   const [attendanceByClass, setAttendanceByClass] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [weeklyData, setWeeklyData] = useState([]);
+  const [monthlyData, setMonthlyData] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('all');
@@ -134,6 +146,43 @@ function Dashboard() {
       });
 
       setAttendanceByClass(classAttendance);
+
+      // 주간 출석 데이터 계산 (최근 7일)
+      const weeklyAttendance = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        const count = attendance.filter(a => a.date === dateStr).length;
+        const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+        weeklyAttendance.push({
+          date: dateStr,
+          label: `${date.getMonth() + 1}/${date.getDate()}(${weekdays[date.getDay()]})`,
+          출석수: count
+        });
+      }
+      setWeeklyData(weeklyAttendance);
+
+      // 월간 출석 데이터 계산 (최근 4주)
+      const monthlyAttendance = [];
+      for (let week = 3; week >= 0; week--) {
+        const weekEnd = new Date();
+        weekEnd.setDate(weekEnd.getDate() - (week * 7));
+        const weekStart = new Date(weekEnd);
+        weekStart.setDate(weekStart.getDate() - 6);
+
+        let weekCount = 0;
+        for (let d = new Date(weekStart); d <= weekEnd; d.setDate(d.getDate() + 1)) {
+          const dateStr = d.toISOString().split('T')[0];
+          weekCount += attendance.filter(a => a.date === dateStr).length;
+        }
+
+        monthlyAttendance.push({
+          label: `${weekStart.getMonth() + 1}/${weekStart.getDate()} ~ ${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`,
+          출석수: weekCount
+        });
+      }
+      setMonthlyData(monthlyAttendance);
     } catch (error) {
       console.error('데이터 로드 실패:', error);
     }
@@ -210,6 +259,107 @@ function Dashboard() {
         <div className="stat-card">
           <div className="stat-label">오늘 출석</div>
           <div className="stat-value warning">{stats.todayAttendance}명</div>
+        </div>
+      </div>
+
+      {/* Weekly & Monthly Attendance Charts */}
+      <div
+        className="grid"
+        style={{
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+          marginBottom: 'var(--spacing-lg)'
+        }}
+      >
+        {/* Weekly Chart */}
+        <div className="card">
+          <h3 className="card-title" style={{ marginBottom: 'var(--spacing-lg)' }}>
+            주간 출석 현황
+          </h3>
+          {weeklyData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={weeklyData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-gray-200)" />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 11, fill: 'var(--color-gray-600)' }}
+                  tickLine={false}
+                  axisLine={{ stroke: 'var(--color-gray-200)' }}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: 'var(--color-gray-600)' }}
+                  tickLine={false}
+                  axisLine={{ stroke: 'var(--color-gray-200)' }}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--bg-secondary)',
+                    border: '1px solid var(--color-gray-200)',
+                    borderRadius: 'var(--radius-md)',
+                    boxShadow: 'var(--shadow-md)'
+                  }}
+                  labelStyle={{ color: 'var(--color-gray-700)', fontWeight: 600 }}
+                  formatter={(value) => [`${value}명`, '출석수']}
+                />
+                <Bar
+                  dataKey="출석수"
+                  fill="var(--color-primary)"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={40}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="empty-state" style={{ padding: 'var(--spacing-xl)' }}>
+              <div className="empty-state-description">데이터를 불러오는 중...</div>
+            </div>
+          )}
+        </div>
+
+        {/* Monthly Chart */}
+        <div className="card">
+          <h3 className="card-title" style={{ marginBottom: 'var(--spacing-lg)' }}>
+            월간 출석 현황 (최근 4주)
+          </h3>
+          {monthlyData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-gray-200)" />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 10, fill: 'var(--color-gray-600)' }}
+                  tickLine={false}
+                  axisLine={{ stroke: 'var(--color-gray-200)' }}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: 'var(--color-gray-600)' }}
+                  tickLine={false}
+                  axisLine={{ stroke: 'var(--color-gray-200)' }}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--bg-secondary)',
+                    border: '1px solid var(--color-gray-200)',
+                    borderRadius: 'var(--radius-md)',
+                    boxShadow: 'var(--shadow-md)'
+                  }}
+                  labelStyle={{ color: 'var(--color-gray-700)', fontWeight: 600 }}
+                  formatter={(value) => [`${value}명`, '출석수']}
+                />
+                <Bar
+                  dataKey="출석수"
+                  fill="var(--color-success)"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={60}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="empty-state" style={{ padding: 'var(--spacing-xl)' }}>
+              <div className="empty-state-description">데이터를 불러오는 중...</div>
+            </div>
+          )}
         </div>
       </div>
 
