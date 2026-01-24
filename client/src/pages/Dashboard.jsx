@@ -16,15 +16,11 @@ function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState({
     totalStudents: 0,
-    totalClasses: 0,
-    todayAttendance: 0
+    totalClasses: 0
   });
   const [classes, setClasses] = useState([]);
   const [attendanceByClass, setAttendanceByClass] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [weeklyTotal, setWeeklyTotal] = useState(0);
-  const [monthlyTotal, setMonthlyTotal] = useState(0);
-  const [yearlyTotal, setYearlyTotal] = useState(0);
   const [monthlyDistinctStudents, setMonthlyDistinctStudents] = useState([]);
   const [classDistinctStudents, setClassDistinctStudents] = useState([]);
   const [weeklyAttendanceData, setWeeklyAttendanceData] = useState([]);
@@ -111,13 +107,9 @@ function Dashboard() {
       const classesData = await classesRes.json();
       const attendance = await attendanceRes.json();
 
-      const today = new Date().toISOString().split('T')[0];
-      const todayAttendance = attendance.filter(a => a.date === today);
-
       setStats({
         totalStudents: students.length,
-        totalClasses: classesData.length,
-        todayAttendance: todayAttendance.length
+        totalClasses: classesData.length
       });
 
       setClasses(classesData);
@@ -150,36 +142,6 @@ function Dashboard() {
       });
 
       setAttendanceByClass(classAttendance);
-
-      // 주간 출석 합계 (최근 7일)
-      let weeklyCount = 0;
-      for (let i = 0; i < 7; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
-        weeklyCount += attendance.filter(a => a.date === dateStr).length;
-      }
-      setWeeklyTotal(weeklyCount);
-
-      // 월간 출석 합계 (최근 30일)
-      let monthlyCount = 0;
-      for (let i = 0; i < 30; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
-        monthlyCount += attendance.filter(a => a.date === dateStr).length;
-      }
-      setMonthlyTotal(monthlyCount);
-
-      // 연간 출석 합계 (최근 365일)
-      let yearlyCount = 0;
-      for (let i = 0; i < 365; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
-        yearlyCount += attendance.filter(a => a.date === dateStr).length;
-      }
-      setYearlyTotal(yearlyCount);
 
       // 월별 고유 학생 수 계산 (최근 6개월)
       const monthlyStudents = [];
@@ -334,7 +296,7 @@ function Dashboard() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-3" style={{ marginBottom: 'var(--spacing-lg)' }}>
+      <div className="grid grid-cols-2" style={{ marginBottom: 'var(--spacing-lg)' }}>
         <div className="stat-card">
           <div className="stat-label">전체 학생</div>
           <div className="stat-value primary">{stats.totalStudents}명</div>
@@ -342,29 +304,6 @@ function Dashboard() {
         <div className="stat-card">
           <div className="stat-label">전체 수업</div>
           <div className="stat-value success">{stats.totalClasses}개</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">오늘 출석</div>
-          <div className="stat-value warning">{stats.todayAttendance}명</div>
-        </div>
-      </div>
-
-      {/* Weekly, Monthly, Yearly Attendance Stats */}
-      <div className="grid grid-cols-3" style={{ marginBottom: 'var(--spacing-lg)' }}>
-        <div className="stat-card">
-          <div className="stat-label">주간 출석</div>
-          <div className="stat-value primary">{weeklyTotal}명</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>최근 7일</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">월간 출석</div>
-          <div className="stat-value success">{monthlyTotal}명</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>최근 30일</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">연간 출석</div>
-          <div className="stat-value warning">{yearlyTotal}명</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>최근 365일</div>
         </div>
       </div>
 
