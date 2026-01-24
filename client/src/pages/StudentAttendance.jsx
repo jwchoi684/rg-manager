@@ -44,6 +44,7 @@ function StudentAttendance() {
   // 학생 검색 상태
   const [studentSearchText, setStudentSearchText] = useState('');
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
+  const [dropdownTouchStartY, setDropdownTouchStartY] = useState(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -430,10 +431,18 @@ function StudentAttendance() {
                     e.preventDefault();
                     handleClearStudent();
                   }}
+                  onTouchStart={(e) => {
+                    setDropdownTouchStartY(e.touches[0].clientY);
+                  }}
                   onTouchEnd={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleClearStudent();
+                    const touchEndY = e.changedTouches[0].clientY;
+                    const distance = Math.abs(touchEndY - dropdownTouchStartY);
+                    // 10px 이상 이동했으면 스크롤로 판단하여 선택하지 않음
+                    if (distance < 10) {
+                      handleClearStudent();
+                    }
                   }}
                   style={{
                     padding: 'var(--spacing-md)',
@@ -455,11 +464,17 @@ function StudentAttendance() {
                     }}
                     onTouchStart={(e) => {
                       e.stopPropagation();
+                      setDropdownTouchStartY(e.touches[0].clientY);
                     }}
                     onTouchEnd={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      handleSelectStudent(s.id);
+                      const touchEndY = e.changedTouches[0].clientY;
+                      const distance = Math.abs(touchEndY - dropdownTouchStartY);
+                      // 10px 이상 이동했으면 스크롤로 판단하여 선택하지 않음
+                      if (distance < 10) {
+                        handleSelectStudent(s.id);
+                      }
                     }}
                     style={{
                       padding: 'var(--spacing-md)',
