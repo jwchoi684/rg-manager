@@ -12,6 +12,10 @@ function ClassList() {
   const [selectedUserId, setSelectedUserId] = useState('all');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [draggedIndex, setDraggedIndex] = useState(null);
+  const [swipedId, setSwipedId] = useState(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+  const [swipeOffset, setSwipeOffset] = useState({});
 
   useEffect(() => {
     const handleResize = () => {
@@ -149,6 +153,52 @@ function ClassList() {
     setDraggedIndex(null);
   };
 
+  const minSwipeDistance = 50;
+
+  const handleTouchStart = (e, id) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+    if (swipedId && swipedId !== id) {
+      setSwipedId(null);
+      setSwipeOffset({});
+    }
+  };
+
+  const handleTouchMove = (e, id) => {
+    const currentTouch = e.targetTouches[0].clientX;
+    setTouchEnd(currentTouch);
+    const diff = touchStart - currentTouch;
+    if (diff > 0) {
+      setSwipeOffset({ [id]: Math.min(diff, 80) });
+    } else if (swipedId === id) {
+      setSwipeOffset({ [id]: Math.max(80 + diff, 0) });
+    }
+  };
+
+  const handleTouchEnd = (id) => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      setSwipedId(id);
+      setSwipeOffset({ [id]: 80 });
+    } else if (isRightSwipe || distance < minSwipeDistance) {
+      setSwipedId(null);
+      setSwipeOffset({});
+    }
+  };
+
+  const handleCardClick = (classItem) => {
+    if (swipedId === classItem.id) {
+      setSwipedId(null);
+      setSwipeOffset({});
+    } else if (!swipedId) {
+      handleEdit(classItem);
+    }
+  };
+
   return (
     <div className="animate-fadeIn">
       {/* Page Header */}
@@ -253,63 +303,53 @@ function ClassList() {
           </div>
         )}
 
-        {/* Mobile View - Toss Style */}
+        {/* Mobile View - Swipeable */}
         {isMobile && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-lg)' }}>
-            {classes.map((classItem, index) => (
-              <div
-                key={classItem.id}
-                className="toss-card-item"
-                draggable
-                onDragStart={(e) => handleDragStart(e, index)}
-                onDragOver={(e) => handleDragOver(e, index)}
-                onDragEnd={handleDragEnd}
-                style={{
-                  opacity: draggedIndex === index ? 0.5 : 1,
-                  backgroundColor: draggedIndex === index ? 'var(--color-primary-bg)' : 'var(--bg-secondary)'
-                }}
-              >
-                <div className="toss-card-item-content">
-                  <span style={{
-                    cursor: 'grab',
-                    color: 'var(--color-gray-400)',
-                    fontSize: '1.25rem',
-                    marginRight: 'var(--spacing-sm)',
-                    flexShrink: 0
-                  }}>⋮⋮</span>
-                  <div className="toss-list-item-icon success">
-                    📚
-                  </div>
-                  <div className="toss-list-item-content">
-                    <div className="toss-list-item-title">{classItem.name}</div>
-                    <div className="toss-list-item-subtitle">
-                      {classItem.schedule} · {classItem.duration}
-                    </div>
-                    {classItem.instructor && (
-                      <div className="toss-list-item-subtitle">
-                        강사: {classItem.instructor}
-                      </div>
-                    )}
-                  </div>
-                  <div className="toss-list-item-value">
-                    <div className="toss-list-item-value-main" style={{ color: 'var(--color-primary)' }}>
-                      {getStudentsInClass(classItem.id).length}명
-                    </div>
-                    <div className="toss-list-item-value-sub">
-                      등록 학생
-                    </div>
-                  </div>
+          <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'var(--spacing-lg)' }}>
+            {classes.map((classItem) => (
+              <div key={classItem.id} className="swipeable-container">
+                <div className="swipeable-delete-bg">
+                  <button
+                    className="swipeable-delete-btn"
+                    onClick={() => handleDelete(classItem.id)}
+                  >
+                    <span>🗑️</span> 삭제
+                  </button>
                 </div>
-                <div className="toss-card-item-actions">
-                  <button className="btn btn-secondary btn-sm" onClick={() => handleEdit(classItem)}>
-                    수정
-                  </button>
-                  <button className="btn btn-primary btn-sm" onClick={() => handleManageStudents(classItem)}>
-                    학생 관리
-                  </button>
-                  <button className="btn btn-danger btn-sm" onClick={() => handleDelete(classItem.id)}>
-                    삭제
-                  </button>
+                <div
+                  className="swipeable-card"
+                  style={{
+                    transform: `translateX(-${swipeOffset[classItem.id] || 0}px)`
+                  }}
+                  onTouchStart={(e) => handleTouchStart(e, classItem.id)}
+                  onTouchMove={(e) => handleTouchMove(e, classItem.id)}
+                  onTouchEnd={() => handleTouchEnd(classItem.id)}
+                  onClick={() => handleCardClick(classItem)}
+                >
+                  <div className="toss-card-item-content">
+                    <div className="toss-list-item-icon success">
+                      📚
+                    </div>
+                    <div className="toss-list-item-content">
+                      <div className="toss-list-item-title">{classItem.name}</div>
+                      <div className="toss-list-item-subtitle">
+                        {classItem.schedule} · {classItem.duration}
+                      </div>
+                      {classItem.instructor && (
+                        <div className="toss-list-item-subtitle">
+                          강사: {classItem.instructor}
+                        </div>
+                      )}
+                    </div>
+                    <div className="toss-list-item-value">
+                      <div className="toss-list-item-value-main" style={{ color: 'var(--color-primary)' }}>
+                        {getStudentsInClass(classItem.id).length}명
+                      </div>
+                      <div className="toss-list-item-value-sub">
+                        등록 학생
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}

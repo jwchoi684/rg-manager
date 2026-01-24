@@ -1216,3 +1216,51 @@ tbody tr:last-child td {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* Swipeable Card */
+.swipeable-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-sm);
+}
+
+.swipeable-card {
+  position: relative;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  transition: transform 0.2s ease-out;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.swipeable-card:active {
+  background-color: var(--color-gray-50);
+}
+
+.swipeable-delete-bg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  background-color: var(--color-danger);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+}
+
+.swipeable-delete-btn {
+  color: white;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.swipeable-delete-btn span {
+  font-size: 1.25rem;
+}

@@ -14,6 +14,10 @@ function StudentList() {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [classFilter, setClassFilter] = useState('');
   const [searchName, setSearchName] = useState('');
+  const [swipedId, setSwipedId] = useState(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+  const [swipeOffset, setSwipeOffset] = useState({});
 
   useEffect(() => {
     const handleResize = () => {
@@ -173,6 +177,52 @@ function StudentList() {
   const getSortIcon = (key) => {
     if (sortConfig.key !== key) return '↕';
     return sortConfig.direction === 'asc' ? '↑' : '↓';
+  };
+
+  const minSwipeDistance = 50;
+
+  const handleTouchStart = (e, id) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+    if (swipedId && swipedId !== id) {
+      setSwipedId(null);
+      setSwipeOffset({});
+    }
+  };
+
+  const handleTouchMove = (e, id) => {
+    const currentTouch = e.targetTouches[0].clientX;
+    setTouchEnd(currentTouch);
+    const diff = touchStart - currentTouch;
+    if (diff > 0) {
+      setSwipeOffset({ [id]: Math.min(diff, 80) });
+    } else if (swipedId === id) {
+      setSwipeOffset({ [id]: Math.max(80 + diff, 0) });
+    }
+  };
+
+  const handleTouchEnd = (id) => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      setSwipedId(id);
+      setSwipeOffset({ [id]: 80 });
+    } else if (isRightSwipe || distance < minSwipeDistance) {
+      setSwipedId(null);
+      setSwipeOffset({});
+    }
+  };
+
+  const handleCardClick = (student) => {
+    if (swipedId === student.id) {
+      setSwipedId(null);
+      setSwipeOffset({});
+    } else if (!swipedId) {
+      handleEdit(student);
+    }
   };
 
   const sortedStudents = getSortedStudents();
@@ -349,42 +399,47 @@ function StudentList() {
               </button>
             </div>
 
-            {/* Student Cards - Toss Style */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
+            {/* Student Cards - Swipeable */}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
               {sortedStudents.map((student) => (
-                <div key={student.id} className="toss-card-item">
-                  <div className="toss-card-item-content">
-                    <div className="toss-list-item-icon primary">
-                      {student.name.charAt(0)}
-                    </div>
-                    <div className="toss-list-item-content">
-                      <div className="toss-list-item-title">{student.name}</div>
-                      <div className="toss-list-item-subtitle">
-                        {getClassNames(student.classIds)}
-                      </div>
-                    </div>
-                    <div className="toss-list-item-value">
-                      <div className="toss-list-item-value-main">
-                        {calculateAge(student.birthdate)}세
-                      </div>
-                      <div className="toss-list-item-value-sub">
-                        {student.birthdate || '-'}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="toss-card-item-actions">
+                <div key={student.id} className="swipeable-container">
+                  <div className="swipeable-delete-bg">
                     <button
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => handleEdit(student)}
-                    >
-                      수정
-                    </button>
-                    <button
-                      className="btn btn-danger btn-sm"
+                      className="swipeable-delete-btn"
                       onClick={() => handleDelete(student.id)}
                     >
-                      삭제
+                      <span>🗑️</span> 삭제
                     </button>
+                  </div>
+                  <div
+                    className="swipeable-card"
+                    style={{
+                      transform: `translateX(-${swipeOffset[student.id] || 0}px)`
+                    }}
+                    onTouchStart={(e) => handleTouchStart(e, student.id)}
+                    onTouchMove={(e) => handleTouchMove(e, student.id)}
+                    onTouchEnd={() => handleTouchEnd(student.id)}
+                    onClick={() => handleCardClick(student)}
+                  >
+                    <div className="toss-card-item-content">
+                      <div className="toss-list-item-icon primary">
+                        {student.name.charAt(0)}
+                      </div>
+                      <div className="toss-list-item-content">
+                        <div className="toss-list-item-title">{student.name}</div>
+                        <div className="toss-list-item-subtitle">
+                          {getClassNames(student.classIds)}
+                        </div>
+                      </div>
+                      <div className="toss-list-item-value">
+                        <div className="toss-list-item-value-main">
+                          {calculateAge(student.birthdate)}세
+                        </div>
+                        <div className="toss-list-item-value-sub">
+                          {student.birthdate || '-'}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
