@@ -519,6 +519,139 @@ tbody tr:last-child td {
   color: var(--color-danger);
 }
 
+/* Toss-style List */
+.toss-list {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.toss-list-header {
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-gray-500);
+}
+
+.toss-list-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--bg-secondary);
+  transition: background-color var(--transition-fast);
+  cursor: pointer;
+}
+
+.toss-list-item:active {
+  background-color: var(--color-gray-50);
+}
+
+.toss-list-item-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--spacing-md);
+  font-size: 1.125rem;
+  flex-shrink: 0;
+}
+
+.toss-list-item-icon.primary {
+  background-color: var(--color-primary-bg);
+  color: var(--color-primary);
+}
+
+.toss-list-item-icon.success {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.toss-list-item-icon.warning {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+.toss-list-item-icon.danger {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.toss-list-item-icon.gray {
+  background-color: var(--color-gray-100);
+  color: var(--color-gray-600);
+}
+
+.toss-list-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toss-list-item-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-gray-900);
+  line-height: 1.4;
+}
+
+.toss-list-item-subtitle {
+  font-size: 0.8125rem;
+  color: var(--color-gray-500);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.toss-list-item-value {
+  text-align: right;
+  flex-shrink: 0;
+  margin-left: var(--spacing-md);
+}
+
+.toss-list-item-value-main {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-gray-900);
+  line-height: 1.4;
+}
+
+.toss-list-item-value-sub {
+  font-size: 0.75rem;
+  color: var(--color-gray-400);
+  margin-top: 2px;
+}
+
+.toss-list-item-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-md);
+}
+
+.toss-list-item-actions .btn {
+  flex: 1;
+}
+
+/* Toss-style Card List Item (with actions) */
+.toss-card-item {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-md);
+  overflow: hidden;
+  border: 1px solid var(--color-gray-100);
+}
+
+.toss-card-item-content {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-lg);
+}
+
+.toss-card-item-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-lg) var(--spacing-lg);
+}
+
 /* Badge */
 .badge {
   display: inline-flex;

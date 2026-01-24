@@ -392,51 +392,65 @@ function StudentAttendance() {
               </div>
             )}
 
-            {/* Mobile Cards */}
+            {/* Mobile Cards - Toss Style with Date Grouping */}
             {isMobile && (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 'var(--spacing-md)',
-                marginTop: 'var(--spacing-lg)'
-              }}>
-                {attendanceRecords.map(record => {
-                  const student = getStudentInfo(record.studentId);
-                  const classInfo = getClassInfo(record.classId);
-                  return (
-                    <div
-                      key={record.id}
-                      className="list-item"
-                      style={{
-                        borderLeft: '4px solid var(--color-success)',
-                        marginBottom: 0
-                      }}
-                    >
-                      <div className="list-item-content">
-                        <div className="list-item-title">
-                          {student?.name || '-'}
-                        </div>
-                        <div className="list-item-subtitle">
-                          {formatDisplayDate(record.date)} | {student?.birthdate} ({calculateAge(student?.birthdate)}세)
-                        </div>
-                        <div style={{
-                          fontSize: '0.75rem',
-                          color: 'var(--color-success)',
-                          marginTop: '4px'
-                        }}>
-                          {classInfo?.name || '-'}
-                          {classInfo?.schedule && ` - ${classInfo.schedule}`}
-                        </div>
+              <div style={{ marginTop: 'var(--spacing-lg)' }}>
+                {(() => {
+                  const groupedByDate = attendanceRecords.reduce((acc, record) => {
+                    const date = record.date;
+                    if (!acc[date]) acc[date] = [];
+                    acc[date].push(record);
+                    return acc;
+                  }, {});
+
+                  return Object.entries(groupedByDate).map(([date, records]) => (
+                    <div key={date} className="toss-list" style={{ marginBottom: 'var(--spacing-md)' }}>
+                      <div className="toss-list-header">
+                        {formatDisplayDate(date)}
                       </div>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => handleDeleteAttendance(record.id)}
-                      >
-                        삭제
-                      </button>
+                      {records.map(record => {
+                        const student = getStudentInfo(record.studentId);
+                        const classInfo = getClassInfo(record.classId);
+                        return (
+                          <div
+                            key={record.id}
+                            className="toss-list-item"
+                            style={{ cursor: 'default' }}
+                          >
+                            <div className="toss-list-item-icon success">
+                              {student?.name?.charAt(0) || '?'}
+                            </div>
+                            <div className="toss-list-item-content">
+                              <div className="toss-list-item-title">
+                                {student?.name || '-'}
+                              </div>
+                              <div className="toss-list-item-subtitle">
+                                {classInfo?.name || '-'}
+                              </div>
+                            </div>
+                            <div className="toss-list-item-value">
+                              <div className="toss-list-item-value-main" style={{ color: 'var(--color-success)' }}>
+                                {calculateAge(student?.birthdate)}세
+                              </div>
+                              <button
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => handleDeleteAttendance(record.id)}
+                                style={{
+                                  color: 'var(--color-danger)',
+                                  padding: '4px 8px',
+                                  fontSize: '0.75rem',
+                                  marginTop: '2px'
+                                }}
+                              >
+                                삭제
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+                  ));
+                })()}
               </div>
             )}
           </>

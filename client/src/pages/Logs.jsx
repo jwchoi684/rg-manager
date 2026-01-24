@@ -203,48 +203,86 @@ function Logs() {
               </div>
             )}
 
-            {/* Mobile Cards */}
+            {/* Mobile Cards - Toss Style with Date Grouping */}
             {isMobile && (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 'var(--spacing-sm)',
-                marginTop: 'var(--spacing-lg)'
-              }}>
-                {logs.map(log => (
-                  <div
-                    key={log.id}
-                    className="list-item"
-                    style={{
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      gap: 'var(--spacing-xs)',
-                      marginBottom: 0
-                    }}
-                  >
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      width: '100%'
-                    }}>
-                      <span className={`badge ${getActionBadgeClass(log.action)}`}>
-                        {getActionText(log.action)}
-                      </span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>
-                        {formatDisplayDate(log.createdAt)}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>
-                      {log.username}
-                    </div>
-                    {log.details && (
-                      <div style={{ fontSize: '0.8125rem', color: 'var(--color-gray-600)' }}>
-                        {log.details}
+              <div style={{ marginTop: 'var(--spacing-lg)' }}>
+                {(() => {
+                  const groupedByDate = logs.reduce((acc, log) => {
+                    const date = log.createdAt.split('T')[0];
+                    if (!acc[date]) acc[date] = [];
+                    acc[date].push(log);
+                    return acc;
+                  }, {});
+
+                  const getActionIcon = (action) => {
+                    if (action.includes('DELETE')) return '🗑️';
+                    if (action.includes('CREATE') || action === 'SIGNUP') return '✨';
+                    if (action.includes('UPDATE') || action === 'REORDER_CLASSES') return '✏️';
+                    if (action === 'LOGIN') return '🔐';
+                    return '📋';
+                  };
+
+                  const getIconClass = (action) => {
+                    if (action.includes('DELETE')) return 'danger';
+                    if (action.includes('CREATE') || action === 'SIGNUP') return 'success';
+                    if (action.includes('UPDATE') || action === 'REORDER_CLASSES') return 'warning';
+                    return 'gray';
+                  };
+
+                  const formatDateHeader = (dateStr) => {
+                    const date = new Date(dateStr);
+                    const month = date.getMonth() + 1;
+                    const day = date.getDate();
+                    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+                    return `${month}월 ${day}일 (${weekdays[date.getDay()]})`;
+                  };
+
+                  const formatTime = (dateStr) => {
+                    const date = new Date(dateStr);
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    return `${hours}:${minutes}`;
+                  };
+
+                  return Object.entries(groupedByDate).map(([date, dateLogs]) => (
+                    <div key={date} className="toss-list" style={{ marginBottom: 'var(--spacing-md)' }}>
+                      <div className="toss-list-header">
+                        {formatDateHeader(date)}
                       </div>
-                    )}
-                  </div>
-                ))}
+                      {dateLogs.map(log => (
+                        <div
+                          key={log.id}
+                          className="toss-list-item"
+                          style={{ cursor: 'default' }}
+                        >
+                          <div className={`toss-list-item-icon ${getIconClass(log.action)}`}>
+                            {getActionIcon(log.action)}
+                          </div>
+                          <div className="toss-list-item-content">
+                            <div className="toss-list-item-title">
+                              {getActionText(log.action)}
+                            </div>
+                            <div className="toss-list-item-subtitle">
+                              {formatTime(log.createdAt)} · {log.username}
+                            </div>
+                          </div>
+                          {log.details && (
+                            <div className="toss-list-item-value">
+                              <div className="toss-list-item-value-sub" style={{
+                                maxWidth: '120px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {log.details}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ));
+                })()}
               </div>
             )}
           </>

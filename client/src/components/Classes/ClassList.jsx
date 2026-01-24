@@ -253,55 +253,61 @@ function ClassList() {
           </div>
         )}
 
-        {/* Mobile View - Cards */}
+        {/* Mobile View - Toss Style */}
         {isMobile && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)', marginTop: 'var(--spacing-lg)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-lg)' }}>
             {classes.map((classItem, index) => (
               <div
                 key={classItem.id}
-                className="list-item"
+                className="toss-card-item"
                 draggable
                 onDragStart={(e) => handleDragStart(e, index)}
                 onDragOver={(e) => handleDragOver(e, index)}
                 onDragEnd={handleDragEnd}
                 style={{
-                  flexDirection: 'column',
-                  alignItems: 'stretch',
                   opacity: draggedIndex === index ? 0.5 : 1,
                   backgroundColor: draggedIndex === index ? 'var(--color-primary-bg)' : 'var(--bg-secondary)'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: 'var(--spacing-md)' }}>
+                <div className="toss-card-item-content">
                   <span style={{
                     cursor: 'grab',
                     color: 'var(--color-gray-400)',
                     fontSize: '1.25rem',
-                    marginRight: 'var(--spacing-md)',
-                    marginTop: '2px'
+                    marginRight: 'var(--spacing-sm)',
+                    flexShrink: 0
                   }}>⋮⋮</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div>
-                        <div className="list-item-title">{classItem.name}</div>
-                        <div className="list-item-subtitle">{classItem.schedule}</div>
-                      </div>
-                      <span className="badge badge-primary">{getStudentsInClass(classItem.id).length}명</span>
+                  <div className="toss-list-item-icon success">
+                    📚
+                  </div>
+                  <div className="toss-list-item-content">
+                    <div className="toss-list-item-title">{classItem.name}</div>
+                    <div className="toss-list-item-subtitle">
+                      {classItem.schedule} · {classItem.duration}
                     </div>
-                    <div style={{ marginTop: 'var(--spacing-sm)', fontSize: '0.8125rem', color: 'var(--color-gray-500)' }}>
-                      <span>시간: {classItem.duration}</span>
-                      <span style={{ margin: '0 8px' }}>|</span>
-                      <span>강사: {classItem.instructor || '-'}</span>
+                    {classItem.instructor && (
+                      <div className="toss-list-item-subtitle">
+                        강사: {classItem.instructor}
+                      </div>
+                    )}
+                  </div>
+                  <div className="toss-list-item-value">
+                    <div className="toss-list-item-value-main" style={{ color: 'var(--color-primary)' }}>
+                      {getStudentsInClass(classItem.id).length}명
+                    </div>
+                    <div className="toss-list-item-value-sub">
+                      등록 학생
                     </div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-                  <button className="btn btn-secondary" onClick={() => handleEdit(classItem)} style={{ flex: 1 }}>
+                <div className="toss-card-item-actions">
+                  <button className="btn btn-secondary btn-sm" onClick={() => handleEdit(classItem)}>
                     수정
                   </button>
-                  <button className="btn btn-primary" onClick={() => handleManageStudents(classItem)} style={{ flex: 1 }}>
+                  <button className="btn btn-primary btn-sm" onClick={() => handleManageStudents(classItem)}>
                     학생 관리
                   </button>
-                  <button className="btn btn-danger" onClick={() => handleDelete(classItem.id)} style={{ flex: 1 }}>
+                  <button className="btn btn-danger btn-sm" onClick={() => handleDelete(classItem.id)}>
                     삭제
                   </button>
                 </div>

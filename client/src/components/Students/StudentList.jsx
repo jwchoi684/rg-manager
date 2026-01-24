@@ -318,7 +318,7 @@ function StudentList() {
           </div>
         )}
 
-        {/* Mobile View - Cards */}
+        {/* Mobile View - Toss Style */}
         {isMobile && (
           <>
             {/* Mobile Sort Buttons */}
@@ -349,39 +349,39 @@ function StudentList() {
               </button>
             </div>
 
-            {/* Student Cards */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+            {/* Student Cards - Toss Style */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
               {sortedStudents.map((student) => (
-                <div key={student.id} className="list-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
-                    <div
-                      className="list-item-icon"
-                      style={{ backgroundColor: 'var(--color-primary-bg)', color: 'var(--color-primary)' }}
-                    >
-                      👤
+                <div key={student.id} className="toss-card-item">
+                  <div className="toss-card-item-content">
+                    <div className="toss-list-item-icon primary">
+                      {student.name.charAt(0)}
                     </div>
-                    <div className="list-item-content">
-                      <div className="list-item-title">{student.name}</div>
-                      <div className="list-item-subtitle">
-                        {student.birthdate || "-"} ({calculateAge(student.birthdate)}세)
-                      </div>
-                      <div className="list-item-subtitle" style={{ marginTop: '2px' }}>
+                    <div className="toss-list-item-content">
+                      <div className="toss-list-item-title">{student.name}</div>
+                      <div className="toss-list-item-subtitle">
                         {getClassNames(student.classIds)}
                       </div>
                     </div>
+                    <div className="toss-list-item-value">
+                      <div className="toss-list-item-value-main">
+                        {calculateAge(student.birthdate)}세
+                      </div>
+                      <div className="toss-list-item-value-sub">
+                        {student.birthdate || '-'}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                  <div className="toss-card-item-actions">
                     <button
-                      className="btn btn-secondary"
+                      className="btn btn-secondary btn-sm"
                       onClick={() => handleEdit(student)}
-                      style={{ flex: 1 }}
                     >
                       수정
                     </button>
                     <button
-                      className="btn btn-danger"
+                      className="btn btn-danger btn-sm"
                       onClick={() => handleDelete(student.id)}
-                      style={{ flex: 1 }}
                     >
                       삭제
                     </button>
