@@ -15,6 +15,7 @@ function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [weeklyTotal, setWeeklyTotal] = useState(0);
   const [monthlyTotal, setMonthlyTotal] = useState(0);
+  const [yearlyTotal, setYearlyTotal] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('all');
@@ -156,6 +157,16 @@ function Dashboard() {
         monthlyCount += attendance.filter(a => a.date === dateStr).length;
       }
       setMonthlyTotal(monthlyCount);
+
+      // 연간 출석 합계 (최근 365일)
+      let yearlyCount = 0;
+      for (let i = 0; i < 365; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        yearlyCount += attendance.filter(a => a.date === dateStr).length;
+      }
+      setYearlyTotal(yearlyCount);
     } catch (error) {
       console.error('데이터 로드 실패:', error);
     }
@@ -235,15 +246,22 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Weekly & Monthly Attendance Stats */}
-      <div className="grid grid-cols-2" style={{ marginBottom: 'var(--spacing-lg)' }}>
+      {/* Weekly, Monthly, Yearly Attendance Stats */}
+      <div className="grid grid-cols-3" style={{ marginBottom: 'var(--spacing-lg)' }}>
         <div className="stat-card">
-          <div className="stat-label">주간 출석 (최근 7일)</div>
+          <div className="stat-label">주간 출석</div>
           <div className="stat-value primary">{weeklyTotal}명</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>최근 7일</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">월간 출석 (최근 30일)</div>
+          <div className="stat-label">월간 출석</div>
           <div className="stat-value success">{monthlyTotal}명</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>최근 30일</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">연간 출석</div>
+          <div className="stat-value warning">{yearlyTotal}명</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>최근 365일</div>
         </div>
       </div>
 
