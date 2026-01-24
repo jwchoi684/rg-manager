@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import StudentList from './components/Students/StudentList';
@@ -45,6 +45,18 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
+
+  // 메뉴 열릴 때 body 스크롤 방지
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -95,15 +107,19 @@ function App() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h1 style={{ marginBottom: 0 }}>리듬체조 출석</h1>
           <button className="mobile-menu-button" onClick={toggleMobileMenu}>
-            {mobileMenuOpen ? '✕' : '☰'}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
           </button>
         </div>
-        <nav className={mobileMenuOpen ? 'mobile-open' : ''}>
+        {/* Desktop Navigation */}
+        <nav className="desktop-nav">
           {navLinks.map(link => (
             <Link
               key={link.path}
               to={link.path}
-              onClick={closeMobileMenu}
               className={isActive(link.path) ? 'active' : ''}
             >
               {link.label}
@@ -113,7 +129,6 @@ function App() {
             <Link
               key={link.path}
               to={link.path}
-              onClick={closeMobileMenu}
               className={isActive(link.path) ? 'active' : ''}
             >
               {link.label}
@@ -131,6 +146,75 @@ function App() {
           </button>
         </nav>
       </header>
+
+      {/* Mobile Fullscreen Menu */}
+      <div className={`mobile-menu-overlay ${mobileMenuOpen ? 'open' : ''}`}>
+        <div className="mobile-menu-header">
+          <span className="mobile-menu-title">메뉴</span>
+          <button className="mobile-menu-close" onClick={closeMobileMenu}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div className="mobile-menu-content">
+          <div className="mobile-menu-section">
+            <div className="mobile-menu-section-title">메인</div>
+            {navLinks.map(link => (
+              <Link
+                key={link.path}
+                to={link.path}
+                onClick={closeMobileMenu}
+                className={`mobile-menu-item ${isActive(link.path) ? 'active' : ''}`}
+              >
+                <span className="mobile-menu-icon">{link.icon}</span>
+                <span className="mobile-menu-label">{link.label}</span>
+                {isActive(link.path) && (
+                  <span className="mobile-menu-active-indicator"></span>
+                )}
+              </Link>
+            ))}
+          </div>
+          {user?.role === 'admin' && (
+            <div className="mobile-menu-section">
+              <div className="mobile-menu-section-title">관리</div>
+              {adminLinks.map(link => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={closeMobileMenu}
+                  className={`mobile-menu-item ${isActive(link.path) ? 'active' : ''}`}
+                >
+                  <span className="mobile-menu-icon">{link.icon}</span>
+                  <span className="mobile-menu-label">{link.label}</span>
+                  {isActive(link.path) && (
+                    <span className="mobile-menu-active-indicator"></span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="mobile-menu-footer">
+          <div className="mobile-menu-user">
+            <span className="mobile-menu-user-icon">👤</span>
+            <span className="mobile-menu-user-name">{user?.username}</span>
+            {user?.role === 'admin' && <span className="mobile-menu-user-badge">관리자</span>}
+          </div>
+          <button
+            onClick={handleLogout}
+            className="mobile-menu-logout"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            로그아웃
+          </button>
+        </div>
+      </div>
 
       <main className="app-main">
         <Routes>
