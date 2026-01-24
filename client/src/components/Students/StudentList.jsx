@@ -190,14 +190,16 @@ function StudentList() {
     }
   };
 
+  const swipeRevealWidth = 72;
+
   const handleTouchMove = (e, id) => {
     const currentTouch = e.targetTouches[0].clientX;
     setTouchEnd(currentTouch);
     const diff = touchStart - currentTouch;
     if (diff > 0) {
-      setSwipeOffset({ [id]: Math.min(diff, 80) });
+      setSwipeOffset({ [id]: Math.min(diff, swipeRevealWidth) });
     } else if (swipedId === id) {
-      setSwipeOffset({ [id]: Math.max(80 + diff, 0) });
+      setSwipeOffset({ [id]: Math.max(swipeRevealWidth + diff, 0) });
     }
   };
 
@@ -209,7 +211,7 @@ function StudentList() {
 
     if (isLeftSwipe) {
       setSwipedId(id);
-      setSwipeOffset({ [id]: 80 });
+      setSwipeOffset({ [id]: swipeRevealWidth });
     } else if (isRightSwipe || distance < minSwipeDistance) {
       setSwipedId(null);
       setSwipeOffset({});
@@ -403,12 +405,12 @@ function StudentList() {
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {sortedStudents.map((student) => (
                 <div key={student.id} className="swipeable-container">
-                  <div className="swipeable-delete-bg">
+                  <div className="swipeable-actions">
                     <button
-                      className="swipeable-delete-btn"
+                      className="swipeable-action-btn delete"
                       onClick={() => handleDelete(student.id)}
                     >
-                      <span>🗑️</span> 삭제
+                      🗑️
                     </button>
                   </div>
                   <div
