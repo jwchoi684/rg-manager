@@ -21,6 +21,8 @@ function AttendanceCheck() {
   const [addFormStudent, setAddFormStudent] = useState('');
   const [addFormClass, setAddFormClass] = useState('');
   const [addFormDate, setAddFormDate] = useState(new Date().toISOString().split('T')[0]);
+  const [studentSearchText, setStudentSearchText] = useState('');
+  const [showStudentDropdown, setShowStudentDropdown] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -211,7 +213,29 @@ function AttendanceCheck() {
     setAddFormStudent('');
     setAddFormClass('');
     setAddFormDate(selectedDate);
+    setStudentSearchText('');
+    setShowStudentDropdown(false);
     setShowAddModal(true);
+  };
+
+  const getFilteredStudentsForModal = () => {
+    if (!studentSearchText) return students;
+    return students.filter(s =>
+      s.name.toLowerCase().includes(studentSearchText.toLowerCase())
+    );
+  };
+
+  const getSelectedStudentName = () => {
+    if (!addFormStudent) return '';
+    const student = students.find(s => s.id === parseInt(addFormStudent));
+    return student ? student.name : '';
+  };
+
+  const handleSelectStudent = (studentId) => {
+    setAddFormStudent(studentId.toString());
+    const student = students.find(s => s.id === studentId);
+    setStudentSearchText(student ? student.name : '');
+    setShowStudentDropdown(false);
   };
 
   const getFilteredStudents = () => {
@@ -292,7 +316,7 @@ function AttendanceCheck() {
               </button>
             </div>
 
-            <div style={{ marginTop: 'var(--spacing-lg)' }}>
+            <div style={{ marginTop: 'var(--spacing-lg)' }} onClick={() => setShowStudentDropdown(false)}>
               <div className="form-group">
                 <label className="form-label">날짜 *</label>
                 <input
@@ -315,17 +339,62 @@ function AttendanceCheck() {
                 </select>
               </div>
 
-              <div className="form-group">
+              <div className="form-group" style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
                 <label className="form-label">학생 *</label>
-                <select
-                  value={addFormStudent}
-                  onChange={(e) => setAddFormStudent(e.target.value)}
-                >
-                  <option value="">학생을 선택하세요</option>
-                  {students.map(s => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
+                <input
+                  type="text"
+                  placeholder="학생 이름을 검색하세요"
+                  value={studentSearchText}
+                  onChange={(e) => {
+                    setStudentSearchText(e.target.value);
+                    setAddFormStudent('');
+                    setShowStudentDropdown(true);
+                  }}
+                  onFocus={() => setShowStudentDropdown(true)}
+                />
+                {showStudentDropdown && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      maxHeight: '200px',
+                      overflowY: 'auto',
+                      backgroundColor: 'var(--bg-primary)',
+                      border: '1px solid var(--color-gray-200)',
+                      borderRadius: 'var(--radius-md)',
+                      boxShadow: 'var(--shadow-lg)',
+                      zIndex: 10
+                    }}
+                  >
+                    {getFilteredStudentsForModal().length > 0 ? (
+                      getFilteredStudentsForModal().map(s => (
+                        <div
+                          key={s.id}
+                          onClick={() => handleSelectStudent(s.id)}
+                          style={{
+                            padding: 'var(--spacing-sm) var(--spacing-md)',
+                            cursor: 'pointer',
+                            backgroundColor: addFormStudent === s.id.toString() ? 'var(--color-primary-bg)' : 'transparent',
+                            borderBottom: '1px solid var(--color-gray-100)'
+                          }}
+                          onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--color-gray-50)'}
+                          onMouseLeave={(e) => e.target.style.backgroundColor = addFormStudent === s.id.toString() ? 'var(--color-primary-bg)' : 'transparent'}
+                        >
+                          <div style={{ fontWeight: 500 }}>{s.name}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>
+                            {s.birthdate || '-'} ({calculateAge(s.birthdate)}세)
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ padding: 'var(--spacing-md)', color: 'var(--color-gray-500)', textAlign: 'center' }}>
+                        검색 결과가 없습니다
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div style={{
