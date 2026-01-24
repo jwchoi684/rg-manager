@@ -20,7 +20,6 @@ function Dashboard() {
   });
   const [classes, setClasses] = useState([]);
   const [attendanceByClass, setAttendanceByClass] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [monthlyDistinctStudents, setMonthlyDistinctStudents] = useState([]);
   const [classDistinctStudents, setClassDistinctStudents] = useState([]);
   const [weeklyAttendanceData, setWeeklyAttendanceData] = useState([]);
@@ -69,11 +68,6 @@ function Dashboard() {
     }
   }, [startDate, endDate]);
 
-  useEffect(() => {
-    if (classes.length > 0) {
-      loadData();
-    }
-  }, [selectedDate]);
 
   const loadUsers = async () => {
     try {
@@ -613,80 +607,6 @@ function Dashboard() {
         )}
       </div>
 
-      {/* Daily Attendance Rate */}
-      {classes.length > 0 && (
-        <div className="card" style={{ marginTop: 'var(--spacing-lg)' }}>
-          <div className="card-header" style={{ flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center' }}>
-            <h3 className="card-title">선택한 날짜의 출석률</h3>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              style={{ width: isMobile ? '100%' : '180px' }}
-            />
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: 'var(--spacing-md)',
-            marginTop: 'var(--spacing-lg)'
-          }}>
-            {attendanceByClass
-              .filter((item) => {
-                const selectedDateAttendance = item.dailyAttendance.find(d => d.date === selectedDate);
-                const attendanceCount = selectedDateAttendance ? selectedDateAttendance.count : 0;
-                return attendanceCount > 0;
-              })
-              .map((item, idx) => {
-                const selectedDateAttendance = item.dailyAttendance.find(d => d.date === selectedDate);
-                const attendanceCount = selectedDateAttendance ? selectedDateAttendance.count : 0;
-                const attendanceRate = item.enrolledStudents > 0
-                  ? Math.round((attendanceCount / item.enrolledStudents) * 100)
-                  : 0;
-
-                return (
-                  <div
-                    key={idx}
-                    className="list-item"
-                    style={{
-                      borderLeft: `4px solid ${getAttendanceColor(attendanceCount, item.enrolledStudents)}`,
-                      marginBottom: 0
-                    }}
-                  >
-                    <div className="list-item-content">
-                      <div className="list-item-title">{item.class.name}</div>
-                      <div className="list-item-subtitle">{item.class.schedule}</div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{
-                        fontSize: '1.25rem',
-                        fontWeight: 700,
-                        color: getAttendanceColor(attendanceCount, item.enrolledStudents)
-                      }}>
-                        {attendanceRate}%
-                      </div>
-                      <div style={{ fontSize: '0.8125rem', color: 'var(--color-gray-500)' }}>
-                        {attendanceCount} / {item.enrolledStudents}명
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
-
-          {attendanceByClass.filter((item) => {
-            const selectedDateAttendance = item.dailyAttendance.find(d => d.date === selectedDate);
-            return selectedDateAttendance ? selectedDateAttendance.count > 0 : false;
-          }).length === 0 && (
-            <div className="empty-state">
-              <div className="empty-state-icon">📅</div>
-              <div className="empty-state-title">출석 기록이 없습니다</div>
-              <div className="empty-state-description">선택한 날짜에 출석 기록이 없습니다.</div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
