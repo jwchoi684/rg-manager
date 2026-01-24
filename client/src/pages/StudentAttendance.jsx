@@ -36,6 +36,10 @@ function StudentAttendance() {
   const [selectedStudent, setSelectedStudent] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [swipedId, setSwipedId] = useState(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+  const [swipeOffset, setSwipeOffset] = useState({});
 
   useEffect(() => {
     const handleResize = () => {
@@ -191,6 +195,44 @@ function StudentAttendance() {
     const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
     const weekday = weekdays[date.getDay()];
     return `${month}/${day}(${weekday})`;
+  };
+
+  const minSwipeDistance = 50;
+  const swipeRevealWidth = 72;
+
+  const handleTouchStart = (e, id) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+    if (swipedId && swipedId !== id) {
+      setSwipedId(null);
+      setSwipeOffset({});
+    }
+  };
+
+  const handleTouchMove = (e, id) => {
+    const currentTouch = e.targetTouches[0].clientX;
+    setTouchEnd(currentTouch);
+    const diff = touchStart - currentTouch;
+    if (diff > 0) {
+      setSwipeOffset({ [id]: Math.min(diff, swipeRevealWidth) });
+    } else if (swipedId === id) {
+      setSwipeOffset({ [id]: Math.max(swipeRevealWidth + diff, 0) });
+    }
+  };
+
+  const handleTouchEnd = (id) => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      setSwipedId(id);
+      setSwipeOffset({ [id]: swipeRevealWidth });
+    } else if (isRightSwipe || distance < minSwipeDistance) {
+      setSwipedId(null);
+      setSwipeOffset({});
+    }
   };
 
   return (
@@ -392,7 +434,7 @@ function StudentAttendance() {
               </div>
             )}
 
-            {/* Mobile Cards - Toss Style with Date Grouping */}
+            {/* Mobile Cards - Swipeable with Date Grouping */}
             {isMobile && (
               <div style={{ marginTop: 'var(--spacing-lg)' }}>
                 {(() => {
@@ -404,46 +446,58 @@ function StudentAttendance() {
                   }, {});
 
                   return Object.entries(groupedByDate).map(([date, records]) => (
-                    <div key={date} className="toss-list" style={{ marginBottom: 'var(--spacing-md)' }}>
-                      <div className="toss-list-header">
+                    <div key={date} style={{ marginBottom: 'var(--spacing-md)' }}>
+                      <div className="toss-list-header" style={{
+                        padding: 'var(--spacing-lg) var(--spacing-lg) var(--spacing-sm)',
+                        fontSize: '0.8125rem',
+                        fontWeight: 500,
+                        color: 'var(--color-gray-500)'
+                      }}>
                         {formatDisplayDate(date)}
                       </div>
                       {records.map(record => {
                         const student = getStudentInfo(record.studentId);
                         const classInfo = getClassInfo(record.classId);
                         return (
-                          <div
-                            key={record.id}
-                            className="toss-list-item"
-                            style={{ cursor: 'default' }}
-                          >
-                            <div className="toss-list-item-icon success">
-                              {student?.name?.charAt(0) || '?'}
-                            </div>
-                            <div className="toss-list-item-content">
-                              <div className="toss-list-item-title">
-                                {student?.name || '-'}
-                              </div>
-                              <div className="toss-list-item-subtitle">
-                                {classInfo?.name || '-'}
-                              </div>
-                            </div>
-                            <div className="toss-list-item-value">
-                              <div className="toss-list-item-value-main" style={{ color: 'var(--color-success)' }}>
-                                {calculateAge(student?.birthdate)}세
-                              </div>
+                          <div key={record.id} className="swipeable-container">
+                            <div className="swipeable-actions">
                               <button
-                                className="btn btn-ghost btn-sm"
+                                className="swipeable-action-btn delete"
                                 onClick={() => handleDeleteAttendance(record.id)}
-                                style={{
-                                  color: 'var(--color-danger)',
-                                  padding: '4px 8px',
-                                  fontSize: '0.75rem',
-                                  marginTop: '2px'
-                                }}
                               >
-                                삭제
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6"></polyline>
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
                               </button>
+                            </div>
+                            <div
+                              className="swipeable-card"
+                              style={{
+                                transform: `translateX(-${swipeOffset[record.id] || 0}px)`
+                              }}
+                              onTouchStart={(e) => handleTouchStart(e, record.id)}
+                              onTouchMove={(e) => handleTouchMove(e, record.id)}
+                              onTouchEnd={() => handleTouchEnd(record.id)}
+                            >
+                              <div className="toss-card-item-content">
+                                <div className="toss-list-item-icon success">
+                                  {student?.name?.charAt(0) || '?'}
+                                </div>
+                                <div className="toss-list-item-content">
+                                  <div className="toss-list-item-title">
+                                    {student?.name || '-'}
+                                  </div>
+                                  <div className="toss-list-item-subtitle">
+                                    {classInfo?.name || '-'}
+                                  </div>
+                                </div>
+                                <div className="toss-list-item-value">
+                                  <div className="toss-list-item-value-main" style={{ color: 'var(--color-success)' }}>
+                                    {calculateAge(student?.birthdate)}세
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         );
