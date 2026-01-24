@@ -32,7 +32,13 @@ export const logAction = (action, target = null) => {
 // 로그 저장 함수
 const saveLog = async (req, action, target, responseData) => {
   try {
-    const username = req.user?.username || 'unknown';
+    // LOGIN/SIGNUP의 경우 req.body.username 사용, 그 외에는 req.user.username 사용
+    let username = req.user?.username;
+    if (!username && (action === 'LOGIN' || action === 'SIGNUP')) {
+      username = req.body?.username || 'unknown';
+    }
+    username = username || 'unknown';
+
     let details = null;
 
     // 액션별 상세 정보 생성
