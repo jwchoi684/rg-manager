@@ -205,9 +205,21 @@ function Dashboard() {
       }
       setMonthlyDistinctStudents(monthlyStudents);
 
-      // 수업별 고유 학생 수 계산
+      // 수업별 고유 학생 수 계산 (지난달)
+      const lastMonth = new Date();
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      const lastMonthYear = lastMonth.getFullYear();
+      const lastMonthMonth = lastMonth.getMonth();
+      const lastMonthStart = `${lastMonthYear}-${String(lastMonthMonth + 1).padStart(2, '0')}-01`;
+      const lastMonthLastDay = new Date(lastMonthYear, lastMonthMonth + 1, 0).getDate();
+      const lastMonthEnd = `${lastMonthYear}-${String(lastMonthMonth + 1).padStart(2, '0')}-${String(lastMonthLastDay).padStart(2, '0')}`;
+
       const classStudents = classesData.map(classItem => {
-        const classAttendance = attendance.filter(a => a.classId === classItem.id);
+        const classAttendance = attendance.filter(a =>
+          a.classId === classItem.id &&
+          a.date >= lastMonthStart &&
+          a.date <= lastMonthEnd
+        );
         const distinctStudents = new Set(classAttendance.map(a => a.studentId));
         return {
           name: classItem.name,
@@ -519,7 +531,7 @@ function Dashboard() {
             수업별 참여 학생 수
           </h3>
           <div style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)', marginBottom: 'var(--spacing-lg)' }}>
-            각 수업에 1회 이상 출석한 고유 학생 수 (전체 기간)
+            각 수업에 1회 이상 출석한 고유 학생 수 (지난달)
           </div>
           <ResponsiveContainer width="100%" height={Math.max(200, classDistinctStudents.length * 45)}>
             <BarChart
