@@ -11,6 +11,8 @@ function ClassStudentManagement() {
 
   const [students, setStudents] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [enrolledSearch, setEnrolledSearch] = useState('');
+  const [availableSearch, setAvailableSearch] = useState('');
 
   useEffect(() => {
     const handleResize = () => {
@@ -55,16 +57,42 @@ function ClassStudentManagement() {
 
   const getStudentsInClass = () => {
     if (!classItem) return [];
-    return students.filter(student =>
+    let filtered = students.filter(student =>
       student.classIds && student.classIds.includes(classItem.id)
     );
+    if (enrolledSearch) {
+      filtered = filtered.filter(s =>
+        s.name.toLowerCase().includes(enrolledSearch.toLowerCase())
+      );
+    }
+    return filtered;
   };
 
   const getStudentsNotInClass = () => {
     if (!classItem) return [];
-    return students.filter(student =>
+    let filtered = students.filter(student =>
       !student.classIds || !student.classIds.includes(classItem.id)
     );
+    if (availableSearch) {
+      filtered = filtered.filter(s =>
+        s.name.toLowerCase().includes(availableSearch.toLowerCase())
+      );
+    }
+    return filtered;
+  };
+
+  const getEnrolledCount = () => {
+    if (!classItem) return 0;
+    return students.filter(student =>
+      student.classIds && student.classIds.includes(classItem.id)
+    ).length;
+  };
+
+  const getAvailableCount = () => {
+    if (!classItem) return 0;
+    return students.filter(student =>
+      !student.classIds || !student.classIds.includes(classItem.id)
+    ).length;
   };
 
   const addStudentToClass = async (studentId) => {
@@ -164,9 +192,50 @@ function ClassStudentManagement() {
             <h3 className="card-title">
               등록된 학생
               <span className="badge badge-success" style={{ marginLeft: '8px' }}>
-                {studentsInClass.length}명
+                {getEnrolledCount()}명
               </span>
             </h3>
+          </div>
+
+          {/* Search Input */}
+          <div style={{ marginTop: 'var(--spacing-md)', position: 'relative' }}>
+            <input
+              type="text"
+              placeholder="이름으로 검색"
+              value={enrolledSearch}
+              onChange={(e) => setEnrolledSearch(e.target.value)}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              style={{ paddingRight: enrolledSearch ? '36px' : undefined }}
+            />
+            {enrolledSearch && (
+              <button
+                type="button"
+                onClick={() => setEnrolledSearch('')}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'var(--color-gray-300)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '20px',
+                  height: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  color: 'white',
+                  lineHeight: 1
+                }}
+              >
+                ×
+              </button>
+            )}
           </div>
 
           {studentsInClass.length > 0 ? (
@@ -202,9 +271,19 @@ function ClassStudentManagement() {
             </div>
           ) : (
             <div className="empty-state" style={{ padding: 'var(--spacing-2xl) var(--spacing-lg)' }}>
-              <div className="empty-state-icon">👥</div>
-              <div className="empty-state-title">등록된 학생이 없습니다</div>
-              <div className="empty-state-description">오른쪽에서 학생을 등록해주세요.</div>
+              {enrolledSearch ? (
+                <>
+                  <div className="empty-state-icon">🔍</div>
+                  <div className="empty-state-title">검색 결과가 없습니다</div>
+                  <div className="empty-state-description">다른 이름으로 검색해보세요.</div>
+                </>
+              ) : (
+                <>
+                  <div className="empty-state-icon">👥</div>
+                  <div className="empty-state-title">등록된 학생이 없습니다</div>
+                  <div className="empty-state-description">{isMobile ? '아래에서' : '오른쪽에서'} 학생을 등록해주세요.</div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -215,9 +294,50 @@ function ClassStudentManagement() {
             <h3 className="card-title">
               등록 가능한 학생
               <span className="badge badge-primary" style={{ marginLeft: '8px' }}>
-                {studentsNotInClass.length}명
+                {getAvailableCount()}명
               </span>
             </h3>
+          </div>
+
+          {/* Search Input */}
+          <div style={{ marginTop: 'var(--spacing-md)', position: 'relative' }}>
+            <input
+              type="text"
+              placeholder="이름으로 검색"
+              value={availableSearch}
+              onChange={(e) => setAvailableSearch(e.target.value)}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              style={{ paddingRight: availableSearch ? '36px' : undefined }}
+            />
+            {availableSearch && (
+              <button
+                type="button"
+                onClick={() => setAvailableSearch('')}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'var(--color-gray-300)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '20px',
+                  height: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  color: 'white',
+                  lineHeight: 1
+                }}
+              >
+                ×
+              </button>
+            )}
           </div>
 
           {studentsNotInClass.length > 0 ? (
@@ -253,9 +373,19 @@ function ClassStudentManagement() {
             </div>
           ) : (
             <div className="empty-state" style={{ padding: 'var(--spacing-2xl) var(--spacing-lg)' }}>
-              <div className="empty-state-icon">✓</div>
-              <div className="empty-state-title">모든 학생이 등록되어 있습니다</div>
-              <div className="empty-state-description">등록 가능한 학생이 없습니다.</div>
+              {availableSearch ? (
+                <>
+                  <div className="empty-state-icon">🔍</div>
+                  <div className="empty-state-title">검색 결과가 없습니다</div>
+                  <div className="empty-state-description">다른 이름으로 검색해보세요.</div>
+                </>
+              ) : (
+                <>
+                  <div className="empty-state-icon">✓</div>
+                  <div className="empty-state-title">모든 학생이 등록되어 있습니다</div>
+                  <div className="empty-state-description">등록 가능한 학생이 없습니다.</div>
+                </>
+              )}
             </div>
           )}
         </div>
