@@ -170,9 +170,6 @@ function App() {
               >
                 <span className="mobile-menu-icon">{link.icon}</span>
                 <span className="mobile-menu-label">{link.label}</span>
-                {isActive(link.path) && (
-                  <span className="mobile-menu-active-indicator"></span>
-                )}
               </Link>
             ))}
           </div>
@@ -188,31 +185,20 @@ function App() {
                 >
                   <span className="mobile-menu-icon">{link.icon}</span>
                   <span className="mobile-menu-label">{link.label}</span>
-                  {isActive(link.path) && (
-                    <span className="mobile-menu-active-indicator"></span>
-                  )}
                 </Link>
               ))}
             </div>
           )}
-        </div>
-        <div className="mobile-menu-footer">
-          <div className="mobile-menu-user">
-            <span className="mobile-menu-user-icon">👤</span>
-            <span className="mobile-menu-user-name">{user?.username}</span>
-            {user?.role === 'admin' && <span className="mobile-menu-user-badge">관리자</span>}
+          <div className="mobile-menu-section">
+            <div className="mobile-menu-section-title">계정</div>
+            <button
+              onClick={handleLogout}
+              className="mobile-menu-item"
+            >
+              <span className="mobile-menu-icon">🚪</span>
+              <span className="mobile-menu-label">로그아웃</span>
+            </button>
           </div>
-          <button
-            onClick={handleLogout}
-            className="mobile-menu-logout"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16 17 21 12 16 7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-            로그아웃
-          </button>
         </div>
       </div>
 
