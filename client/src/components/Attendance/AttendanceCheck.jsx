@@ -339,7 +339,7 @@ function AttendanceCheck() {
                 </select>
               </div>
 
-              <div className="form-group" style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+              <div className="form-group" style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
                 <label className="form-label">학생 *</label>
                 <input
                   type="text"
@@ -351,6 +351,10 @@ function AttendanceCheck() {
                     setShowStudentDropdown(true);
                   }}
                   onFocus={() => setShowStudentDropdown(true)}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
                 />
                 {showStudentDropdown && (
                   <div
@@ -365,25 +369,35 @@ function AttendanceCheck() {
                       border: '1px solid var(--color-gray-200)',
                       borderRadius: 'var(--radius-md)',
                       boxShadow: 'var(--shadow-lg)',
-                      zIndex: 10
+                      zIndex: 10,
+                      WebkitOverflowScrolling: 'touch'
                     }}
                   >
                     {getFilteredStudentsForModal().length > 0 ? (
                       getFilteredStudentsForModal().map(s => (
                         <div
                           key={s.id}
-                          onClick={() => handleSelectStudent(s.id)}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleSelectStudent(s.id);
+                          }}
+                          onTouchStart={(e) => {
+                            e.stopPropagation();
+                          }}
+                          onTouchEnd={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSelectStudent(s.id);
+                          }}
                           style={{
-                            padding: 'var(--spacing-sm) var(--spacing-md)',
+                            padding: 'var(--spacing-md)',
                             cursor: 'pointer',
                             backgroundColor: addFormStudent === s.id.toString() ? 'var(--color-primary-bg)' : 'transparent',
                             borderBottom: '1px solid var(--color-gray-100)'
                           }}
-                          onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--color-gray-50)'}
-                          onMouseLeave={(e) => e.target.style.backgroundColor = addFormStudent === s.id.toString() ? 'var(--color-primary-bg)' : 'transparent'}
                         >
-                          <div style={{ fontWeight: 500 }}>{s.name}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>
+                          <div style={{ fontWeight: 500, pointerEvents: 'none' }}>{s.name}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', pointerEvents: 'none' }}>
                             {s.birthdate || '-'} ({calculateAge(s.birthdate)}세)
                           </div>
                         </div>
