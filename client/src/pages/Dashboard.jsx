@@ -2,6 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import DateRangePicker from '../components/common/DateRangePicker';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 
 function Dashboard() {
   const { user } = useAuth();
@@ -16,6 +25,7 @@ function Dashboard() {
   const [weeklyTotal, setWeeklyTotal] = useState(0);
   const [monthlyTotal, setMonthlyTotal] = useState(0);
   const [yearlyTotal, setYearlyTotal] = useState(0);
+  const [monthlyDistinctStudents, setMonthlyDistinctStudents] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('all');
@@ -167,6 +177,30 @@ function Dashboard() {
         yearlyCount += attendance.filter(a => a.date === dateStr).length;
       }
       setYearlyTotal(yearlyCount);
+
+      // 월별 고유 학생 수 계산 (최근 6개월)
+      const monthlyStudents = [];
+      for (let i = 5; i >= 0; i--) {
+        const targetDate = new Date();
+        targetDate.setMonth(targetDate.getMonth() - i);
+        const year = targetDate.getFullYear();
+        const month = targetDate.getMonth();
+
+        // 해당 월의 시작일과 마지막일
+        const monthStart = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+        const lastDay = new Date(year, month + 1, 0).getDate();
+        const monthEnd = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+        // 해당 월의 출석 기록에서 고유 학생 수 계산
+        const monthAttendance = attendance.filter(a => a.date >= monthStart && a.date <= monthEnd);
+        const distinctStudents = new Set(monthAttendance.map(a => a.studentId));
+
+        monthlyStudents.push({
+          month: `${month + 1}월`,
+          학생수: distinctStudents.size
+        });
+      }
+      setMonthlyDistinctStudents(monthlyStudents);
     } catch (error) {
       console.error('데이터 로드 실패:', error);
     }
@@ -263,6 +297,55 @@ function Dashboard() {
           <div className="stat-value warning">{yearlyTotal}명</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)', marginTop: '4px' }}>최근 365일</div>
         </div>
+      </div>
+
+      {/* Monthly Distinct Students Chart */}
+      <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
+        <h3 className="card-title" style={{ marginBottom: 'var(--spacing-lg)' }}>
+          월별 수업 참여 학생 수
+        </h3>
+        <div style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)', marginBottom: 'var(--spacing-lg)' }}>
+          매월 1회 이상 출석한 고유 학생 수 (최근 6개월)
+        </div>
+        {monthlyDistinctStudents.length > 0 ? (
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={monthlyDistinctStudents} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-gray-200)" />
+              <XAxis
+                dataKey="month"
+                tick={{ fontSize: 12, fill: 'var(--color-gray-600)' }}
+                tickLine={false}
+                axisLine={{ stroke: 'var(--color-gray-200)' }}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: 'var(--color-gray-600)' }}
+                tickLine={false}
+                axisLine={{ stroke: 'var(--color-gray-200)' }}
+                allowDecimals={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  border: '1px solid var(--color-gray-200)',
+                  borderRadius: 'var(--radius-md)',
+                  boxShadow: 'var(--shadow-md)'
+                }}
+                labelStyle={{ color: 'var(--color-gray-700)', fontWeight: 600 }}
+                formatter={(value) => [`${value}명`, '참여 학생']}
+              />
+              <Bar
+                dataKey="학생수"
+                fill="var(--color-primary)"
+                radius={[4, 4, 0, 0]}
+                maxBarSize={50}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="empty-state" style={{ padding: 'var(--spacing-xl)' }}>
+            <div className="empty-state-description">데이터를 불러오는 중...</div>
+          </div>
+        )}
       </div>
 
       {/* Attendance by Class */}
