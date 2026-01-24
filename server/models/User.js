@@ -59,21 +59,28 @@ class User {
   static async update(id, data) {
     const { username, password, role } = data;
 
-    // 비밀번호가 제공된 경우에만 해싱
-    let hashedPassword = password;
-    if (password) {
-      hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    // 비밀번호가 제공된 경우에만 비밀번호 업데이트
+    if (password && password.trim() !== '') {
+      const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+      const result = await pool.query(
+        `UPDATE users
+         SET username = $1, password = $2, role = $3
+         WHERE id = $4
+         RETURNING id, username, role, "createdAt"`,
+        [username, hashedPassword, role, id]
+      );
+      return result.rows.length > 0 ? result.rows[0] : null;
+    } else {
+      // 비밀번호 변경 없이 다른 정보만 업데이트
+      const result = await pool.query(
+        `UPDATE users
+         SET username = $1, role = $2
+         WHERE id = $3
+         RETURNING id, username, role, "createdAt"`,
+        [username, role, id]
+      );
+      return result.rows.length > 0 ? result.rows[0] : null;
     }
-
-    const result = await pool.query(
-      `UPDATE users
-       SET username = $1, password = $2, role = $3
-       WHERE id = $4
-       RETURNING id, username, role, "createdAt"`,
-      [username, hashedPassword, role, id]
-    );
-
-    return result.rows.length > 0 ? result.rows[0] : null;
   }
 
   static async delete(id) {
