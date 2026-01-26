@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { matchKoreanSearch } from '../utils/koreanSearch';
 
 const APPARATUS_NAMES = {
   freehand: '맨손',
@@ -174,9 +175,8 @@ function StudentCompetitions() {
       return allRecords;
     }
 
-    const searchLower = searchText.toLowerCase();
     return allRecords.filter(record =>
-      record.student.name.toLowerCase().includes(searchLower)
+      matchKoreanSearch(searchText, record.student.name)
     );
   };
 

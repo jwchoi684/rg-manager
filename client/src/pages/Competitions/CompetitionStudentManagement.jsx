@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { matchKoreanSearch } from '../../utils/koreanSearch';
 
 const APPARATUS_LIST = [
   { id: 'freehand', name: '맨손', hasLevel: true },
@@ -92,7 +93,7 @@ function CompetitionStudentManagement() {
     let filtered = participantsWithEvents;
     if (enrolledSearch) {
       filtered = filtered.filter(s =>
-        s.name.toLowerCase().includes(enrolledSearch.toLowerCase())
+        matchKoreanSearch(enrolledSearch, s.name)
       );
     }
     return filtered;
@@ -102,7 +103,7 @@ function CompetitionStudentManagement() {
     let filtered = students.filter(student => !participantIds.includes(student.id));
     if (availableSearch) {
       filtered = filtered.filter(s =>
-        s.name.toLowerCase().includes(availableSearch.toLowerCase())
+        matchKoreanSearch(availableSearch, s.name)
       );
     }
     return filtered;

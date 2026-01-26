@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { matchKoreanSearch } from '../../utils/koreanSearch';
 
 function ClassStudentManagement() {
   const { user } = useAuth();
@@ -62,7 +63,7 @@ function ClassStudentManagement() {
     );
     if (enrolledSearch) {
       filtered = filtered.filter(s =>
-        s.name.toLowerCase().includes(enrolledSearch.toLowerCase())
+        matchKoreanSearch(enrolledSearch, s.name)
       );
     }
     return filtered;
@@ -75,7 +76,7 @@ function ClassStudentManagement() {
     );
     if (availableSearch) {
       filtered = filtered.filter(s =>
-        s.name.toLowerCase().includes(availableSearch.toLowerCase())
+        matchKoreanSearch(availableSearch, s.name)
       );
     }
     return filtered;

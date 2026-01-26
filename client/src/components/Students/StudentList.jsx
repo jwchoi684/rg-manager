@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { fetchWithAuth } from "../../utils/api";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { matchKoreanSearch } from "../../utils/koreanSearch";
 
 function StudentList() {
   const { user } = useAuth();
@@ -133,7 +134,7 @@ function StudentList() {
 
     if (searchName) {
       sortedStudents = sortedStudents.filter(student =>
-        student.name.toLowerCase().includes(searchName.toLowerCase())
+        matchKoreanSearch(searchName, student.name)
       );
     }
 

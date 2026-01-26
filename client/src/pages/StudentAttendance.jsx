@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import DateRangePicker from '../components/common/DateRangePicker';
+import { matchKoreanSearch } from '../utils/koreanSearch';
 
 function StudentAttendance() {
   const { user } = useAuth();
@@ -208,7 +209,7 @@ function StudentAttendance() {
     }
     if (studentSearchText) {
       filtered = filtered.filter(s =>
-        s.name.toLowerCase().includes(studentSearchText.toLowerCase())
+        matchKoreanSearch(studentSearchText, s.name)
       );
     }
     return filtered;

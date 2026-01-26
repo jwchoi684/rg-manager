@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { fetchWithAuth } from "../../utils/api";
 import { useAuth } from "../../context/AuthContext";
+import { matchKoreanSearch } from "../../utils/koreanSearch";
 
 function AttendanceCheck() {
   const { user } = useAuth();
@@ -222,7 +223,7 @@ function AttendanceCheck() {
   const getFilteredStudentsForModal = () => {
     if (!studentSearchText) return students;
     return students.filter(s =>
-      s.name.toLowerCase().includes(studentSearchText.toLowerCase())
+      matchKoreanSearch(studentSearchText, s.name)
     );
   };
 
