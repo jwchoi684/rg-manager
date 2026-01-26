@@ -33,6 +33,12 @@ function CompetitionStudentManagement() {
   const [selectedEvents, setSelectedEvents] = useState({});
   const [isEditingEvents, setIsEditingEvents] = useState(false);
 
+  // 스와이프 상태
+  const [swipedId, setSwipedId] = useState(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+  const [swipeOffset, setSwipeOffset] = useState({});
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -250,20 +256,69 @@ function CompetitionStudentManagement() {
     }
   };
 
-  const removeStudentFromCompetition = async (studentId, e) => {
-    e.stopPropagation();
+  const removeStudentFromCompetition = async (studentId) => {
     if (confirm('이 학생을 대회에서 제외하시겠습니까?')) {
       try {
         const response = await fetchWithAuth(`/api/competitions/${competition.id}/students/${studentId}`, {
           method: 'DELETE'
         });
         if (response.ok) {
+          setSwipedId(null);
+          setSwipeOffset({});
           loadData();
         }
       } catch (error) {
         console.error('학생 제외 실패:', error);
         alert('학생 제외에 실패했습니다.');
       }
+    }
+  };
+
+  // 스와이프 핸들러
+  const minSwipeDistance = 50;
+  const swipeRevealWidth = 72;
+
+  const handleTouchStart = (e, id) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+    if (swipedId && swipedId !== id) {
+      setSwipedId(null);
+      setSwipeOffset({});
+    }
+  };
+
+  const handleTouchMove = (e, id) => {
+    const currentTouch = e.targetTouches[0].clientX;
+    setTouchEnd(currentTouch);
+    const diff = touchStart - currentTouch;
+    if (diff > 0) {
+      setSwipeOffset({ [id]: Math.min(diff, swipeRevealWidth) });
+    } else if (swipedId === id) {
+      setSwipeOffset({ [id]: Math.max(swipeRevealWidth + diff, 0) });
+    }
+  };
+
+  const handleTouchEnd = (id) => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      setSwipedId(id);
+      setSwipeOffset({ [id]: swipeRevealWidth });
+    } else if (isRightSwipe || distance < minSwipeDistance) {
+      setSwipedId(null);
+      setSwipeOffset({});
+    }
+  };
+
+  const handleCardClick = (student) => {
+    if (swipedId === student.id) {
+      setSwipedId(null);
+      setSwipeOffset({});
+    } else if (!swipedId) {
+      openEventModal(student, true);
     }
   };
 
@@ -384,79 +439,86 @@ function CompetitionStudentManagement() {
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: 'var(--spacing-sm)',
               marginTop: 'var(--spacing-lg)'
             }}>
               {participants.map(student => (
-                <div
-                  key={student.id}
-                  className="list-item"
-                  style={{
-                    borderLeft: '4px solid var(--color-success)',
-                    marginBottom: 0,
-                    flexDirection: 'column',
-                    alignItems: 'stretch',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => openEventModal(student, true)}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div className="list-item-content">
-                      <div className="list-item-title">{student.name}</div>
-                      <div className="list-item-subtitle">
-                        {student.birthdate} ({calculateAge(student.birthdate)}세)
-                      </div>
-                    </div>
+                <div key={student.id} className="swipeable-container">
+                  <div className="swipeable-actions">
                     <button
-                      className="btn btn-danger btn-sm"
-                      onClick={(e) => removeStudentFromCompetition(student.id, e)}
+                      className="swipeable-action-btn delete"
+                      onClick={() => removeStudentFromCompetition(student.id)}
                     >
-                      제외
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      </svg>
                     </button>
                   </div>
-                  {student.events && student.events.length > 0 && (
-                    <div style={{
-                      marginTop: 'var(--spacing-sm)',
-                      paddingTop: 'var(--spacing-sm)',
-                      borderTop: '1px solid var(--color-gray-200)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '6px'
-                    }}>
-                      {student.events.map((event, idx) => {
-                        const apparatus = APPARATUS_LIST.find(a => a.id === event.apparatus);
-                        return (
-                          <div key={idx} style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            flexWrap: 'wrap'
-                          }}>
-                            <span
-                              className={`badge ${event.routine === '자유' ? 'badge-primary' : 'badge-gray'}`}
-                              style={{ fontSize: '0.75rem' }}
-                            >
-                              {apparatus?.name || event.apparatus}
-                              {event.level && ` ${event.level}`}
-                              {' '}({event.routine})
-                            </span>
-                            {event.award && (
-                              <span style={{
-                                fontSize: '0.75rem',
-                                color: 'var(--color-warning)',
-                                fontWeight: 600,
+                  <div
+                    className="swipeable-card"
+                    style={{
+                      transform: `translateX(-${swipeOffset[student.id] || 0}px)`,
+                      borderLeft: '4px solid var(--color-success)'
+                    }}
+                    onTouchStart={(e) => handleTouchStart(e, student.id)}
+                    onTouchMove={(e) => handleTouchMove(e, student.id)}
+                    onTouchEnd={() => handleTouchEnd(student.id)}
+                    onClick={() => handleCardClick(student)}
+                  >
+                    <div style={{ padding: 'var(--spacing-md)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ fontWeight: 600, color: 'var(--color-gray-900)' }}>{student.name}</div>
+                          <div style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)' }}>
+                            {student.birthdate} ({calculateAge(student.birthdate)}세)
+                          </div>
+                        </div>
+                      </div>
+                      {student.events && student.events.length > 0 && (
+                        <div style={{
+                          marginTop: 'var(--spacing-sm)',
+                          paddingTop: 'var(--spacing-sm)',
+                          borderTop: '1px solid var(--color-gray-200)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px'
+                        }}>
+                          {student.events.map((event, idx) => {
+                            const apparatus = APPARATUS_LIST.find(a => a.id === event.apparatus);
+                            return (
+                              <div key={idx} style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '2px'
+                                gap: '6px',
+                                flexWrap: 'wrap'
                               }}>
-                                🏅 {event.award}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
+                                <span
+                                  className={`badge ${event.routine === '자유' ? 'badge-primary' : 'badge-gray'}`}
+                                  style={{ fontSize: '0.75rem' }}
+                                >
+                                  {apparatus?.name || event.apparatus}
+                                  {event.level && ` ${event.level}`}
+                                  {' '}({event.routine})
+                                </span>
+                                {event.award && (
+                                  <span style={{
+                                    fontSize: '0.75rem',
+                                    color: 'var(--color-warning)',
+                                    fontWeight: 600,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2px'
+                                  }}>
+                                    🏅 {event.award}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               ))}
             </div>
