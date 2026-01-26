@@ -769,8 +769,8 @@ function CompetitionStudentManagement() {
                               onChange={(e) => setAward(apparatus.id, e.target.value)}
                               style={{
                                 width: '100%',
-                                padding: '6px 10px',
-                                fontSize: '0.8125rem',
+                                padding: '8px 12px',
+                                fontSize: '16px',
                                 border: '1px solid var(--color-gray-200)',
                                 borderRadius: 'var(--radius-md)'
                               }}
