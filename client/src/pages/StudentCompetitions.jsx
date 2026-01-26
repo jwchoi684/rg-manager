@@ -2,11 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
+const APPARATUS_NAMES = {
+  freehand: '맨손',
+  ball: '볼',
+  hoop: '후프',
+  clubs: '곤봉',
+  ribbon: '리본',
+  rope: '줄'
+};
+
 function StudentCompetitions() {
   const { user } = useAuth();
   const [students, setStudents] = useState([]);
   const [competitions, setCompetitions] = useState([]);
-  const [competitionStudents, setCompetitionStudents] = useState({});
+  const [competitionStudentsWithEvents, setCompetitionStudentsWithEvents] = useState({});
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('all');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -78,16 +87,16 @@ function StudentCompetitions() {
       setStudents(studentsData);
       setCompetitions(competitionsData);
 
-      // Load participant IDs for each competition
-      const compStudents = {};
+      // Load participants with events for each competition
+      const compStudentsWithEvents = {};
       await Promise.all(
         competitionsData.map(async (comp) => {
-          const res = await fetchWithAuth(`/api/competitions/${comp.id}/student-ids`);
-          const studentIds = await res.json();
-          compStudents[comp.id] = studentIds;
+          const res = await fetchWithAuth(`/api/competitions/${comp.id}/students-with-events`);
+          const studentsWithEvents = await res.json();
+          compStudentsWithEvents[comp.id] = studentsWithEvents;
         })
       );
-      setCompetitionStudents(compStudents);
+      setCompetitionStudentsWithEvents(compStudentsWithEvents);
     } catch (error) {
       console.error('데이터 로드 실패:', error);
     }
@@ -111,21 +120,40 @@ function StudentCompetitions() {
     return competitionDate >= today;
   };
 
+  // Format events for display
+  const formatEvents = (events) => {
+    if (!events || events.length === 0) return '-';
+    return events.map(e => {
+      let name = APPARATUS_NAMES[e.apparatus] || e.apparatus;
+      if (e.routine) name += ` (${e.routine})`;
+      if (e.level) name += ` ${e.level}`;
+      return name;
+    }).join(', ');
+  };
+
+  // Format awards for display
+  const formatAwards = (events) => {
+    if (!events || events.length === 0) return '-';
+    const awards = events.filter(e => e.award).map(e => {
+      const name = APPARATUS_NAMES[e.apparatus] || e.apparatus;
+      return `${name}: ${e.award}`;
+    });
+    return awards.length > 0 ? awards.join(', ') : '-';
+  };
+
   // Build all participation records (student + competition)
   const getAllParticipationRecords = () => {
     const records = [];
 
     competitions.forEach(comp => {
-      const participantIds = competitionStudents[comp.id] || [];
-      participantIds.forEach(studentId => {
-        const student = students.find(s => s.id === studentId);
-        if (student) {
-          records.push({
-            id: `${comp.id}-${studentId}`,
-            student,
-            competition: comp
-          });
-        }
+      const participantsWithEvents = competitionStudentsWithEvents[comp.id] || [];
+      participantsWithEvents.forEach(participant => {
+        records.push({
+          id: `${comp.id}-${participant.id}`,
+          student: participant,
+          competition: comp,
+          events: participant.events || []
+        });
       });
     });
 
@@ -296,7 +324,8 @@ function StudentCompetitions() {
                       <th>학생</th>
                       <th>날짜</th>
                       <th>대회명</th>
-                      <th>장소</th>
+                      <th>종목</th>
+                      <th>수상 기록</th>
                       <th style={{ textAlign: 'center' }}>상태</th>
                     </tr>
                   </thead>
@@ -321,11 +350,29 @@ function StudentCompetitions() {
                           <span style={{ fontWeight: 500 }}>{formatDate(record.competition.date)}</span>
                         </td>
                         <td>
-                          <span style={{ fontWeight: 500 }}>
-                            {record.competition.name}
+                          <div>
+                            <span style={{ fontWeight: 500 }}>
+                              {record.competition.name}
+                            </span>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>
+                              {record.competition.location}
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '0.875rem' }}>
+                            {formatEvents(record.events)}
                           </span>
                         </td>
-                        <td>{record.competition.location}</td>
+                        <td>
+                          <span style={{
+                            fontSize: '0.875rem',
+                            color: formatAwards(record.events) !== '-' ? 'var(--color-primary)' : 'inherit',
+                            fontWeight: formatAwards(record.events) !== '-' ? 500 : 400
+                          }}>
+                            {formatAwards(record.events)}
+                          </span>
+                        </td>
                         <td style={{ textAlign: 'center' }}>
                           {isUpcoming(record.competition.date) ? (
                             <span className="badge badge-success">예정</span>
@@ -392,6 +439,43 @@ function StudentCompetitions() {
                       <div className="list-item-subtitle">
                         {formatDate(record.competition.date)} · {record.competition.location}
                       </div>
+                      {record.events && record.events.length > 0 && (
+                        <div style={{
+                          marginTop: 'var(--spacing-sm)',
+                          paddingTop: 'var(--spacing-sm)',
+                          borderTop: '1px solid var(--color-gray-200)'
+                        }}>
+                          <div style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--color-gray-500)',
+                            marginBottom: '2px'
+                          }}>
+                            종목
+                          </div>
+                          <div style={{ fontSize: '0.875rem', color: 'var(--color-gray-700)' }}>
+                            {formatEvents(record.events)}
+                          </div>
+                          {formatAwards(record.events) !== '-' && (
+                            <>
+                              <div style={{
+                                fontSize: '0.75rem',
+                                color: 'var(--color-gray-500)',
+                                marginTop: 'var(--spacing-xs)',
+                                marginBottom: '2px'
+                              }}>
+                                수상 기록
+                              </div>
+                              <div style={{
+                                fontSize: '0.875rem',
+                                color: 'var(--color-primary)',
+                                fontWeight: 500
+                              }}>
+                                {formatAwards(record.events)}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
