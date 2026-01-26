@@ -155,6 +155,12 @@ const initDatabase = async () => {
       ADD COLUMN IF NOT EXISTS paid BOOLEAN DEFAULT FALSE
     `);
 
+    // competition_students 테이블에 coachFeePaid 컬럼 추가 (출강비 납부 여부)
+    await client.query(`
+      ALTER TABLE competition_students
+      ADD COLUMN IF NOT EXISTS "coachFeePaid" BOOLEAN DEFAULT FALSE
+    `);
+
     // 기본 관리자 계정 생성 (username: admin, password: admin123)
     const adminCheck = await client.query('SELECT * FROM users WHERE username = $1', ['admin']);
     const hashedAdminPassword = await bcrypt.hash('admin123', SALT_ROUNDS);

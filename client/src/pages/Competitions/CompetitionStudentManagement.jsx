@@ -322,23 +322,29 @@ function CompetitionStudentManagement() {
     }
   };
 
-  // 참가비 납부 상태 토글
-  const togglePaid = async (studentId, currentPaid, e) => {
+  // 납부 상태 토글 (type: 'paid' 또는 'coachFeePaid')
+  const togglePayment = async (studentId, type, e) => {
     e.stopPropagation();
+    const student = participantsWithEvents.find(p => p.id === studentId);
+    if (!student) return;
+
+    const newPaid = type === 'paid' ? !student.paid : student.paid;
+    const newCoachFeePaid = type === 'coachFeePaid' ? !student.coachFeePaid : student.coachFeePaid;
+
     try {
       const response = await fetchWithAuth(
         `/api/competitions/${competition.id}/students/${studentId}/paid`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paid: !currentPaid })
+          body: JSON.stringify({ paid: newPaid, coachFeePaid: newCoachFeePaid })
         }
       );
       if (response.ok) {
         // 로컬 상태 업데이트
         setParticipantsWithEvents(prev =>
           prev.map(p =>
-            p.id === studentId ? { ...p, paid: !currentPaid } : p
+            p.id === studentId ? { ...p, paid: newPaid, coachFeePaid: newCoachFeePaid } : p
           )
         );
       }
@@ -498,41 +504,79 @@ function CompetitionStudentManagement() {
                             {student.birthdate} ({calculateAge(student.birthdate)}세)
                           </div>
                         </div>
-                        <div
-                          onClick={(e) => togglePaid(student.id, student.paid, e)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '4px 10px',
-                            borderRadius: 'var(--radius-full)',
-                            backgroundColor: student.paid ? 'var(--color-success-bg)' : 'var(--color-gray-100)',
-                            cursor: 'pointer',
-                            border: student.paid ? '1px solid var(--color-success)' : '1px solid var(--color-gray-300)'
-                          }}
-                        >
-                          <span style={{
-                            width: '16px',
-                            height: '16px',
-                            borderRadius: '4px',
-                            border: student.paid ? '2px solid var(--color-success)' : '2px solid var(--color-gray-400)',
-                            backgroundColor: student.paid ? 'var(--color-success)' : 'white',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            fontSize: '10px',
-                            fontWeight: 'bold'
-                          }}>
-                            {student.paid && '✓'}
-                          </span>
-                          <span style={{
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: student.paid ? 'var(--color-success)' : 'var(--color-gray-500)'
-                          }}>
-                            납부
-                          </span>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <div
+                            onClick={(e) => togglePayment(student.id, 'paid', e)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '4px 8px',
+                              borderRadius: 'var(--radius-full)',
+                              backgroundColor: student.paid ? 'var(--color-success-bg)' : 'var(--color-gray-100)',
+                              cursor: 'pointer',
+                              border: student.paid ? '1px solid var(--color-success)' : '1px solid var(--color-gray-300)'
+                            }}
+                          >
+                            <span style={{
+                              width: '14px',
+                              height: '14px',
+                              borderRadius: '3px',
+                              border: student.paid ? '2px solid var(--color-success)' : '2px solid var(--color-gray-400)',
+                              backgroundColor: student.paid ? 'var(--color-success)' : 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'white',
+                              fontSize: '9px',
+                              fontWeight: 'bold'
+                            }}>
+                              {student.paid && '✓'}
+                            </span>
+                            <span style={{
+                              fontSize: '0.6875rem',
+                              fontWeight: 500,
+                              color: student.paid ? 'var(--color-success)' : 'var(--color-gray-500)'
+                            }}>
+                              참가비
+                            </span>
+                          </div>
+                          <div
+                            onClick={(e) => togglePayment(student.id, 'coachFeePaid', e)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '4px 8px',
+                              borderRadius: 'var(--radius-full)',
+                              backgroundColor: student.coachFeePaid ? 'var(--color-primary-bg)' : 'var(--color-gray-100)',
+                              cursor: 'pointer',
+                              border: student.coachFeePaid ? '1px solid var(--color-primary)' : '1px solid var(--color-gray-300)'
+                            }}
+                          >
+                            <span style={{
+                              width: '14px',
+                              height: '14px',
+                              borderRadius: '3px',
+                              border: student.coachFeePaid ? '2px solid var(--color-primary)' : '2px solid var(--color-gray-400)',
+                              backgroundColor: student.coachFeePaid ? 'var(--color-primary)' : 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'white',
+                              fontSize: '9px',
+                              fontWeight: 'bold'
+                            }}>
+                              {student.coachFeePaid && '✓'}
+                            </span>
+                            <span style={{
+                              fontSize: '0.6875rem',
+                              fontWeight: 500,
+                              color: student.coachFeePaid ? 'var(--color-primary)' : 'var(--color-gray-500)'
+                            }}>
+                              출강비
+                            </span>
+                          </div>
                         </div>
                       </div>
                       {student.events && student.events.length > 0 && (

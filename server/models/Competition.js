@@ -146,7 +146,7 @@ class Competition {
 
   static async getStudentsWithEvents(competitionId, userId, role) {
     let query = `
-      SELECT s.*, cs.events, cs.paid FROM students s
+      SELECT s.*, cs.events, cs.paid, cs."coachFeePaid" FROM students s
       INNER JOIN competition_students cs ON s.id = cs."studentId"
       WHERE cs."competitionId" = $1
     `;
@@ -162,14 +162,15 @@ class Competition {
     return result.rows.map(row => ({
       ...row,
       events: row.events ? JSON.parse(row.events) : [],
-      paid: row.paid || false
+      paid: row.paid || false,
+      coachFeePaid: row.coachFeePaid || false
     }));
   }
 
-  static async updateStudentPaid(competitionId, studentId, paid) {
+  static async updateStudentPaid(competitionId, studentId, paid, coachFeePaid) {
     const result = await pool.query(
-      `UPDATE competition_students SET paid = $1 WHERE "competitionId" = $2 AND "studentId" = $3 RETURNING *`,
-      [paid, competitionId, studentId]
+      `UPDATE competition_students SET paid = $1, "coachFeePaid" = $2 WHERE "competitionId" = $3 AND "studentId" = $4 RETURNING *`,
+      [paid, coachFeePaid, competitionId, studentId]
     );
     return result.rows.length > 0 ? result.rows[0] : null;
   }

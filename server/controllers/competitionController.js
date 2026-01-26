@@ -157,8 +157,8 @@ export const getCompetitionStudentIds = async (req, res) => {
 export const updateStudentPaid = async (req, res) => {
   try {
     const { id, studentId } = req.params;
-    const { paid } = req.body;
-    const result = await Competition.updateStudentPaid(id, studentId, paid);
+    const { paid, coachFeePaid } = req.body;
+    const result = await Competition.updateStudentPaid(id, studentId, paid, coachFeePaid);
     if (!result) {
       return res.status(404).json({ error: '등록 정보를 찾을 수 없습니다.' });
     }
