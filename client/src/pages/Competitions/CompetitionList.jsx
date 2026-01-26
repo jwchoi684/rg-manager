@@ -8,6 +8,8 @@ function CompetitionList() {
   const navigate = useNavigate();
   const [competitions, setCompetitions] = useState([]);
   const [participantCounts, setParticipantCounts] = useState({});
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('all');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [swipedId, setSwipedId] = useState(null);
   const [touchStart, setTouchStart] = useState(null);
@@ -23,12 +25,32 @@ function CompetitionList() {
   }, []);
 
   useEffect(() => {
+    if (user?.role === 'admin') {
+      loadUsers();
+    }
     loadCompetitions();
   }, []);
 
+  useEffect(() => {
+    loadCompetitions();
+  }, [selectedUserId]);
+
+  const loadUsers = async () => {
+    try {
+      const response = await fetchWithAuth("/api/auth/users");
+      const data = await response.json();
+      setUsers(data.filter(u => u.role !== 'admin'));
+    } catch (error) {
+      console.error("사용자 목록 로드 실패:", error);
+    }
+  };
+
   const loadCompetitions = async () => {
     try {
-      const response = await fetchWithAuth('/api/competitions');
+      const url = user?.role === 'admin' && selectedUserId !== 'all'
+        ? `/api/competitions?filterUserId=${selectedUserId}`
+        : '/api/competitions';
+      const response = await fetchWithAuth(url);
       const data = await response.json();
       setCompetitions(data);
 
@@ -156,6 +178,32 @@ function CompetitionList() {
           + 대회 등록
         </button>
       </div>
+
+      {/* Admin User Filter */}
+      {user?.role === 'admin' && (
+        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--spacing-md)',
+            flexWrap: 'wrap'
+          }}>
+            <label className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>
+              사용자 선택
+            </label>
+            <select
+              value={selectedUserId}
+              onChange={(e) => setSelectedUserId(e.target.value)}
+              style={{ flex: 1, minWidth: '200px', maxWidth: isMobile ? '100%' : '300px' }}
+            >
+              <option value="all">전체 사용자</option>
+              {users.map(u => (
+                <option key={u.id} value={u.id}>{u.username}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
 
       {/* Competition List Card */}
       <div className="card">

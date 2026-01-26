@@ -82,9 +82,13 @@ function StudentCompetitions() {
         ? `/api/students?filterUserId=${selectedUserId}`
         : '/api/students';
 
+      const competitionsUrl = user?.role === 'admin' && selectedUserId !== 'all'
+        ? `/api/competitions?filterUserId=${selectedUserId}`
+        : '/api/competitions';
+
       const [studentsRes, competitionsRes] = await Promise.all([
         fetchWithAuth(studentsUrl),
-        fetchWithAuth('/api/competitions')
+        fetchWithAuth(competitionsUrl)
       ]);
       const studentsData = await studentsRes.json();
       const competitionsData = await competitionsRes.json();
