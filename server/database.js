@@ -103,6 +103,31 @@ const initDatabase = async () => {
       )
     `);
 
+    // Competitions 테이블 (대회)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS competitions (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        date TEXT NOT NULL,
+        location TEXT NOT NULL,
+        "userId" INTEGER,
+        "createdAt" TEXT NOT NULL
+      )
+    `);
+
+    // Competition Students 테이블 (대회 참가 학생)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS competition_students (
+        id SERIAL PRIMARY KEY,
+        "competitionId" INTEGER NOT NULL,
+        "studentId" INTEGER NOT NULL,
+        "createdAt" TEXT NOT NULL,
+        FOREIGN KEY ("competitionId") REFERENCES competitions(id) ON DELETE CASCADE,
+        FOREIGN KEY ("studentId") REFERENCES students(id) ON DELETE CASCADE,
+        UNIQUE ("competitionId", "studentId")
+      )
+    `);
+
     // 기본 관리자 계정 생성 (username: admin, password: admin123)
     const adminCheck = await client.query('SELECT * FROM users WHERE username = $1', ['admin']);
     const hashedAdminPassword = await bcrypt.hash('admin123', SALT_ROUNDS);

@@ -62,6 +62,16 @@ const saveLog = async (req, action, target, responseData) => {
       details = `로그인 성공`;
     } else if (action === 'SIGNUP' && req.body) {
       details = `사용자명: ${req.body.username}`;
+    } else if (action === 'CREATE_COMPETITION' && responseData) {
+      details = `대회명: ${responseData.name}`;
+    } else if (action === 'UPDATE_COMPETITION' && req.body) {
+      details = `대회명: ${req.body.name}`;
+    } else if (action === 'DELETE_COMPETITION' && target) {
+      details = `ID: ${target}`;
+    } else if (action === 'ADD_COMPETITION_STUDENT' && req.body) {
+      details = `학생 ID: ${req.body.studentId}`;
+    } else if (action === 'REMOVE_COMPETITION_STUDENT' && req.params) {
+      details = `학생 ID: ${req.params.studentId}`;
     }
 
     await pool.query(
