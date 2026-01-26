@@ -109,6 +109,7 @@ function CompetitionForm() {
                 value={formData.date}
                 onChange={(e) => setFormData({...formData, date: e.target.value})}
                 required
+                style={{ minHeight: '44px' }}
               />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
