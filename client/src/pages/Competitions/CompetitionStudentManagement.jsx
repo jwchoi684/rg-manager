@@ -3,6 +3,15 @@ import { fetchWithAuth } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
+const APPARATUS_LIST = [
+  { id: 'freehand', name: '맨손' },
+  { id: 'ball', name: '볼' },
+  { id: 'hoop', name: '후프' },
+  { id: 'clubs', name: '곤봉' },
+  { id: 'ribbon', name: '리본' },
+  { id: 'rope', name: '줄' }
+];
+
 function CompetitionStudentManagement() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -10,11 +19,18 @@ function CompetitionStudentManagement() {
   const competition = location.state?.competition;
 
   const [students, setStudents] = useState([]);
+  const [participantsWithEvents, setParticipantsWithEvents] = useState([]);
   const [participantIds, setParticipantIds] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [enrolledSearch, setEnrolledSearch] = useState('');
   const [availableSearch, setAvailableSearch] = useState('');
+
+  // 종목 선택 모달 상태
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [eventModalStudent, setEventModalStudent] = useState(null);
+  const [selectedEvents, setSelectedEvents] = useState({});
+  const [isEditingEvents, setIsEditingEvents] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -49,21 +65,24 @@ function CompetitionStudentManagement() {
 
   const loadData = async () => {
     try {
-      const [studentsRes, participantIdsRes] = await Promise.all([
+      const [studentsRes, participantIdsRes, participantsWithEventsRes] = await Promise.all([
         fetchWithAuth('/api/students'),
-        fetchWithAuth(`/api/competitions/${competition.id}/student-ids`)
+        fetchWithAuth(`/api/competitions/${competition.id}/student-ids`),
+        fetchWithAuth(`/api/competitions/${competition.id}/students-with-events`)
       ]);
       const studentsData = await studentsRes.json();
       const participantIdsData = await participantIdsRes.json();
+      const participantsWithEventsData = await participantsWithEventsRes.json();
       setStudents(studentsData);
       setParticipantIds(participantIdsData);
+      setParticipantsWithEvents(participantsWithEventsData);
     } catch (error) {
       console.error('데이터 로드 실패:', error);
     }
   };
 
   const getParticipants = () => {
-    let filtered = students.filter(student => participantIds.includes(student.id));
+    let filtered = participantsWithEvents;
     if (enrolledSearch) {
       filtered = filtered.filter(s =>
         s.name.toLowerCase().includes(enrolledSearch.toLowerCase())
@@ -83,7 +102,7 @@ function CompetitionStudentManagement() {
   };
 
   const getParticipantCount = () => {
-    return students.filter(student => participantIds.includes(student.id)).length;
+    return participantIds.length;
   };
 
   const getNonParticipantCount = () => {
@@ -107,16 +126,91 @@ function CompetitionStudentManagement() {
     setSelectedIds([]);
   };
 
-  const addStudentToCompetition = async (studentId) => {
+  // 종목 선택 모달 열기
+  const openEventModal = (student, isEditing = false) => {
+    setEventModalStudent(student);
+    setIsEditingEvents(isEditing);
+
+    if (isEditing && student.events && student.events.length > 0) {
+      // 기존 종목 정보 로드
+      const eventsMap = {};
+      student.events.forEach(event => {
+        eventsMap[event.apparatus] = {
+          selected: true,
+          routine: event.routine || '규정'
+        };
+      });
+      setSelectedEvents(eventsMap);
+    } else {
+      setSelectedEvents({});
+    }
+
+    setShowEventModal(true);
+  };
+
+  // 종목 토글
+  const toggleApparatus = (apparatusId) => {
+    setSelectedEvents(prev => {
+      if (prev[apparatusId]?.selected) {
+        const { [apparatusId]: _, ...rest } = prev;
+        return rest;
+      } else {
+        return {
+          ...prev,
+          [apparatusId]: { selected: true, routine: '규정' }
+        };
+      }
+    });
+  };
+
+  // 루틴 타입 변경
+  const setRoutineType = (apparatusId, routineType) => {
+    setSelectedEvents(prev => ({
+      ...prev,
+      [apparatusId]: { ...prev[apparatusId], routine: routineType }
+    }));
+  };
+
+  // 선택된 종목 수 계산
+  const getSelectedEventCount = () => {
+    return Object.values(selectedEvents).filter(e => e.selected).length;
+  };
+
+  // 자유 종목 수 계산
+  const getFreestyleCount = () => {
+    return Object.values(selectedEvents).filter(e => e.selected && e.routine === '자유').length;
+  };
+
+  // 종목 정보를 배열로 변환
+  const getEventsArray = () => {
+    return Object.entries(selectedEvents)
+      .filter(([_, value]) => value.selected)
+      .map(([apparatus, value]) => ({
+        apparatus,
+        routine: value.routine
+      }));
+  };
+
+  // 학생 등록 (종목 포함)
+  const addStudentWithEvents = async () => {
+    if (getSelectedEventCount() === 0) {
+      alert('최소 1개 이상의 종목을 선택해주세요.');
+      return;
+    }
+
     try {
+      const events = getEventsArray();
       const response = await fetchWithAuth(`/api/competitions/${competition.id}/students`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId })
+        body: JSON.stringify({ studentId: eventModalStudent.id, events })
       });
       if (response.ok) {
-        setParticipantIds([...participantIds, studentId]);
-        setSelectedIds(selectedIds.filter(id => id !== studentId));
+        setShowEventModal(false);
+        setSelectedEvents({});
+        setEventModalStudent(null);
+        setSelectedIds(selectedIds.filter(id => id !== eventModalStudent.id));
+        loadData();
       }
     } catch (error) {
       console.error('학생 등록 실패:', error);
@@ -124,26 +218,32 @@ function CompetitionStudentManagement() {
     }
   };
 
-  const addSelectedStudents = async () => {
-    if (selectedIds.length === 0) {
-      alert('등록할 학생을 선택해주세요.');
+  // 종목 정보 수정
+  const updateEvents = async () => {
+    if (getSelectedEventCount() === 0) {
+      alert('최소 1개 이상의 종목을 선택해주세요.');
       return;
     }
 
     try {
-      const promises = selectedIds.map(studentId =>
-        fetchWithAuth(`/api/competitions/${competition.id}/students`, {
-          method: 'POST',
+      const events = getEventsArray();
+      const response = await fetchWithAuth(
+        `/api/competitions/${competition.id}/students/${eventModalStudent.id}/events`,
+        {
+          method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ studentId })
-        })
+          body: JSON.stringify({ events })
+        }
       );
-      await Promise.all(promises);
-      setParticipantIds([...participantIds, ...selectedIds]);
-      setSelectedIds([]);
+      if (response.ok) {
+        setShowEventModal(false);
+        setSelectedEvents({});
+        setEventModalStudent(null);
+        loadData();
+      }
     } catch (error) {
-      console.error('학생 일괄 등록 실패:', error);
-      alert('학생 등록에 실패했습니다.');
+      console.error('종목 수정 실패:', error);
+      alert('종목 수정에 실패했습니다.');
     }
   };
 
@@ -154,7 +254,7 @@ function CompetitionStudentManagement() {
           method: 'DELETE'
         });
         if (response.ok) {
-          setParticipantIds(participantIds.filter(id => id !== studentId));
+          loadData();
         }
       } catch (error) {
         console.error('학생 제외 실패:', error);
@@ -171,6 +271,15 @@ function CompetitionStudentManagement() {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  // 종목 표시 포맷
+  const formatEvents = (events) => {
+    if (!events || events.length === 0) return '-';
+    return events.map(e => {
+      const apparatus = APPARATUS_LIST.find(a => a.id === e.apparatus);
+      return `${apparatus?.name || e.apparatus}(${e.routine})`;
+    }).join(', ');
   };
 
   if (!competition) {
@@ -290,21 +399,56 @@ function CompetitionStudentManagement() {
                   className="list-item"
                   style={{
                     borderLeft: '4px solid var(--color-success)',
-                    marginBottom: 0
+                    marginBottom: 0,
+                    flexDirection: 'column',
+                    alignItems: 'stretch'
                   }}
                 >
-                  <div className="list-item-content">
-                    <div className="list-item-title">{student.name}</div>
-                    <div className="list-item-subtitle">
-                      {student.birthdate} ({calculateAge(student.birthdate)}세)
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div className="list-item-content">
+                      <div className="list-item-title">{student.name}</div>
+                      <div className="list-item-subtitle">
+                        {student.birthdate} ({calculateAge(student.birthdate)}세)
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 'var(--spacing-xs)' }}>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => openEventModal(student, true)}
+                      >
+                        종목
+                      </button>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => removeStudentFromCompetition(student.id)}
+                      >
+                        제외
+                      </button>
                     </div>
                   </div>
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => removeStudentFromCompetition(student.id)}
-                  >
-                    제외
-                  </button>
+                  {student.events && student.events.length > 0 && (
+                    <div style={{
+                      marginTop: 'var(--spacing-sm)',
+                      paddingTop: 'var(--spacing-sm)',
+                      borderTop: '1px solid var(--color-gray-200)',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '4px'
+                    }}>
+                      {student.events.map((event, idx) => {
+                        const apparatus = APPARATUS_LIST.find(a => a.id === event.apparatus);
+                        return (
+                          <span
+                            key={idx}
+                            className={`badge ${event.routine === '자유' ? 'badge-primary' : 'badge-gray'}`}
+                            style={{ fontSize: '0.75rem' }}
+                          >
+                            {apparatus?.name || event.apparatus} ({event.routine})
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -379,32 +523,6 @@ function CompetitionStudentManagement() {
             )}
           </div>
 
-          {/* Bulk Actions */}
-          {nonParticipants.length > 0 && (
-            <div style={{
-              display: 'flex',
-              gap: 'var(--spacing-sm)',
-              marginTop: 'var(--spacing-md)',
-              flexWrap: 'wrap',
-              alignItems: 'center'
-            }}>
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={selectedCount === nonParticipants.length ? deselectAll : selectAllAvailable}
-              >
-                {selectedCount === nonParticipants.length ? '선택 해제' : '전체 선택'}
-              </button>
-              {selectedCount > 0 && (
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={addSelectedStudents}
-                >
-                  선택한 {selectedCount}명 등록
-                </button>
-              )}
-            </div>
-          )}
-
           {nonParticipants.length > 0 ? (
             <div style={{
               display: 'flex',
@@ -417,48 +535,19 @@ function CompetitionStudentManagement() {
                   key={student.id}
                   className="list-item"
                   style={{
-                    borderLeft: selectedIds.includes(student.id)
-                      ? '4px solid var(--color-primary)'
-                      : '4px solid var(--color-gray-300)',
-                    marginBottom: 0,
-                    backgroundColor: selectedIds.includes(student.id)
-                      ? 'var(--color-primary-light, rgba(59, 130, 246, 0.05))'
-                      : undefined,
-                    cursor: 'pointer'
+                    borderLeft: '4px solid var(--color-gray-300)',
+                    marginBottom: 0
                   }}
-                  onClick={() => toggleSelectStudent(student.id)}
                 >
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--spacing-md)',
-                    flex: 1
-                  }}>
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(student.id)}
-                      onChange={() => toggleSelectStudent(student.id)}
-                      onClick={(e) => e.stopPropagation()}
-                      style={{
-                        width: '18px',
-                        height: '18px',
-                        cursor: 'pointer',
-                        accentColor: 'var(--color-primary)'
-                      }}
-                    />
-                    <div className="list-item-content">
-                      <div className="list-item-title">{student.name}</div>
-                      <div className="list-item-subtitle">
-                        {student.birthdate} ({calculateAge(student.birthdate)}세)
-                      </div>
+                  <div className="list-item-content">
+                    <div className="list-item-title">{student.name}</div>
+                    <div className="list-item-subtitle">
+                      {student.birthdate} ({calculateAge(student.birthdate)}세)
                     </div>
                   </div>
                   <button
                     className="btn btn-primary btn-sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      addStudentToCompetition(student.id);
-                    }}
+                    onClick={() => openEventModal(student, false)}
                   >
                     등록
                   </button>
@@ -484,6 +573,189 @@ function CompetitionStudentManagement() {
           )}
         </div>
       </div>
+
+      {/* Event Selection Modal */}
+      {showEventModal && eventModalStudent && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: 'var(--spacing-md)'
+          }}
+          onClick={() => setShowEventModal(false)}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: '480px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              margin: 0
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-header">
+              <h3 className="card-title">
+                {isEditingEvents ? '종목 수정' : '참가 종목 선택'}
+              </h3>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowEventModal(false)}
+                style={{ padding: '4px 8px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ marginTop: 'var(--spacing-md)' }}>
+              <div className="info-box" style={{ marginBottom: 'var(--spacing-lg)' }}>
+                <div style={{ fontWeight: 600 }}>{eventModalStudent.name}</div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)' }}>
+                  {eventModalStudent.birthdate} ({calculateAge(eventModalStudent.birthdate)}세)
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">참가 종목 * (복수 선택 가능)</label>
+                <div style={{
+                  border: '1px solid var(--color-gray-200)',
+                  borderRadius: 'var(--radius-md)',
+                  overflow: 'hidden'
+                }}>
+                  {APPARATUS_LIST.map((apparatus, index) => {
+                    const isSelected = selectedEvents[apparatus.id]?.selected;
+                    const routine = selectedEvents[apparatus.id]?.routine || '규정';
+
+                    return (
+                      <div
+                        key={apparatus.id}
+                        style={{
+                          padding: 'var(--spacing-md)',
+                          borderBottom: index < APPARATUS_LIST.length - 1 ? '1px solid var(--color-gray-100)' : 'none',
+                          backgroundColor: isSelected ? 'var(--color-primary-bg)' : 'transparent'
+                        }}
+                      >
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 'var(--spacing-md)'
+                        }}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected || false}
+                            onChange={() => toggleApparatus(apparatus.id)}
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              cursor: 'pointer',
+                              accentColor: 'var(--color-primary)'
+                            }}
+                          />
+                          <span style={{
+                            fontWeight: 500,
+                            minWidth: '60px'
+                          }}>
+                            {apparatus.name}
+                          </span>
+
+                          {isSelected && (
+                            <div style={{
+                              display: 'flex',
+                              gap: 'var(--spacing-xs)',
+                              marginLeft: 'auto'
+                            }}>
+                              <button
+                                type="button"
+                                onClick={() => setRoutineType(apparatus.id, '규정')}
+                                style={{
+                                  padding: '6px 16px',
+                                  borderRadius: 'var(--radius-full)',
+                                  border: routine === '규정' ? '2px solid var(--color-primary)' : '1px solid var(--color-gray-300)',
+                                  backgroundColor: routine === '규정' ? 'var(--color-primary)' : 'white',
+                                  color: routine === '규정' ? 'white' : 'var(--color-gray-700)',
+                                  fontWeight: 500,
+                                  fontSize: '0.875rem',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                규정
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setRoutineType(apparatus.id, '자유')}
+                                style={{
+                                  padding: '6px 16px',
+                                  borderRadius: 'var(--radius-full)',
+                                  border: routine === '자유' ? '2px solid var(--color-primary)' : '1px solid var(--color-gray-300)',
+                                  backgroundColor: routine === '자유' ? 'var(--color-primary)' : 'white',
+                                  color: routine === '자유' ? 'white' : 'var(--color-gray-700)',
+                                  fontWeight: 500,
+                                  fontSize: '0.875rem',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                자유
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div style={{
+                marginTop: 'var(--spacing-md)',
+                padding: 'var(--spacing-md)',
+                backgroundColor: 'var(--color-gray-50)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.875rem',
+                color: 'var(--color-gray-600)'
+              }}>
+                선택된 종목: {getSelectedEventCount()}개
+                {getFreestyleCount() > 0 && (
+                  <span style={{ marginLeft: '8px' }}>
+                    (자유 {getFreestyleCount()}개)
+                  </span>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div style={{
+                display: 'flex',
+                gap: 'var(--spacing-md)',
+                marginTop: 'var(--spacing-lg)'
+              }}>
+                <button
+                  className="btn btn-primary"
+                  style={{ flex: 1 }}
+                  onClick={isEditingEvents ? updateEvents : addStudentWithEvents}
+                  disabled={getSelectedEventCount() === 0}
+                >
+                  {isEditingEvents ? '수정 완료' : '등록하기'}
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowEventModal(false)}
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

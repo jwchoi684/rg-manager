@@ -92,7 +92,7 @@ class Competition {
     return result.rows;
   }
 
-  static async addStudent(competitionId, studentId) {
+  static async addStudent(competitionId, studentId, events = null) {
     // 먼저 이미 등록되어 있는지 확인
     const existing = await pool.query(
       'SELECT id FROM competition_students WHERE "competitionId" = $1 AND "studentId" = $2',
@@ -100,19 +100,69 @@ class Competition {
     );
 
     if (existing.rows.length > 0) {
+      // 이미 존재하면 events 업데이트
+      if (events) {
+        const result = await pool.query(
+          `UPDATE competition_students SET events = $1 WHERE "competitionId" = $2 AND "studentId" = $3 RETURNING *`,
+          [JSON.stringify(events), competitionId, studentId]
+        );
+        return result.rows[0];
+      }
       return existing.rows[0];
     }
 
     const createdAt = new Date().toISOString();
+    const eventsJson = events ? JSON.stringify(events) : null;
 
     const result = await pool.query(
-      `INSERT INTO competition_students ("competitionId", "studentId", "createdAt")
-       VALUES ($1, $2, $3)
+      `INSERT INTO competition_students ("competitionId", "studentId", events, "createdAt")
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [competitionId, studentId, createdAt]
+      [competitionId, studentId, eventsJson, createdAt]
     );
 
     return result.rows[0];
+  }
+
+  static async updateStudentEvents(competitionId, studentId, events) {
+    const eventsJson = events ? JSON.stringify(events) : null;
+    const result = await pool.query(
+      `UPDATE competition_students SET events = $1 WHERE "competitionId" = $2 AND "studentId" = $3 RETURNING *`,
+      [eventsJson, competitionId, studentId]
+    );
+    return result.rows.length > 0 ? result.rows[0] : null;
+  }
+
+  static async getStudentEvents(competitionId, studentId) {
+    const result = await pool.query(
+      'SELECT events FROM competition_students WHERE "competitionId" = $1 AND "studentId" = $2',
+      [competitionId, studentId]
+    );
+    if (result.rows.length > 0 && result.rows[0].events) {
+      return JSON.parse(result.rows[0].events);
+    }
+    return [];
+  }
+
+  static async getStudentsWithEvents(competitionId, userId, role) {
+    let query = `
+      SELECT s.*, cs.events FROM students s
+      INNER JOIN competition_students cs ON s.id = cs."studentId"
+      WHERE cs."competitionId" = $1
+    `;
+    let params = [competitionId];
+
+    if (role !== 'admin') {
+      query += ' AND s."userId" = $2';
+      params.push(userId);
+    }
+
+    query += ' ORDER BY s.name';
+    const result = await pool.query(query, params);
+    return result.rows.map(row => ({
+      ...row,
+      events: row.events ? JSON.parse(row.events) : []
+    }));
   }
 
   static async removeStudent(competitionId, studentId) {

@@ -137,6 +137,12 @@ const initDatabase = async () => {
       // constraint가 이미 존재하면 무시
     }
 
+    // competition_students 테이블에 events 컬럼 추가 (종목 정보)
+    await client.query(`
+      ALTER TABLE competition_students
+      ADD COLUMN IF NOT EXISTS events TEXT
+    `);
+
     // 기본 관리자 계정 생성 (username: admin, password: admin123)
     const adminCheck = await client.query('SELECT * FROM users WHERE username = $1', ['admin']);
     const hashedAdminPassword = await bcrypt.hash('admin123', SALT_ROUNDS);
