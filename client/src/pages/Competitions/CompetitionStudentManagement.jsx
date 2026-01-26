@@ -754,16 +754,19 @@ function CompetitionStudentManagement() {
 
                         {/* Award input for each apparatus */}
                         {isSelected && (
-                          <div style={{
-                            marginTop: 'var(--spacing-sm)',
-                            marginLeft: '36px'
-                          }}>
+                          <div
+                            style={{
+                              marginTop: 'var(--spacing-sm)',
+                              marginLeft: '36px'
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                          >
                             <input
                               type="text"
                               placeholder="수상 기록 (예: 금상, 1등)"
                               value={eventAward}
                               onChange={(e) => setAward(apparatus.id, e.target.value)}
-                              onClick={(e) => e.stopPropagation()}
                               style={{
                                 width: '100%',
                                 padding: '6px 10px',
@@ -772,6 +775,9 @@ function CompetitionStudentManagement() {
                                 borderRadius: 'var(--radius-md)'
                               }}
                               autoComplete="off"
+                              autoCorrect="off"
+                              autoCapitalize="off"
+                              spellCheck="false"
                             />
                           </div>
                         )}
