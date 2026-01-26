@@ -123,10 +123,19 @@ const initDatabase = async () => {
         "studentId" INTEGER NOT NULL,
         "createdAt" TEXT NOT NULL,
         FOREIGN KEY ("competitionId") REFERENCES competitions(id) ON DELETE CASCADE,
-        FOREIGN KEY ("studentId") REFERENCES students(id) ON DELETE CASCADE,
-        UNIQUE ("competitionId", "studentId")
+        FOREIGN KEY ("studentId") REFERENCES students(id) ON DELETE CASCADE
       )
     `);
+
+    // competition_students 테이블에 UNIQUE constraint 추가 (기존 테이블 마이그레이션)
+    try {
+      await client.query(`
+        ALTER TABLE competition_students
+        ADD CONSTRAINT competition_students_unique UNIQUE ("competitionId", "studentId")
+      `);
+    } catch (e) {
+      // constraint가 이미 존재하면 무시
+    }
 
     // 기본 관리자 계정 생성 (username: admin, password: admin123)
     const adminCheck = await client.query('SELECT * FROM users WHERE username = $1', ['admin']);

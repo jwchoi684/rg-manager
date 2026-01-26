@@ -93,12 +93,21 @@ class Competition {
   }
 
   static async addStudent(competitionId, studentId) {
+    // 먼저 이미 등록되어 있는지 확인
+    const existing = await pool.query(
+      'SELECT id FROM competition_students WHERE "competitionId" = $1 AND "studentId" = $2',
+      [competitionId, studentId]
+    );
+
+    if (existing.rows.length > 0) {
+      return existing.rows[0];
+    }
+
     const createdAt = new Date().toISOString();
 
     const result = await pool.query(
       `INSERT INTO competition_students ("competitionId", "studentId", "createdAt")
        VALUES ($1, $2, $3)
-       ON CONFLICT ("competitionId", "studentId") DO NOTHING
        RETURNING *`,
       [competitionId, studentId, createdAt]
     );
