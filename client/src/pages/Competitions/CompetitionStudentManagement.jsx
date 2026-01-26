@@ -11,6 +11,7 @@ function CompetitionStudentManagement() {
 
   const [students, setStudents] = useState([]);
   const [participantIds, setParticipantIds] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [enrolledSearch, setEnrolledSearch] = useState('');
   const [availableSearch, setAvailableSearch] = useState('');
@@ -89,6 +90,23 @@ function CompetitionStudentManagement() {
     return students.filter(student => !participantIds.includes(student.id)).length;
   };
 
+  const toggleSelectStudent = (studentId) => {
+    if (selectedIds.includes(studentId)) {
+      setSelectedIds(selectedIds.filter(id => id !== studentId));
+    } else {
+      setSelectedIds([...selectedIds, studentId]);
+    }
+  };
+
+  const selectAllAvailable = () => {
+    const availableIds = getNonParticipants().map(s => s.id);
+    setSelectedIds(availableIds);
+  };
+
+  const deselectAll = () => {
+    setSelectedIds([]);
+  };
+
   const addStudentToCompetition = async (studentId) => {
     try {
       const response = await fetchWithAuth(`/api/competitions/${competition.id}/students`, {
@@ -98,9 +116,33 @@ function CompetitionStudentManagement() {
       });
       if (response.ok) {
         setParticipantIds([...participantIds, studentId]);
+        setSelectedIds(selectedIds.filter(id => id !== studentId));
       }
     } catch (error) {
       console.error('학생 등록 실패:', error);
+      alert('학생 등록에 실패했습니다.');
+    }
+  };
+
+  const addSelectedStudents = async () => {
+    if (selectedIds.length === 0) {
+      alert('등록할 학생을 선택해주세요.');
+      return;
+    }
+
+    try {
+      const promises = selectedIds.map(studentId =>
+        fetchWithAuth(`/api/competitions/${competition.id}/students`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ studentId })
+        })
+      );
+      await Promise.all(promises);
+      setParticipantIds([...participantIds, ...selectedIds]);
+      setSelectedIds([]);
+    } catch (error) {
+      console.error('학생 일괄 등록 실패:', error);
       alert('학생 등록에 실패했습니다.');
     }
   };
@@ -137,6 +179,7 @@ function CompetitionStudentManagement() {
 
   const participants = getParticipants();
   const nonParticipants = getNonParticipants();
+  const selectedCount = selectedIds.filter(id => nonParticipants.some(s => s.id === id)).length;
 
   return (
     <div className="animate-fadeIn">
@@ -336,6 +379,32 @@ function CompetitionStudentManagement() {
             )}
           </div>
 
+          {/* Bulk Actions */}
+          {nonParticipants.length > 0 && (
+            <div style={{
+              display: 'flex',
+              gap: 'var(--spacing-sm)',
+              marginTop: 'var(--spacing-md)',
+              flexWrap: 'wrap',
+              alignItems: 'center'
+            }}>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={selectedCount === nonParticipants.length ? deselectAll : selectAllAvailable}
+              >
+                {selectedCount === nonParticipants.length ? '선택 해제' : '전체 선택'}
+              </button>
+              {selectedCount > 0 && (
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={addSelectedStudents}
+                >
+                  선택한 {selectedCount}명 등록
+                </button>
+              )}
+            </div>
+          )}
+
           {nonParticipants.length > 0 ? (
             <div style={{
               display: 'flex',
@@ -348,19 +417,48 @@ function CompetitionStudentManagement() {
                   key={student.id}
                   className="list-item"
                   style={{
-                    borderLeft: '4px solid var(--color-gray-300)',
-                    marginBottom: 0
+                    borderLeft: selectedIds.includes(student.id)
+                      ? '4px solid var(--color-primary)'
+                      : '4px solid var(--color-gray-300)',
+                    marginBottom: 0,
+                    backgroundColor: selectedIds.includes(student.id)
+                      ? 'var(--color-primary-light, rgba(59, 130, 246, 0.05))'
+                      : undefined,
+                    cursor: 'pointer'
                   }}
+                  onClick={() => toggleSelectStudent(student.id)}
                 >
-                  <div className="list-item-content">
-                    <div className="list-item-title">{student.name}</div>
-                    <div className="list-item-subtitle">
-                      {student.birthdate} ({calculateAge(student.birthdate)}세)
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--spacing-md)',
+                    flex: 1
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(student.id)}
+                      onChange={() => toggleSelectStudent(student.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        cursor: 'pointer',
+                        accentColor: 'var(--color-primary)'
+                      }}
+                    />
+                    <div className="list-item-content">
+                      <div className="list-item-title">{student.name}</div>
+                      <div className="list-item-subtitle">
+                        {student.birthdate} ({calculateAge(student.birthdate)}세)
+                      </div>
                     </div>
                   </div>
                   <button
                     className="btn btn-primary btn-sm"
-                    onClick={() => addStudentToCompetition(student.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addStudentToCompetition(student.id);
+                    }}
                   >
                     등록
                   </button>

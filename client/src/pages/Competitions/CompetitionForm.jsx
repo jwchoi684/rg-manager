@@ -9,7 +9,12 @@ function CompetitionForm() {
   const location = useLocation();
   const editCompetition = location.state?.competition;
 
-  const [formData, setFormData] = useState({ name: '', date: '', location: '' });
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
+  const [formData, setFormData] = useState({ name: '', date: getTodayDate(), location: '' });
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
