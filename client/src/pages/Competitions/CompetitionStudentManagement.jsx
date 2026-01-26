@@ -4,13 +4,15 @@ import { useAuth } from '../../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const APPARATUS_LIST = [
-  { id: 'freehand', name: '맨손' },
-  { id: 'ball', name: '볼' },
-  { id: 'hoop', name: '후프' },
-  { id: 'clubs', name: '곤봉' },
-  { id: 'ribbon', name: '리본' },
-  { id: 'rope', name: '줄' }
+  { id: 'freehand', name: '맨손', hasLevel: true },
+  { id: 'ball', name: '볼', hasLevel: false },
+  { id: 'hoop', name: '후프', hasLevel: false },
+  { id: 'clubs', name: '곤봉', hasLevel: false },
+  { id: 'ribbon', name: '리본', hasLevel: false },
+  { id: 'rope', name: '줄', hasLevel: false }
 ];
+
+const LEVELS = ['레벨 1', '레벨 2', '레벨 3'];
 
 function CompetitionStudentManagement() {
   const { user } = useAuth();
@@ -29,7 +31,6 @@ function CompetitionStudentManagement() {
   const [showEventModal, setShowEventModal] = useState(false);
   const [eventModalStudent, setEventModalStudent] = useState(null);
   const [selectedEvents, setSelectedEvents] = useState({});
-  const [award, setAward] = useState('');
   const [isEditingEvents, setIsEditingEvents] = useState(false);
 
   useEffect(() => {
@@ -120,14 +121,14 @@ function CompetitionStudentManagement() {
       student.events.forEach(event => {
         eventsMap[event.apparatus] = {
           selected: true,
-          routine: event.routine || '규정'
+          routine: event.routine || '규정',
+          level: event.level || '',
+          award: event.award || ''
         };
       });
       setSelectedEvents(eventsMap);
-      setAward(student.award || '');
     } else {
       setSelectedEvents({});
-      setAward('');
     }
 
     setShowEventModal(true);
@@ -142,7 +143,7 @@ function CompetitionStudentManagement() {
       } else {
         return {
           ...prev,
-          [apparatusId]: { selected: true, routine: '규정' }
+          [apparatusId]: { selected: true, routine: '규정', level: '', award: '' }
         };
       }
     });
@@ -153,6 +154,22 @@ function CompetitionStudentManagement() {
     setSelectedEvents(prev => ({
       ...prev,
       [apparatusId]: { ...prev[apparatusId], routine: routineType }
+    }));
+  };
+
+  // 레벨 변경
+  const setLevel = (apparatusId, level) => {
+    setSelectedEvents(prev => ({
+      ...prev,
+      [apparatusId]: { ...prev[apparatusId], level }
+    }));
+  };
+
+  // 수상 기록 변경
+  const setAward = (apparatusId, award) => {
+    setSelectedEvents(prev => ({
+      ...prev,
+      [apparatusId]: { ...prev[apparatusId], award }
     }));
   };
 
@@ -172,7 +189,9 @@ function CompetitionStudentManagement() {
       .filter(([_, value]) => value.selected)
       .map(([apparatus, value]) => ({
         apparatus,
-        routine: value.routine
+        routine: value.routine,
+        level: value.level || null,
+        award: value.award || null
       }));
   };
 
@@ -188,12 +207,11 @@ function CompetitionStudentManagement() {
       const response = await fetchWithAuth(`/api/competitions/${competition.id}/students`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId: eventModalStudent.id, events, award: award || null })
+        body: JSON.stringify({ studentId: eventModalStudent.id, events })
       });
       if (response.ok) {
         setShowEventModal(false);
         setSelectedEvents({});
-        setAward('');
         setEventModalStudent(null);
         loadData();
       }
@@ -217,13 +235,12 @@ function CompetitionStudentManagement() {
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ events, award: award || null })
+          body: JSON.stringify({ events })
         }
       );
       if (response.ok) {
         setShowEventModal(false);
         setSelectedEvents({});
-        setAward('');
         setEventModalStudent(null);
         loadData();
       }
@@ -403,40 +420,41 @@ function CompetitionStudentManagement() {
                       paddingTop: 'var(--spacing-sm)',
                       borderTop: '1px solid var(--color-gray-200)',
                       display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '4px'
+                      flexDirection: 'column',
+                      gap: '6px'
                     }}>
                       {student.events.map((event, idx) => {
                         const apparatus = APPARATUS_LIST.find(a => a.id === event.apparatus);
                         return (
-                          <span
-                            key={idx}
-                            className={`badge ${event.routine === '자유' ? 'badge-primary' : 'badge-gray'}`}
-                            style={{ fontSize: '0.75rem' }}
-                          >
-                            {apparatus?.name || event.apparatus} ({event.routine})
-                          </span>
+                          <div key={idx} style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            flexWrap: 'wrap'
+                          }}>
+                            <span
+                              className={`badge ${event.routine === '자유' ? 'badge-primary' : 'badge-gray'}`}
+                              style={{ fontSize: '0.75rem' }}
+                            >
+                              {apparatus?.name || event.apparatus}
+                              {event.level && ` ${event.level}`}
+                              {' '}({event.routine})
+                            </span>
+                            {event.award && (
+                              <span style={{
+                                fontSize: '0.75rem',
+                                color: 'var(--color-warning)',
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '2px'
+                              }}>
+                                🏅 {event.award}
+                              </span>
+                            )}
+                          </div>
                         );
                       })}
-                    </div>
-                  )}
-                  {student.award && (
-                    <div style={{
-                      marginTop: 'var(--spacing-sm)',
-                      paddingTop: 'var(--spacing-sm)',
-                      borderTop: student.events?.length > 0 ? 'none' : '1px solid var(--color-gray-200)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}>
-                      <span style={{ fontSize: '1rem' }}>🏅</span>
-                      <span style={{
-                        fontSize: '0.875rem',
-                        color: 'var(--color-warning)',
-                        fontWeight: 600
-                      }}>
-                        {student.award}
-                      </span>
                     </div>
                   )}
                 </div>
@@ -585,7 +603,7 @@ function CompetitionStudentManagement() {
           <div
             className="card"
             style={{
-              maxWidth: '480px',
+              maxWidth: '500px',
               width: '100%',
               maxHeight: '90vh',
               overflow: 'auto',
@@ -624,6 +642,8 @@ function CompetitionStudentManagement() {
                   {APPARATUS_LIST.map((apparatus, index) => {
                     const isSelected = selectedEvents[apparatus.id]?.selected;
                     const routine = selectedEvents[apparatus.id]?.routine || '규정';
+                    const level = selectedEvents[apparatus.id]?.level || '';
+                    const eventAward = selectedEvents[apparatus.id]?.award || '';
 
                     return (
                       <div
@@ -652,7 +672,7 @@ function CompetitionStudentManagement() {
                           />
                           <span style={{
                             fontWeight: 500,
-                            minWidth: '60px'
+                            minWidth: '50px'
                           }}>
                             {apparatus.name}
                           </span>
@@ -661,19 +681,21 @@ function CompetitionStudentManagement() {
                             <div style={{
                               display: 'flex',
                               gap: 'var(--spacing-xs)',
-                              marginLeft: 'auto'
+                              marginLeft: 'auto',
+                              flexWrap: 'wrap',
+                              justifyContent: 'flex-end'
                             }}>
                               <button
                                 type="button"
                                 onClick={() => setRoutineType(apparatus.id, '규정')}
                                 style={{
-                                  padding: '6px 16px',
+                                  padding: '4px 12px',
                                   borderRadius: 'var(--radius-full)',
                                   border: routine === '규정' ? '2px solid var(--color-primary)' : '1px solid var(--color-gray-300)',
                                   backgroundColor: routine === '규정' ? 'var(--color-primary)' : 'white',
                                   color: routine === '규정' ? 'white' : 'var(--color-gray-700)',
                                   fontWeight: 500,
-                                  fontSize: '0.875rem',
+                                  fontSize: '0.8125rem',
                                   cursor: 'pointer'
                                 }}
                               >
@@ -683,13 +705,13 @@ function CompetitionStudentManagement() {
                                 type="button"
                                 onClick={() => setRoutineType(apparatus.id, '자유')}
                                 style={{
-                                  padding: '6px 16px',
+                                  padding: '4px 12px',
                                   borderRadius: 'var(--radius-full)',
                                   border: routine === '자유' ? '2px solid var(--color-primary)' : '1px solid var(--color-gray-300)',
                                   backgroundColor: routine === '자유' ? 'var(--color-primary)' : 'white',
                                   color: routine === '자유' ? 'white' : 'var(--color-gray-700)',
                                   fontWeight: 500,
-                                  fontSize: '0.875rem',
+                                  fontSize: '0.8125rem',
                                   cursor: 'pointer'
                                 }}
                               >
@@ -698,6 +720,61 @@ function CompetitionStudentManagement() {
                             </div>
                           )}
                         </div>
+
+                        {/* Level selection for freehand */}
+                        {isSelected && apparatus.hasLevel && (
+                          <div style={{
+                            marginTop: 'var(--spacing-sm)',
+                            marginLeft: '36px',
+                            display: 'flex',
+                            gap: 'var(--spacing-xs)',
+                            flexWrap: 'wrap'
+                          }}>
+                            {LEVELS.map(lvl => (
+                              <button
+                                key={lvl}
+                                type="button"
+                                onClick={() => setLevel(apparatus.id, level === lvl ? '' : lvl)}
+                                style={{
+                                  padding: '4px 10px',
+                                  borderRadius: 'var(--radius-md)',
+                                  border: level === lvl ? '2px solid var(--color-success)' : '1px solid var(--color-gray-300)',
+                                  backgroundColor: level === lvl ? 'var(--color-success)' : 'white',
+                                  color: level === lvl ? 'white' : 'var(--color-gray-700)',
+                                  fontWeight: 500,
+                                  fontSize: '0.75rem',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                {lvl}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Award input for each apparatus */}
+                        {isSelected && (
+                          <div style={{
+                            marginTop: 'var(--spacing-sm)',
+                            marginLeft: '36px'
+                          }}>
+                            <input
+                              type="text"
+                              placeholder="수상 기록 (예: 금상, 1등)"
+                              value={eventAward}
+                              onChange={(e) => setAward(apparatus.id, e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                width: '100%',
+                                padding: '6px 10px',
+                                fontSize: '0.8125rem',
+                                border: '1px solid var(--color-gray-200)',
+                                borderRadius: 'var(--radius-md)'
+                              }}
+                              autoComplete="off"
+                            />
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -719,27 +796,6 @@ function CompetitionStudentManagement() {
                     (자유 {getFreestyleCount()}개)
                   </span>
                 )}
-              </div>
-
-              {/* Award Input */}
-              <div className="form-group" style={{ marginTop: 'var(--spacing-lg)' }}>
-                <label className="form-label">
-                  🏅 수상 기록
-                </label>
-                <input
-                  type="text"
-                  placeholder="예: 금상, 은상, 동상, 장려상 등"
-                  value={award}
-                  onChange={(e) => setAward(e.target.value)}
-                  autoComplete="off"
-                />
-                <div style={{
-                  fontSize: '0.75rem',
-                  color: 'var(--color-gray-500)',
-                  marginTop: '4px'
-                }}>
-                  수상 기록이 있으면 입력해주세요 (선택사항)
-                </div>
               </div>
 
               {/* Actions */}

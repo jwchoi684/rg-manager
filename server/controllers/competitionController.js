@@ -90,8 +90,8 @@ export const getCompetitionStudents = async (req, res) => {
 export const addStudentToCompetition = async (req, res) => {
   try {
     const { id } = req.params;
-    const { studentId, events, award } = req.body;
-    await Competition.addStudent(id, studentId, events, award);
+    const { studentId, events } = req.body;
+    await Competition.addStudent(id, studentId, events);
     res.status(201).json({ message: '학생이 대회에 등록되었습니다.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -101,8 +101,8 @@ export const addStudentToCompetition = async (req, res) => {
 export const updateStudentEvents = async (req, res) => {
   try {
     const { id, studentId } = req.params;
-    const { events, award } = req.body;
-    const result = await Competition.updateStudentEvents(id, studentId, events, award);
+    const { events } = req.body;
+    const result = await Competition.updateStudentEvents(id, studentId, events);
     if (!result) {
       return res.status(404).json({ error: '등록 정보를 찾을 수 없습니다.' });
     }
