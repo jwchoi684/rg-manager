@@ -21,7 +21,6 @@ function CompetitionStudentManagement() {
   const [students, setStudents] = useState([]);
   const [participantsWithEvents, setParticipantsWithEvents] = useState([]);
   const [participantIds, setParticipantIds] = useState([]);
-  const [selectedIds, setSelectedIds] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [enrolledSearch, setEnrolledSearch] = useState('');
   const [availableSearch, setAvailableSearch] = useState('');
@@ -30,6 +29,7 @@ function CompetitionStudentManagement() {
   const [showEventModal, setShowEventModal] = useState(false);
   const [eventModalStudent, setEventModalStudent] = useState(null);
   const [selectedEvents, setSelectedEvents] = useState({});
+  const [award, setAward] = useState('');
   const [isEditingEvents, setIsEditingEvents] = useState(false);
 
   useEffect(() => {
@@ -109,23 +109,6 @@ function CompetitionStudentManagement() {
     return students.filter(student => !participantIds.includes(student.id)).length;
   };
 
-  const toggleSelectStudent = (studentId) => {
-    if (selectedIds.includes(studentId)) {
-      setSelectedIds(selectedIds.filter(id => id !== studentId));
-    } else {
-      setSelectedIds([...selectedIds, studentId]);
-    }
-  };
-
-  const selectAllAvailable = () => {
-    const availableIds = getNonParticipants().map(s => s.id);
-    setSelectedIds(availableIds);
-  };
-
-  const deselectAll = () => {
-    setSelectedIds([]);
-  };
-
   // 종목 선택 모달 열기
   const openEventModal = (student, isEditing = false) => {
     setEventModalStudent(student);
@@ -141,8 +124,10 @@ function CompetitionStudentManagement() {
         };
       });
       setSelectedEvents(eventsMap);
+      setAward(student.award || '');
     } else {
       setSelectedEvents({});
+      setAward('');
     }
 
     setShowEventModal(true);
@@ -203,13 +188,13 @@ function CompetitionStudentManagement() {
       const response = await fetchWithAuth(`/api/competitions/${competition.id}/students`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId: eventModalStudent.id, events })
+        body: JSON.stringify({ studentId: eventModalStudent.id, events, award: award || null })
       });
       if (response.ok) {
         setShowEventModal(false);
         setSelectedEvents({});
+        setAward('');
         setEventModalStudent(null);
-        setSelectedIds(selectedIds.filter(id => id !== eventModalStudent.id));
         loadData();
       }
     } catch (error) {
@@ -232,12 +217,13 @@ function CompetitionStudentManagement() {
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ events })
+          body: JSON.stringify({ events, award: award || null })
         }
       );
       if (response.ok) {
         setShowEventModal(false);
         setSelectedEvents({});
+        setAward('');
         setEventModalStudent(null);
         loadData();
       }
@@ -247,7 +233,8 @@ function CompetitionStudentManagement() {
     }
   };
 
-  const removeStudentFromCompetition = async (studentId) => {
+  const removeStudentFromCompetition = async (studentId, e) => {
+    e.stopPropagation();
     if (confirm('이 학생을 대회에서 제외하시겠습니까?')) {
       try {
         const response = await fetchWithAuth(`/api/competitions/${competition.id}/students/${studentId}`, {
@@ -273,22 +260,12 @@ function CompetitionStudentManagement() {
     });
   };
 
-  // 종목 표시 포맷
-  const formatEvents = (events) => {
-    if (!events || events.length === 0) return '-';
-    return events.map(e => {
-      const apparatus = APPARATUS_LIST.find(a => a.id === e.apparatus);
-      return `${apparatus?.name || e.apparatus}(${e.routine})`;
-    }).join(', ');
-  };
-
   if (!competition) {
     return null;
   }
 
   const participants = getParticipants();
   const nonParticipants = getNonParticipants();
-  const selectedCount = selectedIds.filter(id => nonParticipants.some(s => s.id === id)).length;
 
   return (
     <div className="animate-fadeIn">
@@ -401,8 +378,10 @@ function CompetitionStudentManagement() {
                     borderLeft: '4px solid var(--color-success)',
                     marginBottom: 0,
                     flexDirection: 'column',
-                    alignItems: 'stretch'
+                    alignItems: 'stretch',
+                    cursor: 'pointer'
                   }}
+                  onClick={() => openEventModal(student, true)}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div className="list-item-content">
@@ -411,20 +390,12 @@ function CompetitionStudentManagement() {
                         {student.birthdate} ({calculateAge(student.birthdate)}세)
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 'var(--spacing-xs)' }}>
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => openEventModal(student, true)}
-                      >
-                        종목
-                      </button>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        onClick={() => removeStudentFromCompetition(student.id)}
-                      >
-                        제외
-                      </button>
-                    </div>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={(e) => removeStudentFromCompetition(student.id, e)}
+                    >
+                      제외
+                    </button>
                   </div>
                   {student.events && student.events.length > 0 && (
                     <div style={{
@@ -447,6 +418,25 @@ function CompetitionStudentManagement() {
                           </span>
                         );
                       })}
+                    </div>
+                  )}
+                  {student.award && (
+                    <div style={{
+                      marginTop: 'var(--spacing-sm)',
+                      paddingTop: 'var(--spacing-sm)',
+                      borderTop: student.events?.length > 0 ? 'none' : '1px solid var(--color-gray-200)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}>
+                      <span style={{ fontSize: '1rem' }}>🏅</span>
+                      <span style={{
+                        fontSize: '0.875rem',
+                        color: 'var(--color-warning)',
+                        fontWeight: 600
+                      }}>
+                        {student.award}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -605,7 +595,7 @@ function CompetitionStudentManagement() {
           >
             <div className="card-header">
               <h3 className="card-title">
-                {isEditingEvents ? '종목 수정' : '참가 종목 선택'}
+                {isEditingEvents ? '종목 및 수상 기록' : '참가 종목 선택'}
               </h3>
               <button
                 className="btn btn-ghost btn-sm"
@@ -731,6 +721,27 @@ function CompetitionStudentManagement() {
                 )}
               </div>
 
+              {/* Award Input */}
+              <div className="form-group" style={{ marginTop: 'var(--spacing-lg)' }}>
+                <label className="form-label">
+                  🏅 수상 기록
+                </label>
+                <input
+                  type="text"
+                  placeholder="예: 금상, 은상, 동상, 장려상 등"
+                  value={award}
+                  onChange={(e) => setAward(e.target.value)}
+                  autoComplete="off"
+                />
+                <div style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--color-gray-500)',
+                  marginTop: '4px'
+                }}>
+                  수상 기록이 있으면 입력해주세요 (선택사항)
+                </div>
+              </div>
+
               {/* Actions */}
               <div style={{
                 display: 'flex',
@@ -743,7 +754,7 @@ function CompetitionStudentManagement() {
                   onClick={isEditingEvents ? updateEvents : addStudentWithEvents}
                   disabled={getSelectedEventCount() === 0}
                 >
-                  {isEditingEvents ? '수정 완료' : '등록하기'}
+                  {isEditingEvents ? '저장' : '등록하기'}
                 </button>
                 <button
                   className="btn btn-secondary"

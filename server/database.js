@@ -143,6 +143,12 @@ const initDatabase = async () => {
       ADD COLUMN IF NOT EXISTS events TEXT
     `);
 
+    // competition_students 테이블에 award 컬럼 추가 (수상 기록)
+    await client.query(`
+      ALTER TABLE competition_students
+      ADD COLUMN IF NOT EXISTS award TEXT
+    `);
+
     // 기본 관리자 계정 생성 (username: admin, password: admin123)
     const adminCheck = await client.query('SELECT * FROM users WHERE username = $1', ['admin']);
     const hashedAdminPassword = await bcrypt.hash('admin123', SALT_ROUNDS);
