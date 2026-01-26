@@ -175,8 +175,8 @@ function StudentList() {
   };
 
   const getSortIcon = (key) => {
-    if (sortConfig.key !== key) return '↕';
-    return sortConfig.direction === 'asc' ? '↑' : '↓';
+    if (sortConfig.key !== key) return '';
+    return sortConfig.direction === 'asc' ? '▲' : '▼';
   };
 
   const minSwipeDistance = 50;
