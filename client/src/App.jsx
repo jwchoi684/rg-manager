@@ -16,6 +16,7 @@ import Logs from './pages/Logs';
 import CompetitionList from './pages/Competitions/CompetitionList';
 import CompetitionForm from './pages/Competitions/CompetitionForm';
 import CompetitionStudentManagement from './pages/Competitions/CompetitionStudentManagement';
+import StudentCompetitions from './pages/StudentCompetitions';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -98,6 +99,7 @@ function App() {
     { path: '/competitions', label: '대회 관리', icon: '🏆' },
     { path: '/attendance', label: '출석 체크', icon: '✓' },
     { path: '/student-attendance', label: '학생별 출석', icon: '📋' },
+    { path: '/student-competitions', label: '학생별 대회', icon: '🎖️' },
   ];
 
   const adminLinks = [
@@ -222,6 +224,7 @@ function App() {
           <Route path="/competitions/manage-students" element={<ProtectedRoute><CompetitionStudentManagement /></ProtectedRoute>} />
           <Route path="/attendance" element={<ProtectedRoute><AttendanceCheck /></ProtectedRoute>} />
           <Route path="/student-attendance" element={<ProtectedRoute><StudentAttendance /></ProtectedRoute>} />
+          <Route path="/student-competitions" element={<ProtectedRoute><StudentCompetitions /></ProtectedRoute>} />
           <Route path="/logs" element={<ProtectedRoute><Logs /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" />} />
