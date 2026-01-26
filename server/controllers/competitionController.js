@@ -153,3 +153,17 @@ export const getCompetitionStudentIds = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const updateStudentPaid = async (req, res) => {
+  try {
+    const { id, studentId } = req.params;
+    const { paid } = req.body;
+    const result = await Competition.updateStudentPaid(id, studentId, paid);
+    if (!result) {
+      return res.status(404).json({ error: '등록 정보를 찾을 수 없습니다.' });
+    }
+    res.json({ message: '납부 상태가 업데이트되었습니다.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

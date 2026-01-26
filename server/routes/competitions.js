@@ -11,7 +11,8 @@ import {
   getCompetitionStudentIds,
   updateStudentEvents,
   getStudentEvents,
-  getCompetitionStudentsWithEvents
+  getCompetitionStudentsWithEvents,
+  updateStudentPaid
 } from '../controllers/competitionController.js';
 import { verifyToken } from '../middleware/auth.js';
 import { logAction } from '../middleware/logger.js';
@@ -35,5 +36,8 @@ router.delete('/:id/students/:studentId', verifyToken, logAction('REMOVE_COMPETI
 // 종목 관리
 router.get('/:id/students/:studentId/events', verifyToken, getStudentEvents);
 router.put('/:id/students/:studentId/events', verifyToken, logAction('UPDATE_COMPETITION_EVENTS'), updateStudentEvents);
+
+// 참가비 납부 관리
+router.put('/:id/students/:studentId/paid', verifyToken, updateStudentPaid);
 
 export default router;

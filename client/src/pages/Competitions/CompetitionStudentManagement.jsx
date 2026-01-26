@@ -322,6 +322,31 @@ function CompetitionStudentManagement() {
     }
   };
 
+  // 참가비 납부 상태 토글
+  const togglePaid = async (studentId, currentPaid, e) => {
+    e.stopPropagation();
+    try {
+      const response = await fetchWithAuth(
+        `/api/competitions/${competition.id}/students/${studentId}/paid`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paid: !currentPaid })
+        }
+      );
+      if (response.ok) {
+        // 로컬 상태 업데이트
+        setParticipantsWithEvents(prev =>
+          prev.map(p =>
+            p.id === studentId ? { ...p, paid: !currentPaid } : p
+          )
+        );
+      }
+    } catch (error) {
+      console.error('납부 상태 변경 실패:', error);
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
@@ -472,6 +497,42 @@ function CompetitionStudentManagement() {
                           <div style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)' }}>
                             {student.birthdate} ({calculateAge(student.birthdate)}세)
                           </div>
+                        </div>
+                        <div
+                          onClick={(e) => togglePaid(student.id, student.paid, e)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '4px 10px',
+                            borderRadius: 'var(--radius-full)',
+                            backgroundColor: student.paid ? 'var(--color-success-bg)' : 'var(--color-gray-100)',
+                            cursor: 'pointer',
+                            border: student.paid ? '1px solid var(--color-success)' : '1px solid var(--color-gray-300)'
+                          }}
+                        >
+                          <span style={{
+                            width: '16px',
+                            height: '16px',
+                            borderRadius: '4px',
+                            border: student.paid ? '2px solid var(--color-success)' : '2px solid var(--color-gray-400)',
+                            backgroundColor: student.paid ? 'var(--color-success)' : 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '10px',
+                            fontWeight: 'bold'
+                          }}>
+                            {student.paid && '✓'}
+                          </span>
+                          <span style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 500,
+                            color: student.paid ? 'var(--color-success)' : 'var(--color-gray-500)'
+                          }}>
+                            납부
+                          </span>
                         </div>
                       </div>
                       {student.events && student.events.length > 0 && (
