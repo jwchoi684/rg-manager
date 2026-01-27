@@ -81,7 +81,7 @@ function ClassForm() {
       </div>
 
       {/* Form Card */}
-      <div className="card">
+      <div className="card" data-tutorial-action="class-form">
         <form onSubmit={handleSubmit}>
           <div style={{
             display: 'grid',

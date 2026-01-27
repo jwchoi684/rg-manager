@@ -111,7 +111,7 @@ function StudentForm() {
       </div>
 
       {/* Form Card */}
-      <div className="card">
+      <div className="card" data-tutorial-action="student-form">
         <form onSubmit={handleSubmit}>
           {/* Basic Info */}
           <div style={{

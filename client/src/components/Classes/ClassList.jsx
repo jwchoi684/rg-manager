@@ -206,7 +206,11 @@ function ClassList() {
       {/* Page Header */}
       <div className="page-header">
         <h2 className="page-title">수업 관리</h2>
-        <button className="btn btn-primary" onClick={() => navigate('/classes/new')}>
+        <button
+          className="btn btn-primary"
+          data-tutorial-action="new-class"
+          onClick={() => navigate('/classes/new')}
+        >
           + 새 수업 등록
         </button>
       </div>

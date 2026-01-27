@@ -262,7 +262,7 @@ function AttendanceCheck() {
   };
 
   return (
-    <div className="animate-fadeIn">
+    <div className="animate-fadeIn" data-tutorial-action="attendance-check">
       {/* Page Header */}
       <div className="page-header">
         <h2 className="page-title">출석 체크</h2>

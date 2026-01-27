@@ -235,7 +235,11 @@ function StudentList() {
       {/* Page Header */}
       <div className="page-header">
         <h2 className="page-title">학생 관리</h2>
-        <button className="btn btn-primary" onClick={() => navigate('/students/new')}>
+        <button
+          className="btn btn-primary"
+          data-tutorial-action="new-student"
+          onClick={() => navigate('/students/new')}
+        >
           + 새 학생 등록
         </button>
       </div>
