@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { useTutorial } from '../context/TutorialContext';
 import DateRangePicker from '../components/common/DateRangePicker';
 import {
   BarChart,
@@ -15,7 +14,6 @@ import {
 
 function Dashboard() {
   const { user } = useAuth();
-  const { hasCompletedTutorial, startTutorial } = useTutorial();
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalClasses: 0
@@ -71,14 +69,6 @@ function Dashboard() {
       loadData();
     }
   }, [startDate, endDate]);
-
-  // 튜토리얼 자동 실행 (신규 사용자: 학생/수업 0개, admin 제외)
-  useEffect(() => {
-    if (user?.role !== 'admin' && !hasCompletedTutorial && stats.totalStudents === 0 && stats.totalClasses === 0) {
-      const timer = setTimeout(() => startTutorial(), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [stats.totalStudents, stats.totalClasses, hasCompletedTutorial, startTutorial, user?.role]);
 
   const calculateAge = (birthdate) => {
     if (!birthdate) return null;
