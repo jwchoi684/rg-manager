@@ -1,9 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTutorial } from '../../context/TutorialContext';
 
 function TutorialOverlay() {
-  const navigate = useNavigate();
   const {
     isActive,
     currentStep,
@@ -17,7 +15,6 @@ function TutorialOverlay() {
   } = useTutorial();
 
   const [targetRect, setTargetRect] = useState(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const tooltipRef = useRef(null);
 
@@ -40,16 +37,14 @@ function TutorialOverlay() {
     if (targetElement) {
       const rect = targetElement.getBoundingClientRect();
       setTargetRect({
-        top: rect.top + window.scrollY,
-        left: rect.left + window.scrollX,
+        top: rect.top,
+        left: rect.left,
         width: rect.width,
-        height: rect.height,
-        viewportTop: rect.top,
-        viewportLeft: rect.left
+        height: rect.height
       });
 
       // 타겟이 뷰포트 밖에 있으면 스크롤
-      if (rect.top < 0 || rect.bottom > window.innerHeight) {
+      if (rect.top < 100 || rect.bottom > window.innerHeight - 100) {
         targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     } else {
@@ -57,45 +52,10 @@ function TutorialOverlay() {
     }
   }, [currentStepData]);
 
-  // 툴팁 위치 계산
   useEffect(() => {
-    if (!tooltipRef.current || isMobile) return;
-
-    const tooltipRect = tooltipRef.current.getBoundingClientRect();
-    const padding = 16;
-
-    if (targetRect) {
-      let top = targetRect.viewportTop + targetRect.height + padding;
-      let left = targetRect.viewportLeft;
-
-      // 화면 오른쪽을 넘어가면 조정
-      if (left + tooltipRect.width > window.innerWidth - padding) {
-        left = window.innerWidth - tooltipRect.width - padding;
-      }
-
-      // 화면 아래를 넘어가면 위에 표시
-      if (top + tooltipRect.height > window.innerHeight - padding) {
-        top = targetRect.viewportTop - tooltipRect.height - padding;
-      }
-
-      // 화면 왼쪽을 넘어가면 조정
-      if (left < padding) {
-        left = padding;
-      }
-
-      setTooltipPosition({ top, left });
-    } else {
-      // 타겟이 없으면 화면 중앙
-      setTooltipPosition({
-        top: window.innerHeight / 2 - tooltipRect.height / 2,
-        left: window.innerWidth / 2 - tooltipRect.width / 2
-      });
-    }
-  }, [targetRect, isMobile, currentStep]);
-
-  useEffect(() => {
-    if (isActive) {
-      updateTargetRect();
+    if (isActive && !isMinimized) {
+      // 딜레이 후 타겟 업데이트 (페이지 렌더링 대기)
+      const timer = setTimeout(updateTargetRect, 200);
 
       const observer = new MutationObserver(() => {
         setTimeout(updateTargetRect, 100);
@@ -109,19 +69,12 @@ function TutorialOverlay() {
       window.addEventListener('scroll', updateTargetRect, true);
 
       return () => {
+        clearTimeout(timer);
         observer.disconnect();
         window.removeEventListener('scroll', updateTargetRect, true);
       };
     }
-  }, [isActive, updateTargetRect, currentStep]);
-
-  const handleComplete = () => {
-    if (currentStepData?.action === 'complete') {
-      completeTutorial();
-    } else {
-      nextStep();
-    }
-  };
+  }, [isActive, isMinimized, updateTargetRect, currentStep]);
 
   if (!isActive) return null;
 
@@ -142,35 +95,46 @@ function TutorialOverlay() {
     );
   }
 
+  // 힌트 메시지
+  const getHintMessage = () => {
+    switch (currentStepData?.action) {
+      case 'click':
+        return '👆 하이라이트된 버튼을 클릭하세요';
+      case 'form':
+        return '✏️ 정보를 입력하고 저장하세요';
+      case 'interact':
+        return '👆 직접 체험해보세요';
+      case 'view':
+        return '👀 확인해보세요';
+      default:
+        return null;
+    }
+  };
+
   return (
     <>
-      {/* 배경 오버레이 - 인트로/완료 시에만 차단, 나머지는 클릭 가능 */}
+      {/* 배경 오버레이 - 인트로/완료 시에만 */}
       {isIntroOrComplete && (
         <div className="tutorial-backdrop" />
       )}
 
-      {/* 타겟 하이라이트 */}
+      {/* 타겟 하이라이트 - 클릭 가능하도록 pointer-events: none */}
       {targetRect && !isIntroOrComplete && (
         <div
           className="tutorial-highlight"
           style={{
-            top: targetRect.viewportTop - 4,
-            left: targetRect.viewportLeft - 4,
+            top: targetRect.top - 4,
+            left: targetRect.left - 4,
             width: targetRect.width + 8,
             height: targetRect.height + 8
           }}
         />
       )}
 
-      {/* 툴팁 */}
+      {/* 툴팁 - 하단 고정 (모바일/데스크톱 모두) */}
       <div
         ref={tooltipRef}
-        className={`tutorial-tooltip ${isMobile ? 'mobile' : ''} ${isIntroOrComplete ? 'centered' : ''}`}
-        style={!isMobile && !isIntroOrComplete ? {
-          position: 'fixed',
-          top: tooltipPosition.top,
-          left: tooltipPosition.left
-        } : undefined}
+        className={`tutorial-tooltip ${isIntroOrComplete ? 'centered' : 'bottom-fixed'}`}
       >
         {/* 헤더 */}
         <div className="tutorial-tooltip-header">
@@ -228,23 +192,19 @@ function TutorialOverlay() {
               완료
             </button>
           )}
-          {currentStepData?.action === 'navigate' && (
-            <p className="tutorial-hint">메뉴를 클릭하면 자동으로 진행됩니다</p>
-          )}
-          {currentStepData?.action === 'click' && (
-            <p className="tutorial-hint">하이라이트된 버튼을 클릭하세요</p>
-          )}
-          {currentStepData?.action === 'form' && (
-            <p className="tutorial-hint">정보를 입력하고 저장하면 자동으로 진행됩니다</p>
-          )}
-          {currentStepData?.action === 'interact' && (
-            <button className="btn btn-secondary btn-block" onClick={nextStep}>
-              다음 단계로
-            </button>
+          {getHintMessage() && (
+            <div className="tutorial-hint-row">
+              <p className="tutorial-hint">{getHintMessage()}</p>
+              {(currentStepData?.action === 'interact' || currentStepData?.action === 'view') && (
+                <button className="btn btn-primary btn-sm" onClick={nextStep}>
+                  다음
+                </button>
+              )}
+            </div>
           )}
         </div>
 
-        {/* 건너뛰기 */}
+        {/* 건너뛰기 링크 */}
         {!isIntroOrComplete && (
           <button className="tutorial-skip-link" onClick={skipTutorial}>
             튜토리얼 건너뛰기

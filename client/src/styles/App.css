@@ -1482,11 +1482,10 @@ tbody tr:last-child td {
   background: var(--bg-secondary);
   border-radius: var(--radius-xl);
   z-index: 10000;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  max-width: 360px;
+  box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
   width: calc(100% - 32px);
   overflow: hidden;
-  animation: tooltipSlideIn 0.3s ease;
 }
 
 .tutorial-tooltip.centered {
@@ -1494,40 +1493,39 @@ tbody tr:last-child td {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  animation: tooltipFadeIn 0.3s ease;
 }
 
-.tutorial-tooltip.mobile {
+.tutorial-tooltip.bottom-fixed {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  max-width: 100%;
-  width: 100%;
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  animation: slideUpMobile 0.3s ease;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: slideUpFromBottom 0.3s ease;
 }
 
-@keyframes tooltipSlideIn {
+@keyframes tooltipFadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translate(-50%, -50%) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
-@keyframes slideUpMobile {
+@keyframes slideUpFromBottom {
   from {
     opacity: 0;
-    transform: translateY(100%);
+    transform: translateX(-50%) translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
   }
 }
+
 
 /* 툴팁 헤더 */
 .tutorial-tooltip-header {
@@ -1614,9 +1612,19 @@ tbody tr:last-child td {
   padding-top: 0;
 }
 
+.tutorial-hint-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.tutorial-hint-row .tutorial-hint {
+  flex: 1;
+}
+
 .tutorial-hint {
   font-size: 0.8125rem;
-  color: var(--color-gray-500);
+  color: var(--color-gray-600);
   text-align: center;
   margin: 0;
   padding: var(--spacing-md);
@@ -1650,24 +1658,34 @@ tbody tr:last-child td {
     right: 16px;
   }
 
-  .tutorial-tooltip.mobile {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+  .tutorial-tooltip.bottom-fixed {
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    max-width: calc(100% - 16px);
+    width: calc(100% - 16px);
   }
 
-  .tutorial-tooltip.mobile .tutorial-tooltip-body {
+  .tutorial-tooltip .tutorial-tooltip-body {
     padding: var(--spacing-lg);
   }
 
-  .tutorial-tooltip.mobile .tutorial-title {
+  .tutorial-tooltip .tutorial-title {
     font-size: 1rem;
   }
 
-  .tutorial-tooltip.mobile .tutorial-description {
+  .tutorial-tooltip .tutorial-description {
     font-size: 0.875rem;
   }
 
-  .tutorial-tooltip.mobile .tutorial-tooltip-footer {
+  .tutorial-tooltip .tutorial-tooltip-footer {
     padding: var(--spacing-md);
     padding-top: 0;
+  }
+
+  .tutorial-hint-row {
+    flex-direction: column;
+  }
+
+  .tutorial-hint-row .btn {
+    width: 100%;
   }
 }
