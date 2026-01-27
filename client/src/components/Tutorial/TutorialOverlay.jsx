@@ -131,10 +131,10 @@ function TutorialOverlay() {
         />
       )}
 
-      {/* 툴팁 - 하단 고정 (모바일/데스크톱 모두) */}
+      {/* 툴팁 - 모바일에서 폼/인터랙션 시 상단, 그 외 하단 고정 */}
       <div
         ref={tooltipRef}
-        className={`tutorial-tooltip ${isIntroOrComplete ? 'centered' : 'bottom-fixed'}`}
+        className={`tutorial-tooltip ${isIntroOrComplete ? 'centered' : (isMobile && (currentStepData?.action === 'form' || currentStepData?.action === 'interact') ? 'top-fixed' : 'bottom-fixed')}`}
       >
         {/* 헤더 */}
         <div className="tutorial-tooltip-header">
