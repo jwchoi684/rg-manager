@@ -1721,6 +1721,12 @@ tbody tr:last-child td {
     transform: none !important;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
     border: 2px solid #7c3aed;
+    pointer-events: none; /* 클릭이 통과하도록 */
+  }
+
+  .tutorial-tooltip-v2.form-step .tutorial-v2-header,
+  .tutorial-tooltip-v2.form-step .tutorial-v2-footer {
+    pointer-events: auto; /* 버튼은 클릭 가능하도록 */
   }
 
   .tutorial-tooltip-v2.form-step .tutorial-v2-body {
