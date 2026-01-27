@@ -52,31 +52,36 @@ function TutorialOverlay() {
       const spaceBelow = viewportHeight - rect.bottom;
 
       // 아래 공간이 200px 이상이면 아래에, 아니면 위에
+      let newTooltipPosition = 'bottom';
       if (spaceBelow >= 200) {
-        setTooltipPosition('bottom');
+        newTooltipPosition = 'bottom';
       } else if (spaceAbove >= 200) {
-        setTooltipPosition('top');
+        newTooltipPosition = 'top';
       } else {
         // 둘 다 부족하면 더 넓은 쪽에
-        setTooltipPosition(spaceBelow >= spaceAbove ? 'bottom' : 'top');
+        newTooltipPosition = spaceBelow >= spaceAbove ? 'bottom' : 'top';
       }
+      setTooltipPosition(newTooltipPosition);
 
-      // 타겟이 뷰포트 밖에 있으면 스크롤
-      const tooltipHeight = 180; // 예상 툴팁 높이
-      const margin = 20;
+      // 타겟이 뷰포트 밖에 있으면 스크롤 (input 스텝에서는 자동 스크롤 비활성화)
+      const isInputAction = currentStepData?.action === 'input';
+      if (!isInputAction) {
+        const tooltipHeight = 180; // 예상 툴팁 높이
+        const margin = 20;
 
-      if (rect.top < margin + (tooltipPosition === 'top' ? tooltipHeight : 0)) {
-        // 타겟이 너무 위에 있음 - 아래로 스크롤
-        window.scrollTo({
-          top: window.scrollY + rect.top - margin - (tooltipPosition === 'top' ? tooltipHeight + 20 : 80),
-          behavior: 'smooth'
-        });
-      } else if (rect.bottom > viewportHeight - margin - (tooltipPosition === 'bottom' ? tooltipHeight : 0)) {
-        // 타겟이 너무 아래에 있음 - 위로 스크롤
-        window.scrollTo({
-          top: window.scrollY + rect.bottom - viewportHeight + margin + (tooltipPosition === 'bottom' ? tooltipHeight + 20 : 80),
-          behavior: 'smooth'
-        });
+        if (rect.top < margin + (newTooltipPosition === 'top' ? tooltipHeight : 0)) {
+          // 타겟이 너무 위에 있음 - 아래로 스크롤
+          window.scrollTo({
+            top: window.scrollY + rect.top - margin - (newTooltipPosition === 'top' ? tooltipHeight + 20 : 80),
+            behavior: 'smooth'
+          });
+        } else if (rect.bottom > viewportHeight - margin - (newTooltipPosition === 'bottom' ? tooltipHeight : 0)) {
+          // 타겟이 너무 아래에 있음 - 위로 스크롤
+          window.scrollTo({
+            top: window.scrollY + rect.bottom - viewportHeight + margin + (newTooltipPosition === 'bottom' ? tooltipHeight + 20 : 80),
+            behavior: 'smooth'
+          });
+        }
       }
 
       setIsReady(true);
@@ -84,48 +89,61 @@ function TutorialOverlay() {
       setTargetRect(null);
       setIsReady(true);
     }
-  }, [currentStepData, tooltipPosition]);
+  }, [currentStepData]);
 
   // 스텝 변경 시 초기화 및 업데이트
   useEffect(() => {
     if (isActive && !isMinimized) {
       setIsReady(false);
+      const isInputAction = currentStepData?.action === 'input';
 
       // 페이지 렌더링 대기 후 타겟 업데이트
       const timer = setTimeout(() => {
         updateTargetRect();
       }, 300);
 
-      // DOM 변화 감지
-      const observer = new MutationObserver(() => {
-        setTimeout(updateTargetRect, 100);
-      });
+      // input 스텝에서는 DOM 변화 감지 비활성화 (타이핑 시 흔들림 방지)
+      let observer = null;
+      if (!isInputAction) {
+        observer = new MutationObserver(() => {
+          setTimeout(updateTargetRect, 100);
+        });
 
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true
-      });
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+      }
 
-      // 스크롤 이벤트
+      // 스크롤/리사이즈 이벤트 (input 스텝에서는 debounce 적용)
+      let scrollTimeout = null;
       const handleScroll = () => {
-        requestAnimationFrame(updateTargetRect);
+        if (isInputAction) {
+          // input 스텝에서는 debounce로 업데이트 빈도 낮춤
+          if (scrollTimeout) clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(updateTargetRect, 200);
+        } else {
+          requestAnimationFrame(updateTargetRect);
+        }
       };
       window.addEventListener('scroll', handleScroll, true);
       window.addEventListener('resize', updateTargetRect);
 
       return () => {
         clearTimeout(timer);
-        observer.disconnect();
+        if (scrollTimeout) clearTimeout(scrollTimeout);
+        if (observer) observer.disconnect();
         window.removeEventListener('scroll', handleScroll, true);
         window.removeEventListener('resize', updateTargetRect);
       };
     }
-  }, [isActive, isMinimized, updateTargetRect, currentStep]);
+  }, [isActive, isMinimized, updateTargetRect, currentStep, currentStepData]);
 
   if (!isActive) return null;
 
   const isIntroOrComplete = currentStepData?.action === 'start' || currentStepData?.action === 'complete';
-  const isFormStep = currentStepData?.action === 'form';
+  const isInputStep = currentStepData?.action === 'input';
+  const isFormStep = currentStepData?.action === 'form' || isInputStep;
   const progress = ((currentStep) / (totalSteps - 1)) * 100;
 
   // 최소화된 상태
@@ -146,6 +164,7 @@ function TutorialOverlay() {
   const getHintIcon = () => {
     switch (currentStepData?.action) {
       case 'click': return '👆';
+      case 'input': return '✏️';
       case 'form': return '✏️';
       case 'interact': return '👆';
       case 'view': return '👀';
@@ -157,6 +176,7 @@ function TutorialOverlay() {
   const getHintMessage = () => {
     switch (currentStepData?.action) {
       case 'click': return '버튼을 클릭하세요';
+      case 'input': return '입력 후 다음을 누르세요';
       case 'form': return '정보를 입력하세요';
       case 'interact': return '직접 체험해보세요';
       case 'view': return '확인해보세요';
@@ -299,7 +319,7 @@ function TutorialOverlay() {
             <div className="tutorial-v2-hint">
               <span className="tutorial-v2-hint-icon">{getHintIcon()}</span>
               <span className="tutorial-v2-hint-text">{getHintMessage()}</span>
-              {(currentStepData?.action === 'interact' || currentStepData?.action === 'view') && (
+              {(currentStepData?.action === 'input' || currentStepData?.action === 'interact' || currentStepData?.action === 'view') && (
                 <button className="tutorial-v2-btn small" onClick={nextStep}>
                   다음
                 </button>

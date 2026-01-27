@@ -119,7 +119,7 @@ function StudentForm() {
             gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
             gap: 'var(--spacing-lg)'
           }}>
-            <div className="form-group" style={{ marginBottom: 0 }}>
+            <div className="form-group" style={{ marginBottom: 0 }} data-tutorial="student-name">
               <label className="form-label">이름</label>
               <input
                 type="text"
@@ -129,7 +129,7 @@ function StudentForm() {
                 required
               />
             </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
+            <div className="form-group" style={{ marginBottom: 0 }} data-tutorial="student-birthdate">
               <label className="form-label">생년월일</label>
               <input
                 type={formData.birthdate ? "date" : "text"}
@@ -144,7 +144,7 @@ function StudentForm() {
 
           {/* Class Selection */}
           {classes.length > 0 && (
-            <div style={{ marginTop: 'var(--spacing-xl)' }}>
+            <div style={{ marginTop: 'var(--spacing-xl)' }} data-tutorial="student-class">
               <label className="form-label">수강 수업 선택</label>
               <div style={{
                 display: 'grid',
@@ -205,7 +205,7 @@ function StudentForm() {
             paddingTop: 'var(--spacing-xl)',
             borderTop: '1px solid var(--color-gray-200)'
           }}>
-            <button type="submit" className="btn btn-primary btn-lg">
+            <button type="submit" className="btn btn-primary btn-lg" data-tutorial="student-submit">
               {isEditing ? "수정 완료" : "등록하기"}
             </button>
             <button

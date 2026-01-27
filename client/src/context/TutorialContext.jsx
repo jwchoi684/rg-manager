@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-// 세부 튜토리얼 스텝 정의 (메뉴 클릭 생략, 입력 부분만)
+// 세부 튜토리얼 스텝 정의 (개별 입력창 하이라이트)
 const TUTORIAL_STEPS = [
   {
     id: 'intro',
@@ -11,27 +11,78 @@ const TUTORIAL_STEPS = [
     requiredPath: null,
     action: 'start'
   },
+  // 수업 등록 - 개별 입력창
   {
-    id: 'fill-class-form',
-    title: '수업 정보 입력',
-    description: '수업명, 수업 시간, 시간(분)을 입력하고 "등록하기" 버튼을 누르세요.',
-    targetSelector: '[data-tutorial-action="class-form"]',
+    id: 'class-name',
+    title: '수업명 입력',
+    description: '수업 이름을 입력하세요. (예: 초급반, 중급반)',
+    targetSelector: '[data-tutorial="class-name"]',
     requiredPath: '/classes/new',
-    action: 'form'
+    action: 'input'
   },
   {
-    id: 'fill-student-form',
-    title: '학생 정보 입력',
-    description: '학생 이름, 생년월일을 입력하고 수업을 선택한 후 "등록하기" 버튼을 누르세요.',
-    targetSelector: '[data-tutorial-action="student-form"]',
-    requiredPath: '/students/new',
-    action: 'form'
+    id: 'class-schedule',
+    title: '수업 시간 입력',
+    description: '수업 요일과 시간을 입력하세요. (예: 월/수 14:00)',
+    targetSelector: '[data-tutorial="class-schedule"]',
+    requiredPath: '/classes/new',
+    action: 'input'
   },
+  {
+    id: 'class-duration',
+    title: '수업 길이 입력',
+    description: '수업 시간(분)을 입력하세요. (예: 60, 90)',
+    targetSelector: '[data-tutorial="class-duration"]',
+    requiredPath: '/classes/new',
+    action: 'input'
+  },
+  {
+    id: 'class-submit',
+    title: '수업 등록',
+    description: '"등록하기" 버튼을 눌러 수업을 등록하세요.',
+    targetSelector: '[data-tutorial="class-submit"]',
+    requiredPath: '/classes/new',
+    action: 'click'
+  },
+  // 학생 등록 - 개별 입력창
+  {
+    id: 'student-name',
+    title: '학생 이름 입력',
+    description: '학생 이름을 입력하세요.',
+    targetSelector: '[data-tutorial="student-name"]',
+    requiredPath: '/students/new',
+    action: 'input'
+  },
+  {
+    id: 'student-birthdate',
+    title: '생년월일 입력',
+    description: '학생의 생년월일을 선택하세요.',
+    targetSelector: '[data-tutorial="student-birthdate"]',
+    requiredPath: '/students/new',
+    action: 'input'
+  },
+  {
+    id: 'student-class',
+    title: '수업 선택',
+    description: '학생이 수강할 수업을 선택하세요.',
+    targetSelector: '[data-tutorial="student-class"]',
+    requiredPath: '/students/new',
+    action: 'input'
+  },
+  {
+    id: 'student-submit',
+    title: '학생 등록',
+    description: '"등록하기" 버튼을 눌러 학생을 등록하세요.',
+    targetSelector: '[data-tutorial="student-submit"]',
+    requiredPath: '/students/new',
+    action: 'click'
+  },
+  // 출석 체크
   {
     id: 'check-attendance',
     title: '출석 체크하기',
-    description: '수업을 선택하고 학생 카드를 클릭하면 출석이 체크됩니다. 체크해보세요!',
-    targetSelector: '[data-tutorial-action="attendance-check"]',
+    description: '수업을 선택하고 학생 카드를 클릭하면 출석이 체크됩니다.',
+    targetSelector: '[data-tutorial="attendance-area"]',
     requiredPath: '/attendance',
     action: 'interact'
   },
@@ -86,11 +137,11 @@ export function TutorialProvider({ children }) {
   // 이미 처리된 스텝/경로 조합 추적 (중복 실행 방지)
   const processedRef = useRef({ step: -1, path: '' });
 
-  // 경로 변경 감지 - form 액션에서 저장 후 목록으로 돌아오면 다음 스텝
+  // 경로 변경 감지 - 등록 후 목록으로 돌아오면 다음 스텝
   useEffect(() => {
     if (!isActive || !currentStepData) return;
 
-    const { action, requiredPath } = currentStepData;
+    const { id, requiredPath } = currentStepData;
     let timeoutId = null;
     let shouldAdvance = false;
 
@@ -99,13 +150,13 @@ export function TutorialProvider({ children }) {
       return;
     }
 
-    // form 액션: /classes/new -> /classes 또는 /students/new -> /students 이동 감지
-    if (action === 'form') {
-      if (requiredPath === '/classes/new' && location.pathname === '/classes') {
-        shouldAdvance = true;
-      } else if (requiredPath === '/students/new' && location.pathname === '/students') {
-        shouldAdvance = true;
-      }
+    // class-submit 클릭 후 /classes로 이동하면 다음 스텝 (student-name)
+    if (id === 'class-submit' && location.pathname === '/classes') {
+      shouldAdvance = true;
+    }
+    // student-submit 클릭 후 /students로 이동하면 다음 스텝 (check-attendance)
+    else if (id === 'student-submit' && location.pathname === '/students') {
+      shouldAdvance = true;
     }
 
     if (shouldAdvance) {

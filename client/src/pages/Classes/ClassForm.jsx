@@ -88,7 +88,7 @@ function ClassForm() {
             gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
             gap: 'var(--spacing-lg)'
           }}>
-            <div className="form-group" style={{ marginBottom: 0 }}>
+            <div className="form-group" style={{ marginBottom: 0 }} data-tutorial="class-name">
               <label className="form-label">수업명</label>
               <input
                 type="text"
@@ -98,7 +98,7 @@ function ClassForm() {
                 required
               />
             </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
+            <div className="form-group" style={{ marginBottom: 0 }} data-tutorial="class-schedule">
               <label className="form-label">수업 시간</label>
               <input
                 type="text"
@@ -108,7 +108,7 @@ function ClassForm() {
                 required
               />
             </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
+            <div className="form-group" style={{ marginBottom: 0 }} data-tutorial="class-duration">
               <label className="form-label">수업 길이</label>
               <input
                 type="text"
@@ -137,7 +137,7 @@ function ClassForm() {
             paddingTop: 'var(--spacing-xl)',
             borderTop: '1px solid var(--color-gray-200)'
           }}>
-            <button type="submit" className="btn btn-primary btn-lg">
+            <button type="submit" className="btn btn-primary btn-lg" data-tutorial="class-submit">
               {isEditing ? '수정 완료' : '등록하기'}
             </button>
             <button
