@@ -166,8 +166,7 @@ function TutorialOverlay() {
 
   // 4개 오버레이로 스포트라이트 효과 생성
   const getOverlayParts = () => {
-    // form 스텝에서는 오버레이를 표시하지 않음 (입력창을 가리지 않도록)
-    if (!targetRect || isIntroOrComplete || isFormStep) return null;
+    if (!targetRect || isIntroOrComplete) return null;
 
     const overlayStyle = {
       position: 'fixed',
@@ -228,11 +227,11 @@ function TutorialOverlay() {
         <div className="tutorial-backdrop" />
       )}
 
-      {/* 스포트라이트 오버레이 (4개 영역) - form 스텝에서는 표시 안함 */}
-      {targetRect && !isIntroOrComplete && !isFormStep && isReady && getOverlayParts()}
+      {/* 스포트라이트 오버레이 (4개 영역) */}
+      {targetRect && !isIntroOrComplete && isReady && getOverlayParts()}
 
-      {/* 타겟 하이라이트 테두리 + 펄스 애니메이션 - form 스텝에서는 표시 안함 */}
-      {targetRect && !isIntroOrComplete && !isFormStep && isReady && (
+      {/* 타겟 하이라이트 테두리 + 펄스 애니메이션 */}
+      {targetRect && !isIntroOrComplete && isReady && (
         <div
           className="tutorial-spotlight-ring"
           style={{
