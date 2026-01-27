@@ -125,6 +125,7 @@ function TutorialOverlay() {
   if (!isActive) return null;
 
   const isIntroOrComplete = currentStepData?.action === 'start' || currentStepData?.action === 'complete';
+  const isFormStep = currentStepData?.action === 'form';
   const progress = ((currentStep) / (totalSteps - 1)) * 100;
 
   // 최소화된 상태
@@ -165,7 +166,8 @@ function TutorialOverlay() {
 
   // 4개 오버레이로 스포트라이트 효과 생성
   const getOverlayParts = () => {
-    if (!targetRect || isIntroOrComplete) return null;
+    // form 스텝에서는 오버레이를 표시하지 않음 (입력창을 가리지 않도록)
+    if (!targetRect || isIntroOrComplete || isFormStep) return null;
 
     const overlayStyle = {
       position: 'fixed',
@@ -199,10 +201,16 @@ function TutorialOverlay() {
       position: 'fixed',
       left: '50%',
       transform: 'translateX(-50%)',
-      maxWidth: 'calc(100% - 32px)',
       width: '100%',
       maxWidth: '400px'
     };
+
+    // form 스텝에서는 하단에 고정 (입력창을 가리지 않도록)
+    if (isFormStep) {
+      delete style.top;
+      style.bottom = `${margin}px`;
+      return style;
+    }
 
     if (tooltipPosition === 'bottom') {
       style.top = `${Math.min(targetRect.bottom + margin, window.innerHeight - 200)}px`;
@@ -220,11 +228,11 @@ function TutorialOverlay() {
         <div className="tutorial-backdrop" />
       )}
 
-      {/* 스포트라이트 오버레이 (4개 영역) */}
-      {targetRect && !isIntroOrComplete && isReady && getOverlayParts()}
+      {/* 스포트라이트 오버레이 (4개 영역) - form 스텝에서는 표시 안함 */}
+      {targetRect && !isIntroOrComplete && !isFormStep && isReady && getOverlayParts()}
 
-      {/* 타겟 하이라이트 테두리 + 펄스 애니메이션 */}
-      {targetRect && !isIntroOrComplete && isReady && (
+      {/* 타겟 하이라이트 테두리 + 펄스 애니메이션 - form 스텝에서는 표시 안함 */}
+      {targetRect && !isIntroOrComplete && !isFormStep && isReady && (
         <div
           className="tutorial-spotlight-ring"
           style={{
@@ -242,7 +250,7 @@ function TutorialOverlay() {
       {/* 툴팁 */}
       <div
         ref={tooltipRef}
-        className={`tutorial-tooltip-v2 ${isIntroOrComplete ? 'centered' : ''}`}
+        className={`tutorial-tooltip-v2 ${isIntroOrComplete ? 'centered' : ''} ${isFormStep ? 'form-step' : ''}`}
         style={!isIntroOrComplete ? getTooltipStyle() : {}}
       >
         {/* 진행 바 */}

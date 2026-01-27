@@ -1710,4 +1710,38 @@ tbody tr:last-child td {
     padding: 8px 14px;
     font-size: 0.8125rem;
   }
+
+  /* form 스텝에서는 하단에 컴팩트하게 표시 (입력창을 가리지 않도록) */
+  .tutorial-tooltip-v2.form-step {
+    top: auto !important;
+    bottom: 12px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    transform: none !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    border: 2px solid #7c3aed;
+  }
+
+  .tutorial-tooltip-v2.form-step .tutorial-v2-body {
+    padding: 12px;
+  }
+
+  .tutorial-tooltip-v2.form-step .tutorial-v2-title {
+    font-size: 0.9375rem;
+    margin-bottom: 4px;
+  }
+
+  .tutorial-tooltip-v2.form-step .tutorial-v2-description {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .tutorial-tooltip-v2.form-step .tutorial-v2-footer {
+    padding: 0 12px 12px;
+  }
+
+  .tutorial-tooltip-v2.form-step .tutorial-v2-hint {
+    padding: 8px 10px;
+  }
 }
