@@ -1392,3 +1392,174 @@ tbody tr:last-child td {
 .swipeable-action-btn:active {
   transform: scale(0.9);
 }
+
+/* ===================================
+   Tutorial Overlay Styles
+   =================================== */
+
+.tutorial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.tutorial-spotlight {
+  position: fixed;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+  z-index: 10001;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.tutorial-tooltip {
+  position: relative;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-2xl);
+  max-width: 400px;
+  width: calc(100% - 32px);
+  z-index: 10002;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp 0.3s ease;
+}
+
+.tutorial-tooltip.mobile {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 100%;
+  width: 100%;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: var(--spacing-2xl) var(--spacing-xl);
+  padding-bottom: calc(var(--spacing-2xl) + env(safe-area-inset-bottom, 0px));
+  animation: slideUpMobile 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpMobile {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tutorial-progress {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.tutorial-progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-gray-300);
+  transition: all 0.3s ease;
+}
+
+.tutorial-progress-dot.active {
+  width: 24px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary);
+}
+
+.tutorial-progress-dot.completed {
+  background-color: var(--color-primary);
+}
+
+.tutorial-step-indicator {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-gray-500);
+  margin-bottom: var(--spacing-md);
+  letter-spacing: 0.5px;
+}
+
+.tutorial-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-gray-900);
+  text-align: center;
+  margin-bottom: var(--spacing-sm);
+  letter-spacing: -0.3px;
+}
+
+.tutorial-description {
+  font-size: 0.9375rem;
+  color: var(--color-gray-600);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: var(--spacing-xl);
+  letter-spacing: -0.2px;
+}
+
+.tutorial-action-btn {
+  margin-bottom: var(--spacing-lg);
+}
+
+.tutorial-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-gray-100);
+}
+
+.tutorial-nav-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+/* Mobile adjustments for tutorial */
+@media (max-width: 768px) {
+  .tutorial-tooltip.mobile .tutorial-title {
+    font-size: 1.125rem;
+  }
+
+  .tutorial-tooltip.mobile .tutorial-description {
+    font-size: 0.875rem;
+  }
+
+  .tutorial-tooltip.mobile .tutorial-nav {
+    flex-direction: column-reverse;
+    gap: var(--spacing-md);
+  }
+
+  .tutorial-tooltip.mobile .tutorial-nav-buttons {
+    width: 100%;
+  }
+
+  .tutorial-tooltip.mobile .tutorial-nav-buttons .btn {
+    flex: 1;
+  }
+
+  .tutorial-tooltip.mobile .tutorial-nav > .btn-ghost {
+    width: 100%;
+  }
+}

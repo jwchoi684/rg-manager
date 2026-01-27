@@ -17,6 +17,8 @@ import CompetitionList from './pages/Competitions/CompetitionList';
 import CompetitionForm from './pages/Competitions/CompetitionForm';
 import CompetitionStudentManagement from './pages/Competitions/CompetitionStudentManagement';
 import StudentCompetitions from './pages/StudentCompetitions';
+import { TutorialOverlay } from './components/Tutorial';
+import { useTutorial } from './context/TutorialContext';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -49,6 +51,7 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
+  const { startTutorial } = useTutorial();
 
   // 메뉴 열릴 때 body 스크롤 방지
   useEffect(() => {
@@ -93,13 +96,13 @@ function App() {
   }
 
   const navLinks = [
-    { path: '/', label: '대시보드', icon: '📊' },
-    { path: '/students', label: '학생 관리', icon: '👥' },
-    { path: '/classes', label: '수업 관리', icon: '📚' },
-    { path: '/competitions', label: '대회 관리', icon: '🏆' },
-    { path: '/attendance', label: '출석 체크', icon: '✓' },
-    { path: '/student-attendance', label: '학생별 출석', icon: '📋' },
-    { path: '/student-competitions', label: '학생별 대회', icon: '🎖️' },
+    { path: '/', label: '대시보드', icon: '📊', id: 'dashboard' },
+    { path: '/students', label: '학생 관리', icon: '👥', id: 'students' },
+    { path: '/classes', label: '수업 관리', icon: '📚', id: 'classes' },
+    { path: '/competitions', label: '대회 관리', icon: '🏆', id: 'competitions' },
+    { path: '/attendance', label: '출석 체크', icon: '✓', id: 'attendance' },
+    { path: '/student-attendance', label: '학생별 출석', icon: '📋', id: 'student-attendance' },
+    { path: '/student-competitions', label: '학생별 대회', icon: '🎖️', id: 'student-competitions' },
   ];
 
   const adminLinks = [
@@ -126,6 +129,7 @@ function App() {
             <Link
               key={link.path}
               to={link.path}
+              data-tutorial={link.id}
               className={isActive(link.path) ? 'active' : ''}
             >
               {link.label}
@@ -141,10 +145,19 @@ function App() {
             </Link>
           ))}
           <button
-            onClick={handleLogout}
+            onClick={() => startTutorial()}
             className="btn btn-ghost"
             style={{
               marginLeft: 'auto',
+              fontSize: '0.875rem',
+            }}
+          >
+            📖 튜토리얼
+          </button>
+          <button
+            onClick={handleLogout}
+            className="btn btn-ghost"
+            style={{
               fontSize: '0.875rem',
             }}
           >
@@ -171,6 +184,7 @@ function App() {
               <Link
                 key={link.path}
                 to={link.path}
+                data-tutorial={link.id}
                 onClick={closeMobileMenu}
                 className={`mobile-menu-item ${isActive(link.path) ? 'active' : ''}`}
               >
@@ -195,6 +209,19 @@ function App() {
               ))}
             </div>
           )}
+          <div className="mobile-menu-section">
+            <div className="mobile-menu-section-title">도움말</div>
+            <button
+              onClick={() => {
+                closeMobileMenu();
+                setTimeout(() => startTutorial(), 300);
+              }}
+              className="mobile-menu-item"
+            >
+              <span className="mobile-menu-icon">📖</span>
+              <span className="mobile-menu-label">튜토리얼 다시 보기</span>
+            </button>
+          </div>
           <div className="mobile-menu-section">
             <div className="mobile-menu-section-title">계정</div>
             <button
@@ -230,6 +257,9 @@ function App() {
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
+
+      {/* Tutorial Overlay */}
+      <TutorialOverlay />
     </div>
   );
 }
