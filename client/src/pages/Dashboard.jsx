@@ -72,13 +72,13 @@ function Dashboard() {
     }
   }, [startDate, endDate]);
 
-  // 튜토리얼 자동 실행 (신규 사용자: 학생/수업 0개)
+  // 튜토리얼 자동 실행 (신규 사용자: 학생/수업 0개, admin 제외)
   useEffect(() => {
-    if (!hasCompletedTutorial && stats.totalStudents === 0 && stats.totalClasses === 0) {
+    if (user?.role !== 'admin' && !hasCompletedTutorial && stats.totalStudents === 0 && stats.totalClasses === 0) {
       const timer = setTimeout(() => startTutorial(), 500);
       return () => clearTimeout(timer);
     }
-  }, [stats.totalStudents, stats.totalClasses, hasCompletedTutorial, startTutorial]);
+  }, [stats.totalStudents, stats.totalClasses, hasCompletedTutorial, startTutorial, user?.role]);
 
 
   const calculateAge = (birthdate) => {

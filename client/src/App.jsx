@@ -144,16 +144,18 @@ function App() {
               {link.label}
             </Link>
           ))}
-          <button
-            onClick={() => startTutorial()}
-            className="btn btn-ghost"
-            style={{
-              marginLeft: 'auto',
-              fontSize: '0.875rem',
-            }}
-          >
-            📖 튜토리얼
-          </button>
+          {user?.role !== 'admin' && (
+            <button
+              onClick={() => startTutorial()}
+              className="btn btn-ghost"
+              style={{
+                marginLeft: 'auto',
+                fontSize: '0.875rem',
+              }}
+            >
+              📖 튜토리얼
+            </button>
+          )}
           <button
             onClick={handleLogout}
             className="btn btn-ghost"
@@ -209,19 +211,21 @@ function App() {
               ))}
             </div>
           )}
-          <div className="mobile-menu-section">
-            <div className="mobile-menu-section-title">도움말</div>
-            <button
-              onClick={() => {
-                closeMobileMenu();
-                setTimeout(() => startTutorial(), 300);
-              }}
-              className="mobile-menu-item"
-            >
-              <span className="mobile-menu-icon">📖</span>
-              <span className="mobile-menu-label">튜토리얼 다시 보기</span>
-            </button>
-          </div>
+          {user?.role !== 'admin' && (
+            <div className="mobile-menu-section">
+              <div className="mobile-menu-section-title">도움말</div>
+              <button
+                onClick={() => {
+                  closeMobileMenu();
+                  setTimeout(() => startTutorial(), 300);
+                }}
+                className="mobile-menu-item"
+              >
+                <span className="mobile-menu-icon">📖</span>
+                <span className="mobile-menu-label">튜토리얼 다시 보기</span>
+              </button>
+            </div>
+          )}
           <div className="mobile-menu-section">
             <div className="mobile-menu-section-title">계정</div>
             <button
