@@ -1,1 +1,1 @@
-export { default as TutorialOverlay } from './TutorialOverlay';
+export { default as TutorialModal } from './TutorialModal';

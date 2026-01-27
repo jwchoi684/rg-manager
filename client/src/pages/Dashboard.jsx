@@ -80,7 +80,6 @@ function Dashboard() {
     }
   }, [stats.totalStudents, stats.totalClasses, hasCompletedTutorial, startTutorial, user?.role]);
 
-
   const calculateAge = (birthdate) => {
     if (!birthdate) return null;
     const today = new Date();

@@ -1394,360 +1394,253 @@ tbody tr:last-child td {
 }
 
 /* ===================================
-   Tutorial V2 Styles (Spotlight)
+   Tutorial Modal Styles
    =================================== */
 
-/* 배경 오버레이 - 인트로/완료 시에만 사용 */
-.tutorial-backdrop {
+/* 모달 오버레이 */
+.tutorial-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.75);
-  z-index: 9998;
-  animation: fadeIn 0.3s ease;
-}
-
-/* 스포트라이트 링 (타겟 하이라이트) */
-.tutorial-spotlight-ring {
-  border: 3px solid var(--color-primary);
-  border-radius: var(--radius-lg);
-  box-shadow:
-    0 0 0 4px rgba(49, 130, 246, 0.3),
-    inset 0 0 20px rgba(49, 130, 246, 0.1);
-  animation: spotlightPulse 1.5s ease-in-out infinite;
-}
-
-@keyframes spotlightPulse {
-  0%, 100% {
-    box-shadow:
-      0 0 0 4px rgba(49, 130, 246, 0.3),
-      inset 0 0 20px rgba(49, 130, 246, 0.1);
-  }
-  50% {
-    box-shadow:
-      0 0 0 8px rgba(49, 130, 246, 0.2),
-      0 0 30px rgba(49, 130, 246, 0.3),
-      inset 0 0 20px rgba(49, 130, 246, 0.1);
-  }
-}
-
-/* 최소화 버튼 */
-.tutorial-minimized {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  z-index: 10001;
-  box-shadow: var(--shadow-lg);
-  font-family: inherit;
-  font-size: 0.875rem;
-  font-weight: 600;
-  transition: all var(--transition-fast);
-}
-
-.tutorial-minimized:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 20px rgba(49, 130, 246, 0.4);
-}
-
-.tutorial-minimized-icon {
-  font-size: 1rem;
-}
-
-.tutorial-minimized-text {
-  display: none;
-}
-
-.tutorial-minimized-step {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-}
-
-@media (min-width: 480px) {
-  .tutorial-minimized-text {
-    display: inline;
-  }
-}
-
-/* 툴팁 V2 */
-.tutorial-tooltip-v2 {
-  background: white;
-  border-radius: 16px;
+  justify-content: center;
   z-index: 10000;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
+  padding: var(--spacing-lg);
+  animation: fadeIn 0.2s ease;
+}
+
+/* 모달 컨테이너 */
+.tutorial-modal {
+  background: white;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
   overflow: hidden;
-  animation: tooltipSlideIn 0.3s ease;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlideUp 0.3s ease;
 }
 
-.tutorial-tooltip-v2.centered {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: calc(100% - 48px);
-  max-width: 360px;
-  animation: tooltipFadeIn 0.3s ease;
-}
-
-@keyframes tooltipSlideIn {
+@keyframes modalSlideUp {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(10px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-@keyframes tooltipFadeIn {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translateY(0);
   }
 }
 
 /* 진행 바 */
-.tutorial-v2-progress {
-  height: 3px;
+.tutorial-progress {
+  height: 4px;
   background: var(--color-gray-100);
 }
 
-.tutorial-v2-progress-fill {
+.tutorial-progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--color-primary), #60a5fa);
   transition: width 0.4s ease;
 }
 
 /* 헤더 */
-.tutorial-v2-header {
+.tutorial-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--color-gray-100);
 }
 
-.tutorial-v2-step {
-  font-size: 0.75rem;
-  font-weight: 700;
+.tutorial-page-indicator {
+  font-size: 0.8125rem;
+  font-weight: 600;
   color: var(--color-primary);
   background: var(--color-primary-bg);
   padding: 4px 12px;
-  border-radius: 100px;
+  border-radius: var(--radius-full);
 }
 
-.tutorial-v2-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.tutorial-v2-icon-btn {
+.tutorial-close-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   background: none;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   color: var(--color-gray-400);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.tutorial-v2-icon-btn:hover {
+.tutorial-close-btn:hover {
   background: var(--color-gray-100);
   color: var(--color-gray-600);
 }
 
-/* 바디 */
-.tutorial-v2-body {
-  padding: 20px 16px 16px;
+/* 콘텐츠 */
+.tutorial-content {
+  padding: var(--spacing-xl) var(--spacing-lg);
+  text-align: center;
 }
 
-.tutorial-v2-title {
-  font-size: 1.125rem;
+.tutorial-icon {
+  font-size: 3.5rem;
+  margin-bottom: var(--spacing-lg);
+  display: block;
+}
+
+.tutorial-title {
+  font-size: 1.375rem;
   font-weight: 700;
   color: var(--color-gray-900);
-  margin: 0 0 8px 0;
+  margin: 0 0 var(--spacing-sm) 0;
   letter-spacing: -0.3px;
 }
 
-.tutorial-v2-description {
+.tutorial-description {
   font-size: 0.9375rem;
   color: var(--color-gray-600);
-  line-height: 1.5;
+  line-height: 1.6;
+  margin: 0 0 var(--spacing-xl) 0;
+}
+
+/* 기능 목록 */
+.tutorial-features {
+  list-style: none;
+  padding: 0;
   margin: 0;
+  text-align: left;
 }
 
-/* 푸터 */
-.tutorial-v2-footer {
-  padding: 0 16px 16px;
+.tutorial-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
 }
 
-.tutorial-v2-btn {
+.tutorial-feature-number {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  padding: 14px 20px;
+  width: 24px;
+  height: 24px;
   background: var(--color-primary);
   color: white;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.tutorial-feature-text {
+  font-size: 0.9375rem;
+  color: var(--color-gray-700);
+  line-height: 1.5;
+  padding-top: 2px;
+}
+
+/* 페이지 도트 */
+.tutorial-dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) 0;
+}
+
+.tutorial-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-gray-200);
   border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  font-family: inherit;
+  padding: 0;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
-.tutorial-v2-btn:hover {
-  background: var(--color-primary-dark);
-  transform: translateY(-1px);
+.tutorial-dot:hover {
+  background: var(--color-gray-300);
 }
 
-.tutorial-v2-btn.primary {
+.tutorial-dot.active {
+  width: 24px;
   background: var(--color-primary);
 }
 
-.tutorial-v2-btn.small {
-  width: auto;
-  padding: 8px 16px;
-  font-size: 0.875rem;
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-/* 힌트 */
-.tutorial-v2-hint {
+/* 푸터 */
+.tutorial-footer {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, var(--color-primary-bg), #eff6ff);
-  border-radius: 12px;
-  border: 1px solid rgba(49, 130, 246, 0.1);
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg);
+  gap: var(--spacing-md);
 }
 
-.tutorial-v2-hint-icon {
-  font-size: 1.25rem;
-  flex-shrink: 0;
+.tutorial-footer .btn {
+  min-width: 80px;
 }
 
-.tutorial-v2-hint-text {
+.tutorial-footer .btn-primary {
   flex: 1;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-primary-dark);
+  max-width: 160px;
 }
 
 /* 모바일 반응형 */
 @media (max-width: 768px) {
-  .tutorial-minimized {
-    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-    right: 16px;
-    padding: 10px 14px;
+  .tutorial-modal-overlay {
+    padding: var(--spacing-md);
+    align-items: flex-end;
   }
 
-  .tutorial-tooltip-v2 {
-    width: calc(100% - 24px) !important;
-    max-width: none !important;
+  .tutorial-modal {
+    max-height: 85vh;
+    border-radius: 20px 20px 0 0;
+    animation: modalSlideUpMobile 0.3s ease;
   }
 
-  .tutorial-tooltip-v2.centered {
-    width: calc(100% - 32px);
+  @keyframes modalSlideUpMobile {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
-  .tutorial-v2-body {
-    padding: 16px 14px 12px;
+  .tutorial-content {
+    padding: var(--spacing-lg);
   }
 
-  .tutorial-v2-title {
-    font-size: 1rem;
+  .tutorial-icon {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-md);
   }
 
-  .tutorial-v2-description {
+  .tutorial-title {
+    font-size: 1.25rem;
+  }
+
+  .tutorial-description {
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .tutorial-feature-text {
     font-size: 0.875rem;
   }
 
-  .tutorial-v2-footer {
-    padding: 0 14px 14px;
-  }
-
-  .tutorial-v2-btn {
-    padding: 12px 16px;
-    font-size: 0.9375rem;
-  }
-
-  .tutorial-v2-hint {
-    padding: 10px 12px;
-    gap: 10px;
-  }
-
-  .tutorial-v2-hint-text {
-    font-size: 0.8125rem;
-  }
-
-  .tutorial-v2-btn.small {
-    padding: 8px 14px;
-    font-size: 0.8125rem;
-  }
-
-  /* form 스텝에서는 하단에 컴팩트하게 표시 (입력창을 가리지 않도록) */
-  .tutorial-tooltip-v2.form-step {
-    top: auto !important;
-    bottom: 12px !important;
-    left: 12px !important;
-    right: 12px !important;
-    width: auto !important;
-    transform: none !important;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
-    border: 2px solid #7c3aed;
-    pointer-events: none; /* 클릭이 통과하도록 */
-  }
-
-  .tutorial-tooltip-v2.form-step .tutorial-v2-header,
-  .tutorial-tooltip-v2.form-step .tutorial-v2-footer {
-    pointer-events: auto; /* 버튼은 클릭 가능하도록 */
-  }
-
-  .tutorial-tooltip-v2.form-step .tutorial-v2-body {
-    padding: 12px;
-  }
-
-  .tutorial-tooltip-v2.form-step .tutorial-v2-title {
-    font-size: 0.9375rem;
-    margin-bottom: 4px;
-  }
-
-  .tutorial-tooltip-v2.form-step .tutorial-v2-description {
-    font-size: 0.8125rem;
-    line-height: 1.4;
-  }
-
-  .tutorial-tooltip-v2.form-step .tutorial-v2-footer {
-    padding: 0 12px 12px;
-  }
-
-  .tutorial-tooltip-v2.form-step .tutorial-v2-hint {
-    padding: 8px 10px;
+  .tutorial-footer {
+    padding: var(--spacing-md) var(--spacing-lg) calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0px));
   }
 }

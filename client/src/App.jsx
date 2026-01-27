@@ -17,7 +17,7 @@ import CompetitionList from './pages/Competitions/CompetitionList';
 import CompetitionForm from './pages/Competitions/CompetitionForm';
 import CompetitionStudentManagement from './pages/Competitions/CompetitionStudentManagement';
 import StudentCompetitions from './pages/StudentCompetitions';
-import { TutorialOverlay } from './components/Tutorial';
+import { TutorialModal } from './components/Tutorial';
 import { useTutorial } from './context/TutorialContext';
 
 function ProtectedRoute({ children }) {
@@ -262,8 +262,8 @@ function App() {
         </Routes>
       </main>
 
-      {/* Tutorial Overlay */}
-      <TutorialOverlay />
+      {/* Tutorial Modal */}
+      <TutorialModal />
     </div>
   );
 }
