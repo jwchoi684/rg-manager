@@ -20,15 +20,22 @@ function TutorialOverlay() {
   const tooltipRef = useRef(null);
   const overlayRef = useRef(null);
 
+  // 항상 최신 스텝 데이터를 참조하기 위한 ref
+  const currentStepDataRef = useRef(currentStepData);
+  currentStepDataRef.current = currentStepData;
+
   // 타겟 요소 위치 업데이트
   const updateTargetRect = useCallback(() => {
-    if (!currentStepData?.targetSelector) {
+    // ref를 통해 항상 최신 스텝 데이터 사용
+    const stepData = currentStepDataRef.current;
+
+    if (!stepData?.targetSelector) {
       setTargetRect(null);
       setIsReady(true);
       return;
     }
 
-    const targetElement = document.querySelector(currentStepData.targetSelector);
+    const targetElement = document.querySelector(stepData.targetSelector);
     if (targetElement) {
       const rect = targetElement.getBoundingClientRect();
       const padding = 8;
@@ -64,7 +71,7 @@ function TutorialOverlay() {
       setTooltipPosition(newTooltipPosition);
 
       // 타겟이 뷰포트 밖에 있으면 스크롤 (input 스텝에서는 자동 스크롤 비활성화)
-      const isInputAction = currentStepData?.action === 'input';
+      const isInputAction = stepData?.action === 'input';
       if (!isInputAction) {
         const tooltipHeight = 180; // 예상 툴팁 높이
         const margin = 20;
@@ -89,13 +96,12 @@ function TutorialOverlay() {
       setTargetRect(null);
       setIsReady(true);
     }
-  }, [currentStepData]);
+  }, []); // ref를 사용하므로 의존성 불필요
 
   // 스텝 변경 시 초기화 및 업데이트
   useEffect(() => {
     if (isActive && !isMinimized) {
       setIsReady(false);
-      const isInputAction = currentStepData?.action === 'input';
 
       // 페이지 렌더링 대기 후 타겟 업데이트
       const timer = setTimeout(() => {
@@ -103,8 +109,11 @@ function TutorialOverlay() {
       }, 300);
 
       // input 스텝에서는 DOM 변화 감지 비활성화 (타이핑 시 흔들림 방지)
+      // ref를 통해 최신 action 체크
+      const isInputAction = () => currentStepDataRef.current?.action === 'input';
+
       let observer = null;
-      if (!isInputAction) {
+      if (!isInputAction()) {
         observer = new MutationObserver(() => {
           setTimeout(updateTargetRect, 100);
         });
@@ -118,7 +127,8 @@ function TutorialOverlay() {
       // 스크롤/리사이즈 이벤트 (input 스텝에서는 debounce 적용)
       let scrollTimeout = null;
       const handleScroll = () => {
-        if (isInputAction) {
+        // ref를 통해 항상 최신 action 체크
+        if (isInputAction()) {
           // input 스텝에서는 debounce로 업데이트 빈도 낮춤
           if (scrollTimeout) clearTimeout(scrollTimeout);
           scrollTimeout = setTimeout(updateTargetRect, 200);
@@ -137,7 +147,7 @@ function TutorialOverlay() {
         window.removeEventListener('resize', updateTargetRect);
       };
     }
-  }, [isActive, isMinimized, updateTargetRect, currentStep, currentStepData]);
+  }, [isActive, isMinimized, updateTargetRect, currentStep]);
 
   if (!isActive) return null;
 
