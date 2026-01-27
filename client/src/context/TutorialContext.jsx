@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-// 세부 튜토리얼 스텝 정의
+// 세부 튜토리얼 스텝 정의 (메뉴 클릭 생략, 입력 부분만)
 const TUTORIAL_STEPS = [
   {
     id: 'intro',
@@ -12,28 +12,12 @@ const TUTORIAL_STEPS = [
     action: 'start'
   },
   {
-    id: 'click-new-class',
-    title: '새 수업 등록',
-    description: '"+ 새 수업 등록" 버튼을 클릭해서 수업을 등록해보세요.',
-    targetSelector: '[data-tutorial-action="new-class"]',
-    requiredPath: '/classes',
-    action: 'click'
-  },
-  {
     id: 'fill-class-form',
     title: '수업 정보 입력',
     description: '수업명, 수업 시간, 시간(분)을 입력하고 "등록하기" 버튼을 누르세요.',
     targetSelector: '[data-tutorial-action="class-form"]',
     requiredPath: '/classes/new',
     action: 'form'
-  },
-  {
-    id: 'click-new-student',
-    title: '새 학생 등록',
-    description: '이제 학생을 등록해봅시다. "+ 새 학생 등록" 버튼을 클릭하세요.',
-    targetSelector: '[data-tutorial-action="new-student"]',
-    requiredPath: '/students',
-    action: 'click'
   },
   {
     id: 'fill-student-form',
@@ -111,7 +95,6 @@ export function TutorialProvider({ children }) {
     let shouldAdvance = false;
 
     // 이미 이 스텝/경로 조합에서 처리했으면 스킵
-    const processKey = `${currentStep}-${location.pathname}`;
     if (processedRef.current.step === currentStep && processedRef.current.path === location.pathname) {
       return;
     }
@@ -121,15 +104,6 @@ export function TutorialProvider({ children }) {
       if (requiredPath === '/classes/new' && location.pathname === '/classes') {
         shouldAdvance = true;
       } else if (requiredPath === '/students/new' && location.pathname === '/students') {
-        shouldAdvance = true;
-      }
-    }
-
-    // click 액션: 버튼 클릭 후 페이지 이동 감지
-    if (action === 'click') {
-      if (requiredPath === '/classes' && location.pathname === '/classes/new') {
-        shouldAdvance = true;
-      } else if (requiredPath === '/students' && location.pathname === '/students/new') {
         shouldAdvance = true;
       }
     }
