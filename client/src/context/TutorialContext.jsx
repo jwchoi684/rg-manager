@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 // 세부 튜토리얼 스텝 정의
@@ -85,49 +85,69 @@ export function TutorialProvider({ children }) {
 
   const currentStepData = TUTORIAL_STEPS[currentStep];
 
-  // 현재 스텝에 필요한 페이지로 이동
-  const navigateToRequiredPath = useCallback((step) => {
-    const stepData = TUTORIAL_STEPS[step];
-    if (stepData?.requiredPath && location.pathname !== stepData.requiredPath) {
-      navigate(stepData.requiredPath);
-    }
-  }, [location.pathname, navigate]);
+  // 스텝 변경 시 필요한 페이지로 이동 (nextStep 호출 시에만)
+  const prevStepRef = useRef(currentStep);
 
-  // 스텝 변경 시 필요한 페이지로 이동
   useEffect(() => {
-    if (isActive && currentStepData?.requiredPath) {
-      navigateToRequiredPath(currentStep);
+    // 스텝이 실제로 변경되었을 때만 네비게이션
+    if (isActive && currentStepData?.requiredPath && prevStepRef.current !== currentStep) {
+      prevStepRef.current = currentStep;
+      // 현재 위치가 이미 목표 위치면 네비게이션 하지 않음
+      if (location.pathname !== currentStepData.requiredPath) {
+        navigate(currentStepData.requiredPath);
+      }
     }
-  }, [currentStep, isActive, currentStepData, navigateToRequiredPath]);
+  }, [currentStep, isActive, currentStepData, navigate, location.pathname]);
+
+  // 이미 처리된 스텝/경로 조합 추적 (중복 실행 방지)
+  const processedRef = useRef({ step: -1, path: '' });
 
   // 경로 변경 감지 - form 액션에서 저장 후 목록으로 돌아오면 다음 스텝
   useEffect(() => {
     if (!isActive || !currentStepData) return;
 
     const { action, requiredPath } = currentStepData;
+    let timeoutId = null;
+    let shouldAdvance = false;
+
+    // 이미 이 스텝/경로 조합에서 처리했으면 스킵
+    const processKey = `${currentStep}-${location.pathname}`;
+    if (processedRef.current.step === currentStep && processedRef.current.path === location.pathname) {
+      return;
+    }
 
     // form 액션: /classes/new -> /classes 또는 /students/new -> /students 이동 감지
     if (action === 'form') {
       if (requiredPath === '/classes/new' && location.pathname === '/classes') {
-        // 수업 등록 완료 -> 다음 스텝 (학생 등록)
-        setTimeout(() => setCurrentStep(prev => prev + 1), 300);
+        shouldAdvance = true;
       } else if (requiredPath === '/students/new' && location.pathname === '/students') {
-        // 학생 등록 완료 -> 다음 스텝 (출석 체크)
-        setTimeout(() => setCurrentStep(prev => prev + 1), 300);
+        shouldAdvance = true;
       }
     }
 
     // click 액션: 버튼 클릭 후 페이지 이동 감지
     if (action === 'click') {
       if (requiredPath === '/classes' && location.pathname === '/classes/new') {
-        // 새 수업 등록 버튼 클릭 -> 다음 스텝
-        setTimeout(() => setCurrentStep(prev => prev + 1), 300);
+        shouldAdvance = true;
       } else if (requiredPath === '/students' && location.pathname === '/students/new') {
-        // 새 학생 등록 버튼 클릭 -> 다음 스텝
-        setTimeout(() => setCurrentStep(prev => prev + 1), 300);
+        shouldAdvance = true;
       }
     }
-  }, [location.pathname, isActive, currentStepData]);
+
+    if (shouldAdvance) {
+      processedRef.current = { step: currentStep, path: location.pathname };
+      timeoutId = setTimeout(() => {
+        setCurrentStep(prev => prev + 1);
+      }, 300);
+    }
+
+    // 클린업: 컴포넌트 언마운트 또는 의존성 변경 시 타임아웃 취소
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [location.pathname, isActive, currentStepData, currentStep]);
 
   const startTutorial = useCallback(() => {
     setCurrentStep(0);
