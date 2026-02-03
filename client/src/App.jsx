@@ -17,6 +17,7 @@ import CompetitionForm from './pages/Competitions/CompetitionForm';
 import CompetitionStudentManagement from './pages/Competitions/CompetitionStudentManagement';
 import StudentCompetitions from './pages/StudentCompetitions';
 import KakaoCallback from './pages/KakaoCallback';
+import Settings from './pages/Settings';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -141,6 +142,12 @@ function App() {
               {link.label}
             </Link>
           ))}
+          <Link
+            to="/settings"
+            className={isActive('/settings') ? 'active' : ''}
+          >
+            설정
+          </Link>
           <button
             onClick={handleLogout}
             className="btn btn-ghost"
@@ -197,6 +204,14 @@ function App() {
           )}
           <div className="mobile-menu-section">
             <div className="mobile-menu-section-title">계정</div>
+            <Link
+              to="/settings"
+              onClick={closeMobileMenu}
+              className={`mobile-menu-item ${isActive('/settings') ? 'active' : ''}`}
+            >
+              <span className="mobile-menu-icon">⚙️</span>
+              <span className="mobile-menu-label">설정</span>
+            </Link>
             <button
               onClick={handleLogout}
               className="mobile-menu-item"
@@ -227,6 +242,7 @@ function App() {
           <Route path="/student-competitions" element={<ProtectedRoute><StudentCompetitions /></ProtectedRoute>} />
           <Route path="/logs" element={<ProtectedRoute><Logs /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
