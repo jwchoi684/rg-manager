@@ -105,13 +105,47 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
   };
 
+  // 카카오 로그인 URL 가져오기
+  const getKakaoLoginUrl = async () => {
+    const response = await fetch('/api/auth/kakao');
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error);
+    }
+    const data = await response.json();
+    return data.url;
+  };
+
+  // 카카오 로그인 콜백 처리
+  const kakaoLogin = async (code) => {
+    const response = await fetch('/api/auth/kakao/callback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error);
+    }
+
+    const data = await response.json();
+    setUser(data.user);
+    setToken(data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem('token', data.token);
+    return data.user;
+  };
+
   const value = {
     user,
     token,
     login,
     signup,
     logout,
-    loading
+    loading,
+    getKakaoLoginUrl,
+    kakaoLogin
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

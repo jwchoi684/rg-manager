@@ -161,6 +161,17 @@ const initDatabase = async () => {
       ADD COLUMN IF NOT EXISTS "coachFeePaid" BOOLEAN DEFAULT FALSE
     `);
 
+    // users 테이블에 카카오 로그인 관련 컬럼 추가
+    await client.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS "kakaoId" TEXT UNIQUE
+    `);
+
+    await client.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS email TEXT
+    `);
+
     // 기본 관리자 계정 생성 (username: admin, password: admin123)
     const adminCheck = await client.query('SELECT * FROM users WHERE username = $1', ['admin']);
     const hashedAdminPassword = await bcrypt.hash('admin123', SALT_ROUNDS);

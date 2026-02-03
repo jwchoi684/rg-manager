@@ -86,6 +86,37 @@ class User {
   static async delete(id) {
     await pool.query('DELETE FROM users WHERE id = $1', [id]);
   }
+
+  static async getByKakaoId(kakaoId) {
+    const result = await pool.query('SELECT * FROM users WHERE "kakaoId" = $1', [kakaoId]);
+    return result.rows.length > 0 ? result.rows[0] : null;
+  }
+
+  static async createWithKakao(data) {
+    const { kakaoId, username, email, role = 'user' } = data;
+    const createdAt = new Date().toISOString();
+    // 카카오 사용자는 비밀번호 없이 생성 (랜덤 해시 저장)
+    const randomPassword = await bcrypt.hash(Math.random().toString(36), SALT_ROUNDS);
+
+    const result = await pool.query(
+      `INSERT INTO users (username, password, role, "createdAt", "kakaoId", email)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, username, role, "createdAt", email`,
+      [username, randomPassword, role, createdAt, kakaoId, email]
+    );
+
+    return result.rows[0];
+  }
+
+  static async updateKakaoInfo(id, data) {
+    const { email } = data;
+    const result = await pool.query(
+      `UPDATE users SET email = $1 WHERE id = $2
+       RETURNING id, username, role, "createdAt", email`,
+      [email, id]
+    );
+    return result.rows.length > 0 ? result.rows[0] : null;
+  }
 }
 
 export default User;

@@ -7,7 +7,8 @@ function Signup() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const { signup } = useAuth();
+  const [kakaoLoading, setKakaoLoading] = useState(false);
+  const { signup, getKakaoLoginUrl } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -29,6 +30,18 @@ function Signup() {
       navigate('/');
     } catch (err) {
       setError(err.message);
+    }
+  };
+
+  const handleKakaoLogin = async () => {
+    setError('');
+    setKakaoLoading(true);
+    try {
+      const url = await getKakaoLoginUrl();
+      window.location.href = url;
+    } catch (err) {
+      setError(err.message || '카카오 로그인을 시작할 수 없습니다.');
+      setKakaoLoading(false);
     }
   };
 
@@ -136,6 +149,47 @@ function Signup() {
               회원가입
             </button>
           </form>
+
+          {/* 구분선 */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            margin: 'var(--spacing-xl) 0',
+            gap: 'var(--spacing-md)'
+          }}>
+            <div style={{ flex: 1, height: 1, backgroundColor: 'var(--color-gray-200)' }} />
+            <span style={{ color: 'var(--color-gray-400)', fontSize: '0.875rem' }}>또는</span>
+            <div style={{ flex: 1, height: 1, backgroundColor: 'var(--color-gray-200)' }} />
+          </div>
+
+          {/* 카카오로 시작하기 버튼 */}
+          <button
+            type="button"
+            onClick={handleKakaoLogin}
+            disabled={kakaoLoading}
+            style={{
+              width: '100%',
+              padding: '14px 20px',
+              backgroundColor: '#FEE500',
+              color: '#000000',
+              border: 'none',
+              borderRadius: 'var(--radius-lg)',
+              fontSize: '1rem',
+              fontWeight: 600,
+              cursor: kakaoLoading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 'var(--spacing-sm)',
+              opacity: kakaoLoading ? 0.7 : 1,
+              transition: 'opacity 0.2s'
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000">
+              <path d="M12 3C6.48 3 2 6.58 2 11c0 2.84 1.89 5.33 4.71 6.73-.14.51-.93 3.3-.96 3.51 0 0-.02.17.09.24.11.06.24.01.24.01.32-.04 3.68-2.42 4.26-2.83.55.08 1.1.12 1.66.12 5.52 0 10-3.58 10-8 0-4.42-4.48-8-10-8z"/>
+            </svg>
+            {kakaoLoading ? '처리 중...' : '카카오로 시작하기'}
+          </button>
         </div>
 
         {/* Login link */}

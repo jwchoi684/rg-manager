@@ -17,6 +17,7 @@ import CompetitionList from './pages/Competitions/CompetitionList';
 import CompetitionForm from './pages/Competitions/CompetitionForm';
 import CompetitionStudentManagement from './pages/Competitions/CompetitionStudentManagement';
 import StudentCompetitions from './pages/StudentCompetitions';
+import KakaoCallback from './pages/KakaoCallback';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -87,6 +88,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/oauth/kakao/callback" element={<KakaoCallback />} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     );
