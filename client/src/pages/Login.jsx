@@ -1,36 +1,20 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [kakaoLoading, setKakaoLoading] = useState(false);
-  const { login, getKakaoLoginUrl } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    try {
-      await login(username, password);
-      navigate('/');
-    } catch (err) {
-      setError(err.message);
-    }
-  };
+  const [loading, setLoading] = useState(false);
+  const { getKakaoLoginUrl } = useAuth();
 
   const handleKakaoLogin = async () => {
     setError('');
-    setKakaoLoading(true);
+    setLoading(true);
     try {
       const url = await getKakaoLoginUrl();
       window.location.href = url;
     } catch (err) {
       setError(err.message || '카카오 로그인을 시작할 수 없습니다.');
-      setKakaoLoading(false);
+      setLoading(false);
     }
   };
 
@@ -53,20 +37,20 @@ function Login() {
           marginBottom: 'var(--spacing-3xl)'
         }}>
           <div style={{
-            width: 64,
-            height: 64,
+            width: 80,
+            height: 80,
             borderRadius: 'var(--radius-xl)',
             backgroundColor: 'var(--color-primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto var(--spacing-lg)',
-            fontSize: '1.75rem'
+            margin: '0 auto var(--spacing-xl)',
+            fontSize: '2.5rem'
           }}>
             🎀
           </div>
           <h1 style={{
-            fontSize: '1.5rem',
+            fontSize: '1.75rem',
             fontWeight: 700,
             color: 'var(--color-gray-900)',
             marginBottom: 'var(--spacing-sm)'
@@ -75,9 +59,10 @@ function Login() {
           </h1>
           <p style={{
             color: 'var(--color-gray-500)',
-            fontSize: '0.9375rem'
+            fontSize: '0.9375rem',
+            lineHeight: 1.6
           }}>
-            계정에 로그인하세요
+            카카오 계정으로 간편하게 시작하세요
           </p>
         </div>
 
@@ -93,101 +78,45 @@ function Login() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className="form-label">사용자 이름</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                placeholder="사용자 이름을 입력하세요"
-                autoComplete="username"
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">비밀번호</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="비밀번호를 입력하세요"
-                autoComplete="current-password"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-primary btn-lg btn-block"
-              style={{ marginTop: 'var(--spacing-lg)' }}
-            >
-              로그인
-            </button>
-          </form>
-
-          {/* 구분선 */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            margin: 'var(--spacing-xl) 0',
-            gap: 'var(--spacing-md)'
-          }}>
-            <div style={{ flex: 1, height: 1, backgroundColor: 'var(--color-gray-200)' }} />
-            <span style={{ color: 'var(--color-gray-400)', fontSize: '0.875rem' }}>또는</span>
-            <div style={{ flex: 1, height: 1, backgroundColor: 'var(--color-gray-200)' }} />
-          </div>
-
           {/* 카카오 로그인 버튼 */}
           <button
             type="button"
             onClick={handleKakaoLogin}
-            disabled={kakaoLoading}
+            disabled={loading}
             style={{
               width: '100%',
-              padding: '14px 20px',
+              padding: '16px 20px',
               backgroundColor: '#FEE500',
               color: '#000000',
               border: 'none',
               borderRadius: 'var(--radius-lg)',
-              fontSize: '1rem',
+              fontSize: '1.0625rem',
               fontWeight: 600,
-              cursor: kakaoLoading ? 'not-allowed' : 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 'var(--spacing-sm)',
-              opacity: kakaoLoading ? 0.7 : 1,
-              transition: 'opacity 0.2s'
+              opacity: loading ? 0.7 : 1,
+              transition: 'all 0.2s'
             }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="#000000">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#000000">
               <path d="M12 3C6.48 3 2 6.58 2 11c0 2.84 1.89 5.33 4.71 6.73-.14.51-.93 3.3-.96 3.51 0 0-.02.17.09.24.11.06.24.01.24.01.32-.04 3.68-2.42 4.26-2.83.55.08 1.1.12 1.66.12 5.52 0 10-3.58 10-8 0-4.42-4.48-8-10-8z"/>
             </svg>
-            {kakaoLoading ? '로그인 중...' : '카카오 로그인'}
+            {loading ? '로그인 중...' : '카카오로 시작하기'}
           </button>
-        </div>
 
-        {/* Sign up link */}
-        <p style={{
-          textAlign: 'center',
-          marginTop: 'var(--spacing-xl)',
-          color: 'var(--color-gray-500)',
-          fontSize: '0.9375rem'
-        }}>
-          계정이 없으신가요?{' '}
-          <Link
-            to="/signup"
-            style={{
-              color: 'var(--color-primary)',
-              textDecoration: 'none',
-              fontWeight: 600
-            }}
-          >
-            회원가입
-          </Link>
-        </p>
+          <p style={{
+            textAlign: 'center',
+            marginTop: 'var(--spacing-xl)',
+            color: 'var(--color-gray-400)',
+            fontSize: '0.8125rem',
+            lineHeight: 1.6
+          }}>
+            처음이시면 자동으로 가입됩니다
+          </p>
+        </div>
       </div>
     </div>
   );

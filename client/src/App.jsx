@@ -10,7 +10,6 @@ import AttendanceCheck from './components/Attendance/AttendanceCheck';
 import Dashboard from './pages/Dashboard';
 import StudentAttendance from './pages/StudentAttendance';
 import Login from './pages/Login';
-import Signup from './pages/Signup';
 import Admin from './pages/Admin';
 import Logs from './pages/Logs';
 import CompetitionList from './pages/Competitions/CompetitionList';
@@ -87,7 +86,7 @@ function App() {
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/signup" element={<Navigate to="/login" />} />
         <Route path="/oauth/kakao/callback" element={<KakaoCallback />} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
