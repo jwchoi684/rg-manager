@@ -5,12 +5,12 @@ const SALT_ROUNDS = 10;
 
 class User {
   static async getAll() {
-    const result = await pool.query('SELECT id, username, role, "createdAt" FROM users ORDER BY id');
+    const result = await pool.query('SELECT id, username, role, "createdAt", email, "kakaoId" FROM users ORDER BY id');
     return result.rows;
   }
 
   static async getById(id) {
-    const result = await pool.query('SELECT id, username, role, "createdAt" FROM users WHERE id = $1', [id]);
+    const result = await pool.query('SELECT id, username, role, "createdAt", email, "kakaoId" FROM users WHERE id = $1', [id]);
     return result.rows.length > 0 ? result.rows[0] : null;
   }
 

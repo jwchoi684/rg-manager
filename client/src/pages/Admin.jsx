@@ -268,6 +268,7 @@ function Admin() {
                     <tr>
                       <th style={{ width: '60px' }}>ID</th>
                       <th>사용자 이름</th>
+                      <th>이메일</th>
                       <th>역할</th>
                       <th>가입일</th>
                       <th style={{ width: '160px' }}>관리</th>
@@ -280,8 +281,29 @@ function Admin() {
                           <span style={{ color: 'var(--color-gray-500)' }}>#{u.id}</span>
                         </td>
                         <td>
-                          <span style={{ fontWeight: 600, color: 'var(--color-gray-900)' }}>
-                            {u.username}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                            <span style={{ fontWeight: 600, color: 'var(--color-gray-900)' }}>
+                              {u.username}
+                            </span>
+                            {u.kakaoId && (
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: 20,
+                                height: 20,
+                                backgroundColor: '#FEE500',
+                                borderRadius: '4px',
+                                fontSize: '0.75rem'
+                              }} title="카카오 계정">
+                                💬
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <span style={{ color: 'var(--color-gray-600)', fontSize: '0.875rem' }}>
+                            {u.email || '-'}
                           </span>
                         </td>
                         <td>
@@ -335,14 +357,28 @@ function Admin() {
                     }}
                   >
                     <div className="list-item-content">
-                      <div className="list-item-title">
+                      <div className="list-item-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {u.username}
-                        <span className={`badge ${u.role === 'admin' ? 'badge-primary' : 'badge-gray'}`} style={{ marginLeft: '8px' }}>
+                        {u.kakaoId && (
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 18,
+                            height: 18,
+                            backgroundColor: '#FEE500',
+                            borderRadius: '4px',
+                            fontSize: '0.625rem'
+                          }}>
+                            💬
+                          </span>
+                        )}
+                        <span className={`badge ${u.role === 'admin' ? 'badge-primary' : 'badge-gray'}`} style={{ marginLeft: '4px' }}>
                           {u.role === 'admin' ? '관리자' : '일반'}
                         </span>
                       </div>
                       <div className="list-item-subtitle">
-                        #{u.id} | 가입일: {formatDate(u.createdAt)}
+                        #{u.id} | {u.email || '이메일 없음'} | {formatDate(u.createdAt)}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
