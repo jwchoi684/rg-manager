@@ -102,9 +102,6 @@ function App() {
     return location.pathname.startsWith(path);
   };
 
-  // 관리자 페이지 여부 확인
-  const isAdminPage = location.pathname.startsWith('/admin');
-
   if (!user) {
     return (
       <Routes>
@@ -152,14 +149,6 @@ function App() {
               {link.label}
             </Link>
           ))}
-          {user?.role === 'admin' && (
-            <Link
-              to="/admin"
-              className={isAdminPage ? 'active' : ''}
-            >
-              관리자
-            </Link>
-          )}
           <Link
             to="/settings"
             className={isActive('/settings') ? 'active' : ''}
@@ -204,19 +193,6 @@ function App() {
               </Link>
             ))}
           </div>
-          {user?.role === 'admin' && (
-            <div className="mobile-menu-section">
-              <div className="mobile-menu-section-title">관리</div>
-              <Link
-                to="/admin"
-                onClick={closeMobileMenu}
-                className={`mobile-menu-item ${isAdminPage ? 'active' : ''}`}
-              >
-                <span className="mobile-menu-icon">🛠️</span>
-                <span className="mobile-menu-label">관리자 대시보드</span>
-              </Link>
-            </div>
-          )}
           <div className="mobile-menu-section">
             <div className="mobile-menu-section-title">계정</div>
             <Link
