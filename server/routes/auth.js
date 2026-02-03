@@ -1,5 +1,5 @@
 import express from 'express';
-import { login, signup, getUsers, updateUser, deleteUser, verifyTokenEndpoint, getKakaoAuthUrl, kakaoCallback, transferUserData } from '../controllers/authController.js';
+import { login, signup, getUsers, updateUser, deleteUser, verifyTokenEndpoint, getKakaoAuthUrl, kakaoCallback, transferUserData, updateKakaoMessageConsent } from '../controllers/authController.js';
 import { verifyToken } from '../middleware/auth.js';
 import { logAction } from '../middleware/logger.js';
 
@@ -18,5 +18,6 @@ router.post('/users/transfer', verifyToken, logAction('TRANSFER_DATA'), transfer
 // 카카오 로그인
 router.get('/kakao', getKakaoAuthUrl);
 router.post('/kakao/callback', logAction('KAKAO_LOGIN'), kakaoCallback);
+router.put('/kakao/consent', verifyToken, updateKakaoMessageConsent);
 
 export default router;

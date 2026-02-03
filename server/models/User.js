@@ -5,12 +5,12 @@ const SALT_ROUNDS = 10;
 
 class User {
   static async getAll() {
-    const result = await pool.query('SELECT id, username, role, "createdAt", email, "kakaoId" FROM users ORDER BY id');
+    const result = await pool.query('SELECT id, username, role, "createdAt", email, "kakaoId", "kakaoMessageConsent" FROM users ORDER BY id');
     return result.rows;
   }
 
   static async getById(id) {
-    const result = await pool.query('SELECT id, username, role, "createdAt", email, "kakaoId" FROM users WHERE id = $1', [id]);
+    const result = await pool.query('SELECT id, username, role, "createdAt", email, "kakaoId", "kakaoMessageConsent" FROM users WHERE id = $1', [id]);
     return result.rows.length > 0 ? result.rows[0] : null;
   }
 
@@ -93,16 +93,25 @@ class User {
   }
 
   static async createWithKakao(data) {
-    const { kakaoId, username, email, role = 'user' } = data;
+    const {
+      kakaoId,
+      username,
+      email,
+      role = 'user',
+      accessToken = null,
+      refreshToken = null,
+      tokenExpiresAt = null
+    } = data;
     const createdAt = new Date().toISOString();
     // 카카오 사용자는 비밀번호 없이 생성 (랜덤 해시 저장)
     const randomPassword = await bcrypt.hash(Math.random().toString(36), SALT_ROUNDS);
 
     const result = await pool.query(
-      `INSERT INTO users (username, password, role, "createdAt", "kakaoId", email)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, username, role, "createdAt", email, "kakaoId"`,
-      [username, randomPassword, role, createdAt, kakaoId, email]
+      `INSERT INTO users (username, password, role, "createdAt", "kakaoId", email,
+       "kakaoAccessToken", "kakaoRefreshToken", "kakaoTokenExpiresAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING id, username, role, "createdAt", email, "kakaoId", "kakaoMessageConsent"`,
+      [username, randomPassword, role, createdAt, kakaoId, email, accessToken, refreshToken, tokenExpiresAt]
     );
 
     return result.rows[0];
@@ -112,8 +121,41 @@ class User {
     const { email } = data;
     const result = await pool.query(
       `UPDATE users SET email = $1 WHERE id = $2
-       RETURNING id, username, role, "createdAt", email, "kakaoId"`,
+       RETURNING id, username, role, "createdAt", email, "kakaoId", "kakaoMessageConsent"`,
       [email, id]
+    );
+    return result.rows.length > 0 ? result.rows[0] : null;
+  }
+
+  static async updateKakaoTokens(id, data) {
+    const { email, accessToken, refreshToken, tokenExpiresAt } = data;
+    const result = await pool.query(
+      `UPDATE users
+       SET email = COALESCE($1, email),
+           "kakaoAccessToken" = $2,
+           "kakaoRefreshToken" = $3,
+           "kakaoTokenExpiresAt" = $4
+       WHERE id = $5
+       RETURNING id, username, role, "createdAt", email, "kakaoId", "kakaoMessageConsent"`,
+      [email, accessToken, refreshToken, tokenExpiresAt, id]
+    );
+    return result.rows.length > 0 ? result.rows[0] : null;
+  }
+
+  static async getKakaoTokens(id) {
+    const result = await pool.query(
+      `SELECT "kakaoAccessToken", "kakaoRefreshToken", "kakaoTokenExpiresAt", "kakaoMessageConsent"
+       FROM users WHERE id = $1`,
+      [id]
+    );
+    return result.rows.length > 0 ? result.rows[0] : null;
+  }
+
+  static async updateMessageConsent(id, consent) {
+    const result = await pool.query(
+      `UPDATE users SET "kakaoMessageConsent" = $1 WHERE id = $2
+       RETURNING id, username, role, "createdAt", email, "kakaoId", "kakaoMessageConsent"`,
+      [consent, id]
     );
     return result.rows.length > 0 ? result.rows[0] : null;
   }

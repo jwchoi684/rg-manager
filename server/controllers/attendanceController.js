@@ -1,5 +1,8 @@
 import Attendance from '../models/Attendance.js';
 import { sendAttendanceEmail } from '../utils/mailer.js';
+import { sendAttendanceKakaoMessage } from '../utils/kakaoMessage.js';
+import Class from '../models/Class.js';
+import Student from '../models/Student.js';
 
 export const getAttendance = async (req, res) => {
   try {
@@ -94,6 +97,56 @@ export const submitAttendanceWithEmail = async (req, res) => {
       res.status(500).json({ error: '이메일 발송 실패', details: emailResult.error });
     }
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// 일괄 출석 제출 + 카카오톡 알림
+export const submitBulkAttendance = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const role = req.user.role;
+    const { date, classId, studentIds, sendKakaoMessage } = req.body;
+
+    // 1. 기존 출석 삭제 (해당 날짜 + 수업)
+    await Attendance.deleteByDateAndClass(date, classId, userId, role);
+
+    // 2. 새 출석 기록 생성
+    const attendancePromises = studentIds.map((studentId) =>
+      Attendance.create({ studentId, classId, date }, userId)
+    );
+    await Promise.all(attendancePromises);
+
+    // 3. 카카오 메시지 전송 (요청된 경우)
+    let kakaoResult = { skipped: true };
+    if (sendKakaoMessage) {
+      try {
+        // 수업 정보 가져오기
+        const classInfo = await Class.getById(classId, userId, role);
+        // 해당 수업의 전체 학생 가져오기
+        const allStudents = await Student.getByClassId(classId, userId, role);
+
+        kakaoResult = await sendAttendanceKakaoMessage({
+          userId,
+          date,
+          className: classInfo?.name || '알 수 없는 수업',
+          schedule: classInfo?.schedule || '',
+          students: allStudents,
+          presentStudentIds: studentIds,
+        });
+      } catch (kakaoError) {
+        console.error('카카오 메시지 전송 중 오류:', kakaoError);
+        kakaoResult = { success: false, error: kakaoError.message };
+      }
+    }
+
+    res.json({
+      message: '출석 체크가 완료되었습니다.',
+      attendanceCount: studentIds.length,
+      kakaoMessage: kakaoResult,
+    });
+  } catch (error) {
+    console.error('출석 체크 오류:', error);
     res.status(500).json({ error: error.message });
   }
 };

@@ -141,7 +141,9 @@ export const getKakaoAuthUrl = (req, res) => {
   if (!KAKAO_CLIENT_ID) {
     return res.status(500).json({ error: '카카오 로그인이 설정되지 않았습니다.' });
   }
-  const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${encodeURIComponent(KAKAO_REDIRECT_URI)}&response_type=code`;
+  // talk_message scope 추가 (카카오톡 메시지 전송 권한)
+  const scope = 'talk_message';
+  const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${encodeURIComponent(KAKAO_REDIRECT_URI)}&response_type=code&scope=${scope}`;
   res.json({ url: kakaoAuthUrl });
 };
 
@@ -182,6 +184,12 @@ export const kakaoCallback = async (req, res) => {
       return res.status(400).json({ error: '카카오 인증에 실패했습니다.' });
     }
 
+    // 토큰 정보 추출
+    const accessToken = tokenData.access_token;
+    const refreshToken = tokenData.refresh_token;
+    const expiresIn = tokenData.expires_in; // 초 단위
+    const tokenExpiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+
     // 2. 액세스 토큰으로 사용자 정보 가져오기
     const userResponse = await fetch('https://kapi.kakao.com/v2/user/me', {
       headers: {
@@ -204,19 +212,25 @@ export const kakaoCallback = async (req, res) => {
     let user = await User.getByKakaoId(kakaoId);
 
     if (!user) {
-      // 새 사용자 생성
+      // 새 사용자 생성 (토큰 포함)
       user = await User.createWithKakao({
         kakaoId,
         username: nickname,
         email,
+        accessToken,
+        refreshToken,
+        tokenExpiresAt,
       });
     } else {
-      // 기존 사용자 이메일 업데이트 (변경된 경우)
-      if (email && user.email !== email) {
-        const updatedUser = await User.updateKakaoInfo(user.id, { email });
-        if (updatedUser) {
-          user = updatedUser;
-        }
+      // 기존 사용자 토큰 및 이메일 업데이트
+      const updatedUser = await User.updateKakaoTokens(user.id, {
+        email,
+        accessToken,
+        refreshToken,
+        tokenExpiresAt,
+      });
+      if (updatedUser) {
+        user = updatedUser;
       }
     }
 
@@ -238,5 +252,27 @@ export const kakaoCallback = async (req, res) => {
   } catch (error) {
     console.error('카카오 로그인 오류:', error);
     res.status(500).json({ error: '카카오 로그인 처리 중 오류가 발생했습니다.' });
+  }
+};
+
+// 카카오 메시지 알림 동의 설정
+export const updateKakaoMessageConsent = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { consent } = req.body;
+
+    const user = await User.updateMessageConsent(userId, consent);
+
+    if (!user) {
+      return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+    }
+
+    res.json({
+      message: consent ? '카카오톡 알림이 활성화되었습니다.' : '카카오톡 알림이 비활성화되었습니다.',
+      user
+    });
+  } catch (error) {
+    console.error('알림 설정 변경 오류:', error);
+    res.status(500).json({ error: error.message });
   }
 };

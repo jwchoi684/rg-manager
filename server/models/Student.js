@@ -100,6 +100,31 @@ class Student {
 
     await pool.query(query, params);
   }
+
+  static async getByClassId(classId, userId, role) {
+    // 해당 수업에 등록된 학생들 조회 (classIds JSON 배열에 classId 포함)
+    let query = 'SELECT * FROM students';
+    let params = [];
+
+    // Admin이 아닌 경우 userId로 필터링
+    if (role !== 'admin') {
+      query += ' WHERE "userId" = $1';
+      params.push(userId);
+    }
+
+    query += ' ORDER BY id';
+    const result = await pool.query(query, params);
+
+    // classIds에 해당 classId가 포함된 학생만 필터링
+    const filteredStudents = result.rows
+      .map(student => ({
+        ...student,
+        classIds: student.classIds ? JSON.parse(student.classIds) : []
+      }))
+      .filter(student => student.classIds.includes(parseInt(classId)));
+
+    return filteredStudents;
+  }
 }
 
 export default Student;

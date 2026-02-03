@@ -132,31 +132,28 @@ function AttendanceCheck() {
     }
 
     try {
-      await fetchWithAuth("/api/attendance/bulk", {
-        method: "DELETE",
+      // 새 bulk 엔드포인트 사용 (출석 저장 + 카카오 알림)
+      const response = await fetchWithAuth("/api/attendance/bulk", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: selectedDate,
           classId: parseInt(selectedClass),
+          studentIds: Array.from(checkedStudents),
+          sendKakaoMessage: true, // 카카오 메시지 전송 시도
         }),
       });
 
-      const attendancePromises = Array.from(checkedStudents).map((studentId) =>
-        fetchWithAuth("/api/attendance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            studentId,
-            classId: parseInt(selectedClass),
-            date: selectedDate,
-          }),
-        })
-      );
-
-      await Promise.all(attendancePromises);
+      const result = await response.json();
 
       setHasChanges(false);
-      alert(`출석 체크가 완료되었습니다! (${checkedStudents.size}명)`);
+
+      let message = `출석 체크가 완료되었습니다! (${checkedStudents.size}명)`;
+      if (result.kakaoMessage?.success) {
+        message += '\n카카오톡 알림이 전송되었습니다.';
+      }
+
+      alert(message);
     } catch (error) {
       console.error("출석 체크 제출 실패:", error);
       alert("출석 체크 제출에 실패했습니다.");

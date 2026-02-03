@@ -108,6 +108,28 @@ function Admin() {
     return `${year}.${month}.${day}`;
   };
 
+  const handleToggleKakaoConsent = async (userId, currentConsent) => {
+    try {
+      // 관리자가 다른 사용자의 설정을 변경하는 것이므로 별도 API 필요
+      // 일단 현재 로그인한 사용자의 설정만 변경 가능하도록 구현
+      const response = await fetchWithAuth('/api/auth/kakao/consent', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ consent: !currentConsent })
+      });
+
+      if (response.ok) {
+        await loadUsers();
+      } else {
+        const data = await response.json();
+        alert(data.error || '알림 설정 변경에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('알림 설정 변경 실패:', error);
+      alert('알림 설정 변경에 실패했습니다.');
+    }
+  };
+
   const handleTransfer = async () => {
     if (!transferFrom || !transferTo) {
       alert('이전할 사용자와 대상 사용자를 모두 선택해주세요.');
@@ -270,6 +292,7 @@ function Admin() {
                       <th>사용자 이름</th>
                       <th>이메일</th>
                       <th>역할</th>
+                      <th>카카오 알림</th>
                       <th>가입일</th>
                       <th style={{ width: '160px' }}>관리</th>
                     </tr>
@@ -310,6 +333,29 @@ function Admin() {
                           <span className={`badge ${u.role === 'admin' ? 'badge-primary' : 'badge-gray'}`}>
                             {u.role === 'admin' ? '관리자' : '일반 사용자'}
                           </span>
+                        </td>
+                        <td>
+                          {u.kakaoId ? (
+                            <label style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              cursor: u.id === user.id ? 'pointer' : 'not-allowed',
+                              opacity: u.id === user.id ? 1 : 0.5
+                            }}>
+                              <input
+                                type="checkbox"
+                                checked={u.kakaoMessageConsent || false}
+                                onChange={() => u.id === user.id && handleToggleKakaoConsent(u.id, u.kakaoMessageConsent)}
+                                disabled={u.id !== user.id}
+                                style={{ marginRight: '6px' }}
+                              />
+                              <span style={{ fontSize: '0.8125rem', color: u.kakaoMessageConsent ? 'var(--color-success)' : 'var(--color-gray-500)' }}>
+                                {u.kakaoMessageConsent ? '활성' : '비활성'}
+                              </span>
+                            </label>
+                          ) : (
+                            <span style={{ color: 'var(--color-gray-400)', fontSize: '0.8125rem' }}>-</span>
+                          )}
                         </td>
                         <td>
                           <span style={{ color: 'var(--color-gray-600)' }}>
@@ -380,6 +426,26 @@ function Admin() {
                       <div className="list-item-subtitle">
                         #{u.id} | {u.email || '이메일 없음'} | {formatDate(u.createdAt)}
                       </div>
+                      {u.kakaoId && u.id === user.id && (
+                        <div style={{ marginTop: '8px' }}>
+                          <label style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            fontSize: '0.8125rem'
+                          }}>
+                            <input
+                              type="checkbox"
+                              checked={u.kakaoMessageConsent || false}
+                              onChange={() => handleToggleKakaoConsent(u.id, u.kakaoMessageConsent)}
+                              style={{ marginRight: '6px' }}
+                            />
+                            <span style={{ color: u.kakaoMessageConsent ? 'var(--color-success)' : 'var(--color-gray-500)' }}>
+                              카카오 알림 {u.kakaoMessageConsent ? '활성' : '비활성'}
+                            </span>
+                          </label>
+                        </div>
+                      )}
                     </div>
                     <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
                       <button
