@@ -8,8 +8,6 @@ function Settings() {
   const navigate = useNavigate();
   const [kakaoMessageConsent, setKakaoMessageConsent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [testLoading, setTestLoading] = useState(false);
-  const [testResult, setTestResult] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   const handleLogout = () => {
@@ -63,25 +61,6 @@ function Settings() {
       alert('설정 변경에 실패했습니다.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleTestKakaoMessage = async () => {
-    setTestLoading(true);
-    setTestResult(null);
-    try {
-      const response = await fetchWithAuth('/api/auth/kakao/test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const data = await response.json();
-      setTestResult(data);
-      console.log('테스트 결과:', data);
-    } catch (error) {
-      console.error('테스트 실패:', error);
-      setTestResult({ status: 'ERROR', message: error.message });
-    } finally {
-      setTestLoading(false);
     }
   };
 
@@ -151,211 +130,78 @@ function Settings() {
       </div>
 
       {/* Notification Settings Card */}
-      <div className="card">
-        <div className="card-header">
-          <h3 className="card-title">알림 설정</h3>
-        </div>
-        <div style={{ marginTop: 'var(--spacing-lg)' }}>
-          {user?.kakaoId ? (
+      {user?.kakaoId && (
+        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
+          <div className="card-header">
+            <h3 className="card-title">알림 설정</h3>
+          </div>
+          <div style={{ marginTop: 'var(--spacing-lg)' }}>
             <div style={{
               display: 'flex',
-              alignItems: 'flex-start',
+              alignItems: 'center',
               justifyContent: 'space-between',
               gap: 'var(--spacing-lg)',
               padding: 'var(--spacing-lg)',
               backgroundColor: 'var(--color-gray-50)',
               borderRadius: 'var(--radius-md)'
             }}>
-              <div>
-                <div style={{
-                  display: 'flex',
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <span style={{
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '8px'
+                  justifyContent: 'center',
+                  width: 32,
+                  height: 32,
+                  backgroundColor: '#FEE500',
+                  borderRadius: '8px',
+                  fontSize: '1rem'
                 }}>
-                  <span style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 32,
-                    height: 32,
-                    backgroundColor: '#FEE500',
-                    borderRadius: '8px',
-                    fontSize: '1rem'
-                  }}>
-                    💬
-                  </span>
-                  <span style={{ fontWeight: 600, color: 'var(--color-gray-900)' }}>
-                    카카오톡 출석 알림
-                  </span>
-                </div>
-                <p style={{
-                  color: 'var(--color-gray-600)',
-                  fontSize: '0.875rem',
-                  lineHeight: 1.6,
-                  margin: 0
-                }}>
-                  출석 체크를 저장하면 카카오톡 "나와의 채팅"으로<br />
-                  날짜, 수업명, 출석 학생 명단을 알림으로 받습니다.
-                </p>
+                  💬
+                </span>
+                <span style={{ fontWeight: 600, color: 'var(--color-gray-900)' }}>
+                  카카오톡 알림
+                </span>
               </div>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                cursor: loading ? 'wait' : 'pointer',
-                flexShrink: 0
-              }}>
-                <div
-                  onClick={loading ? undefined : handleToggleKakaoConsent}
-                  style={{
-                    width: 52,
-                    height: 28,
-                    backgroundColor: kakaoMessageConsent ? 'var(--color-success)' : 'var(--color-gray-300)',
-                    borderRadius: 14,
-                    position: 'relative',
-                    transition: 'background-color 0.2s',
-                    cursor: loading ? 'wait' : 'pointer'
-                  }}
-                >
-                  <div style={{
-                    width: 24,
-                    height: 24,
-                    backgroundColor: 'white',
-                    borderRadius: '50%',
-                    position: 'absolute',
-                    top: 2,
-                    left: kakaoMessageConsent ? 26 : 2,
-                    transition: 'left 0.2s',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                  }} />
-                </div>
-              </label>
+              <div
+                onClick={loading ? undefined : handleToggleKakaoConsent}
+                style={{
+                  width: 52,
+                  height: 28,
+                  backgroundColor: kakaoMessageConsent ? 'var(--color-success)' : 'var(--color-gray-300)',
+                  borderRadius: 14,
+                  position: 'relative',
+                  transition: 'background-color 0.2s',
+                  cursor: loading ? 'wait' : 'pointer',
+                  flexShrink: 0
+                }}
+              >
+                <div style={{
+                  width: 24,
+                  height: 24,
+                  backgroundColor: 'white',
+                  borderRadius: '50%',
+                  position: 'absolute',
+                  top: 2,
+                  left: kakaoMessageConsent ? 26 : 2,
+                  transition: 'left 0.2s',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }} />
+              </div>
             </div>
-          ) : (
-            <div style={{
-              padding: 'var(--spacing-xl)',
-              backgroundColor: 'var(--color-gray-50)',
-              borderRadius: 'var(--radius-md)',
-              textAlign: 'center'
-            }}>
-              <div style={{
-                width: 48,
-                height: 48,
-                backgroundColor: 'var(--color-gray-200)',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 16px',
-                fontSize: '1.5rem'
-              }}>
-                🔔
-              </div>
-              <p style={{
-                color: 'var(--color-gray-600)',
-                fontSize: '0.9375rem',
-                margin: 0,
-                lineHeight: 1.6
-              }}>
-                카카오 계정으로 로그인하면<br />
-                카카오톡 알림 기능을 사용할 수 있습니다.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Test Kakao Message */}
-      {user?.kakaoId && (
-        <div className="card" style={{ marginTop: 'var(--spacing-lg)' }}>
-          <div className="card-header">
-            <h3 className="card-title">카카오 메시지 테스트</h3>
           </div>
-          <div style={{ marginTop: 'var(--spacing-lg)' }}>
-            <p style={{
-              color: 'var(--color-gray-600)',
-              fontSize: '0.875rem',
-              marginBottom: 'var(--spacing-md)'
-            }}>
-              카카오톡 메시지 전송이 정상적으로 작동하는지 테스트합니다.
-            </p>
-            <button
-              className="btn btn-primary"
-              onClick={handleTestKakaoMessage}
-              disabled={testLoading}
-            >
-              {testLoading ? '테스트 중...' : '테스트 메시지 전송'}
-            </button>
-
-            {testResult && (
-              <div style={{
-                marginTop: 'var(--spacing-lg)',
-                padding: 'var(--spacing-md)',
-                backgroundColor: testResult.status === 'SUCCESS' ? 'var(--color-success-bg, #d4edda)' : 'var(--color-danger-bg, #f8d7da)',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '0.875rem'
-              }}>
-                <div style={{ fontWeight: 600, marginBottom: '8px' }}>
-                  상태: {testResult.status}
-                </div>
-                <div style={{ color: 'var(--color-gray-700)' }}>
-                  {testResult.message}
-                </div>
-                {testResult.tokens && (
-                  <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>
-                    <div>액세스 토큰: {testResult.tokens.hasAccessToken ? '있음' : '없음'}</div>
-                    <div>리프레시 토큰: {testResult.tokens.hasRefreshToken ? '있음' : '없음'}</div>
-                    <div>토큰 만료: {testResult.tokens.expiresAt || '-'}</div>
-                    <div>만료됨: {testResult.tokens.isExpired ? '예' : '아니오'}</div>
-                    <div>알림 동의: {testResult.tokens.messageConsent ? '예' : '아니오'}</div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Info Box */}
-      {user?.kakaoId && (
-        <div className="info-box" style={{ marginTop: 'var(--spacing-lg)' }}>
-          <div className="info-box-title">알림 설정 안내</div>
-          <ul style={{
-            margin: '8px 0 0 0',
-            paddingLeft: '20px',
-            color: 'var(--color-gray-600)',
-            fontSize: '0.875rem',
-            lineHeight: 1.8
-          }}>
-            <li>알림을 받으려면 카카오 개발자 콘솔에서 "카카오톡 메시지 전송" 동의항목이 활성화되어 있어야 합니다.</li>
-            <li>알림 활성화 후 카카오로 다시 로그인하면 권한 동의 화면이 나타날 수 있습니다.</li>
-            <li>메시지는 "나와의 채팅"으로 전송됩니다.</li>
-          </ul>
         </div>
       )}
 
       {/* Account Actions */}
-      <div className="card" style={{ marginTop: 'var(--spacing-lg)' }}>
+      <div className="card">
         <div className="card-header">
           <h3 className="card-title">계정</h3>
         </div>
         <div style={{ marginTop: 'var(--spacing-lg)' }}>
-          <div
-            onClick={() => navigate('/settings')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--spacing-md)',
-              padding: 'var(--spacing-md)',
-              borderRadius: 'var(--radius-md)',
-              cursor: 'pointer',
-              backgroundColor: 'var(--color-primary-bg)',
-              marginBottom: 'var(--spacing-sm)'
-            }}
-          >
-            <span style={{ fontSize: '1.25rem' }}>⚙️</span>
-            <span style={{ fontWeight: 500, color: 'var(--color-gray-900)' }}>설정</span>
-          </div>
           <div
             onClick={handleLogout}
             style={{
