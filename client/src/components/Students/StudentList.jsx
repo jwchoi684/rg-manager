@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { matchKoreanSearch } from "../../utils/koreanSearch";
 
-function StudentList() {
+function StudentList({ basePath = '/students' }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [students, setStudents] = useState([]);
@@ -65,7 +65,7 @@ function StudentList() {
   };
 
   const handleEdit = (student) => {
-    navigate('/students/edit', { state: { student } });
+    navigate(`${basePath}/edit`, { state: { student } });
   };
 
   const handleDelete = async (id) => {
@@ -212,7 +212,7 @@ function StudentList() {
         <button
           className="btn btn-primary"
           data-tutorial-action="new-student"
-          onClick={() => navigate('/students/new')}
+          onClick={() => navigate(`${basePath}/new`)}
         >
           + 새 학생 등록
         </button>

@@ -3,7 +3,7 @@ import { fetchWithAuth } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-function ClassList() {
+function ClassList({ basePath = '/classes' }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
@@ -50,7 +50,7 @@ function ClassList() {
   };
 
   const handleEdit = (classItem) => {
-    navigate('/classes/edit', { state: { classItem } });
+    navigate(`${basePath}/edit`, { state: { classItem } });
   };
 
   const handleDelete = async (id) => {
@@ -88,7 +88,7 @@ function ClassList() {
   };
 
   const handleManageStudents = (classItem) => {
-    navigate('/classes/manage-students', { state: { classItem } });
+    navigate(`${basePath}/manage`, { state: { classItem } });
   };
 
   const handleDragStart = (e, index) => {
@@ -183,7 +183,7 @@ function ClassList() {
         <button
           className="btn btn-primary"
           data-tutorial-action="new-class"
-          onClick={() => navigate('/classes/new')}
+          onClick={() => navigate(`${basePath}/new`)}
         >
           + 새 수업 등록
         </button>

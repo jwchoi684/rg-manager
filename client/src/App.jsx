@@ -10,8 +10,6 @@ import AttendanceCheck from './components/Attendance/AttendanceCheck';
 import Dashboard from './pages/Dashboard';
 import StudentAttendance from './pages/StudentAttendance';
 import Login from './pages/Login';
-import Admin from './pages/Admin';
-import Logs from './pages/Logs';
 import CompetitionList from './pages/Competitions/CompetitionList';
 import CompetitionForm from './pages/Competitions/CompetitionForm';
 import CompetitionStudentManagement from './pages/Competitions/CompetitionStudentManagement';
@@ -19,7 +17,17 @@ import StudentCompetitions from './pages/StudentCompetitions';
 import KakaoCallback from './pages/KakaoCallback';
 import RegisterName from './pages/RegisterName';
 import Settings from './pages/Settings';
-import Notifications from './pages/Notifications';
+
+// Admin components
+import AdminRoute from './components/admin/AdminRoute';
+import AdminLayout from './components/admin/AdminLayout';
+import AdminStudents from './pages/admin/AdminStudents';
+import AdminClasses from './pages/admin/AdminClasses';
+import AdminCompetitions from './pages/admin/AdminCompetitions';
+import AdminAttendance from './pages/admin/AdminAttendance';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminLogs from './pages/admin/AdminLogs';
+import AdminNotifications from './pages/admin/AdminNotifications';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -95,9 +103,7 @@ function App() {
   };
 
   // 관리자 페이지 여부 확인
-  const adminPaths = ['/logs', '/notifications', '/admin'];
-  const isAdminPage = adminPaths.some(path => location.pathname.startsWith(path));
-  const showAdminSidebar = user?.role === 'admin' && isAdminPage && !isMobile;
+  const isAdminPage = location.pathname.startsWith('/admin');
 
   if (!user) {
     return (
@@ -121,11 +127,6 @@ function App() {
     { path: '/student-competitions', label: '학생별 대회', icon: '🎖️' },
   ];
 
-  const adminLinks = [
-    { path: '/logs', label: '로그', icon: '📝' },
-    { path: '/notifications', label: '알림', icon: '🔔' },
-    { path: '/admin', label: '사용자 관리', icon: '👤' },
-  ];
 
   return (
     <div className="app">
@@ -206,17 +207,14 @@ function App() {
           {user?.role === 'admin' && (
             <div className="mobile-menu-section">
               <div className="mobile-menu-section-title">관리</div>
-              {adminLinks.map(link => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={closeMobileMenu}
-                  className={`mobile-menu-item ${isActive(link.path) ? 'active' : ''}`}
-                >
-                  <span className="mobile-menu-icon">{link.icon}</span>
-                  <span className="mobile-menu-label">{link.label}</span>
-                </Link>
-              ))}
+              <Link
+                to="/admin"
+                onClick={closeMobileMenu}
+                className={`mobile-menu-item ${isAdminPage ? 'active' : ''}`}
+              >
+                <span className="mobile-menu-icon">🛠️</span>
+                <span className="mobile-menu-label">관리자 대시보드</span>
+              </Link>
             </div>
           )}
           <div className="mobile-menu-section">
@@ -240,70 +238,50 @@ function App() {
         </div>
       </div>
 
-      {/* Main Content with Admin Sidebar */}
-      {showAdminSidebar ? (
-        <div className="admin-layout">
-          {/* Admin Sidebar */}
-          <aside className="admin-sidebar">
-            <div className="admin-sidebar-header">
-              <h2>관리자</h2>
-            </div>
-            <nav className="admin-sidebar-nav">
-              {adminLinks.map(link => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`admin-sidebar-item ${isActive(link.path) ? 'active' : ''}`}
-                >
-                  <span className="admin-sidebar-icon">{link.icon}</span>
-                  <span className="admin-sidebar-label">{link.label}</span>
-                </Link>
-              ))}
-            </nav>
-            <div className="admin-sidebar-footer">
-              <Link to="/" className="admin-sidebar-back">
-                <span>←</span>
-                <span>메인으로 돌아가기</span>
-              </Link>
-            </div>
-          </aside>
+      {/* Main Content */}
+      <main className="app-main">
+        <Routes>
+          {/* User Routes */}
+          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/students" element={<ProtectedRoute><StudentList /></ProtectedRoute>} />
+          <Route path="/students/new" element={<ProtectedRoute><StudentForm /></ProtectedRoute>} />
+          <Route path="/students/edit" element={<ProtectedRoute><StudentForm /></ProtectedRoute>} />
+          <Route path="/classes" element={<ProtectedRoute><ClassList /></ProtectedRoute>} />
+          <Route path="/classes/new" element={<ProtectedRoute><ClassForm /></ProtectedRoute>} />
+          <Route path="/classes/edit" element={<ProtectedRoute><ClassForm /></ProtectedRoute>} />
+          <Route path="/classes/manage-students" element={<ProtectedRoute><ClassStudentManagement /></ProtectedRoute>} />
+          <Route path="/competitions" element={<ProtectedRoute><CompetitionList /></ProtectedRoute>} />
+          <Route path="/competitions/new" element={<ProtectedRoute><CompetitionForm /></ProtectedRoute>} />
+          <Route path="/competitions/edit" element={<ProtectedRoute><CompetitionForm /></ProtectedRoute>} />
+          <Route path="/competitions/manage-students" element={<ProtectedRoute><CompetitionStudentManagement /></ProtectedRoute>} />
+          <Route path="/attendance" element={<ProtectedRoute><AttendanceCheck /></ProtectedRoute>} />
+          <Route path="/student-attendance" element={<ProtectedRoute><StudentAttendance /></ProtectedRoute>} />
+          <Route path="/student-competitions" element={<ProtectedRoute><StudentCompetitions /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
-          {/* Admin Main Content */}
-          <main className="admin-main">
-            <Routes>
-              <Route path="/logs" element={<ProtectedRoute><Logs /></ProtectedRoute>} />
-              <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-              <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-              <Route path="*" element={<Navigate to="/admin" />} />
-            </Routes>
-          </main>
-        </div>
-      ) : (
-        <main className="app-main">
-          <Routes>
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/students" element={<ProtectedRoute><StudentList /></ProtectedRoute>} />
-            <Route path="/students/new" element={<ProtectedRoute><StudentForm /></ProtectedRoute>} />
-            <Route path="/students/edit" element={<ProtectedRoute><StudentForm /></ProtectedRoute>} />
-            <Route path="/classes" element={<ProtectedRoute><ClassList /></ProtectedRoute>} />
-            <Route path="/classes/new" element={<ProtectedRoute><ClassForm /></ProtectedRoute>} />
-            <Route path="/classes/edit" element={<ProtectedRoute><ClassForm /></ProtectedRoute>} />
-            <Route path="/classes/manage-students" element={<ProtectedRoute><ClassStudentManagement /></ProtectedRoute>} />
-            <Route path="/competitions" element={<ProtectedRoute><CompetitionList /></ProtectedRoute>} />
-            <Route path="/competitions/new" element={<ProtectedRoute><CompetitionForm /></ProtectedRoute>} />
-            <Route path="/competitions/edit" element={<ProtectedRoute><CompetitionForm /></ProtectedRoute>} />
-            <Route path="/competitions/manage-students" element={<ProtectedRoute><CompetitionStudentManagement /></ProtectedRoute>} />
-            <Route path="/attendance" element={<ProtectedRoute><AttendanceCheck /></ProtectedRoute>} />
-            <Route path="/student-attendance" element={<ProtectedRoute><StudentAttendance /></ProtectedRoute>} />
-            <Route path="/student-competitions" element={<ProtectedRoute><StudentCompetitions /></ProtectedRoute>} />
-            <Route path="/logs" element={<ProtectedRoute><Logs /></ProtectedRoute>} />
-            <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </main>
-      )}
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+            <Route index element={<Navigate to="/admin/students" replace />} />
+            <Route path="students" element={<AdminStudents />} />
+            <Route path="students/new" element={<StudentForm />} />
+            <Route path="students/edit" element={<StudentForm />} />
+            <Route path="classes" element={<AdminClasses />} />
+            <Route path="classes/new" element={<ClassForm />} />
+            <Route path="classes/edit" element={<ClassForm />} />
+            <Route path="classes/manage" element={<ClassStudentManagement />} />
+            <Route path="competitions" element={<AdminCompetitions />} />
+            <Route path="competitions/new" element={<CompetitionForm />} />
+            <Route path="competitions/edit" element={<CompetitionForm />} />
+            <Route path="competitions/manage" element={<CompetitionStudentManagement />} />
+            <Route path="attendance" element={<AdminAttendance />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="logs" element={<AdminLogs />} />
+            <Route path="notifications" element={<AdminNotifications />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </main>
     </div>
   );
 }

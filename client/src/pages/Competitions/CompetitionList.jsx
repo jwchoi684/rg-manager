@@ -3,7 +3,7 @@ import { fetchWithAuth } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-function CompetitionList() {
+function CompetitionList({ basePath = '/competitions' }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [competitions, setCompetitions] = useState([]);
@@ -84,11 +84,11 @@ function CompetitionList() {
   };
 
   const handleManageStudents = (competition) => {
-    navigate('/competitions/manage-students', { state: { competition } });
+    navigate(`${basePath}/manage`, { state: { competition } });
   };
 
   const handleEdit = (competition) => {
-    navigate('/competitions/edit', { state: { competition } });
+    navigate(`${basePath}/edit`, { state: { competition } });
   };
 
   // Swipe handlers
@@ -151,7 +151,7 @@ function CompetitionList() {
         </h2>
         <button
           className="btn btn-primary"
-          onClick={() => navigate('/competitions/new')}
+          onClick={() => navigate(`${basePath}/new`)}
         >
           + 대회 등록
         </button>
@@ -312,7 +312,7 @@ function CompetitionList() {
             </div>
             <button
               className="btn btn-primary"
-              onClick={() => navigate('/competitions/new')}
+              onClick={() => navigate(`${basePath}/new`)}
               style={{ marginTop: 'var(--spacing-lg)' }}
             >
               + 대회 등록

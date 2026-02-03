@@ -196,6 +196,53 @@ function Settings() {
         </div>
       )}
 
+      {/* Admin Dashboard Card */}
+      {user?.role === 'admin' && (
+        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
+          <div className="card-header">
+            <h3 className="card-title">관리자</h3>
+          </div>
+          <div style={{ marginTop: 'var(--spacing-lg)' }}>
+            <div
+              onClick={() => navigate('/admin')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spacing-md)',
+                padding: 'var(--spacing-lg)',
+                backgroundColor: 'var(--color-primary-bg)',
+                borderRadius: 'var(--radius-md)',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s',
+                border: '1px solid var(--color-primary)'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-hover-bg)'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-bg)'}
+            >
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 40,
+                height: 40,
+                backgroundColor: 'var(--color-primary)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '1.25rem'
+              }}>
+                🛠️
+              </span>
+              <div>
+                <div style={{ fontWeight: 600, color: 'var(--color-gray-900)' }}>관리자 대시보드</div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)' }}>
+                  학생, 수업, 대회, 출석, 사용자 통합 관리
+                </div>
+              </div>
+              <span style={{ marginLeft: 'auto', color: 'var(--color-primary)', fontSize: '1.25rem' }}>→</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Account Actions */}
       <div className="card">
         <div className="card-header">
