@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { fetchWithAuth } from '../utils/api';
 
-function KakaoMessages() {
+function Notifications() {
   const [logs, setLogs] = useState([]);
   const [kakaoUsers, setKakaoUsers] = useState([]);
   const [total, setTotal] = useState(0);
@@ -105,7 +105,7 @@ function KakaoMessages() {
     <div className="animate-fadeIn">
       {/* Page Header */}
       <div className="page-header">
-        <h2 className="page-title">카카오 메시지</h2>
+        <h2 className="page-title">알림</h2>
         <button
           className="btn btn-primary"
           onClick={() => setShowSendModal(true)}
@@ -226,7 +226,7 @@ function KakaoMessages() {
             <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-primary)' }}>
               {total}
             </div>
-            <div style={{ color: 'var(--color-gray-500)', fontSize: '0.875rem' }}>전체 메시지</div>
+            <div style={{ color: 'var(--color-gray-500)', fontSize: '0.875rem' }}>전체 알림</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--color-success)' }}>
@@ -247,7 +247,7 @@ function KakaoMessages() {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">
-            메시지 로그
+            알림 목록
             <span className="badge badge-primary" style={{ marginLeft: '8px' }}>
               {logs.length}건
             </span>
@@ -260,8 +260,8 @@ function KakaoMessages() {
           </div>
         ) : logs.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-icon">💬</div>
-            <div className="empty-state-title">메시지 로그가 없습니다</div>
+            <div className="empty-state-icon">🔔</div>
+            <div className="empty-state-title">알림이 없습니다</div>
             <div className="empty-state-description">카카오톡 메시지가 전송되면 여기에 기록됩니다.</div>
           </div>
         ) : (
@@ -395,4 +395,4 @@ function KakaoMessages() {
   );
 }
 
-export default KakaoMessages;
+export default Notifications;

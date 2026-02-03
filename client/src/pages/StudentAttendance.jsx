@@ -9,8 +9,6 @@ function StudentAttendance() {
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
   const [attendanceRecords, setAttendanceRecords] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [selectedUserId, setSelectedUserId] = useState('all');
 
   const formatDate = (date) => {
     const year = date.getFullYear();
@@ -69,17 +67,8 @@ function StudentAttendance() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (user?.role === 'admin') {
-      loadUsers();
-    }
     loadData();
   }, []);
-
-  useEffect(() => {
-    loadData();
-    setSelectedStudent('');
-    setSelectedClass('');
-  }, [selectedUserId]);
 
   useEffect(() => {
     if (students.length > 0) {
@@ -102,33 +91,11 @@ function StudentAttendance() {
     };
   }, [showStudentDropdown]);
 
-  const loadUsers = async () => {
-    try {
-      const response = await fetchWithAuth("/api/auth/users");
-      const data = await response.json();
-      setUsers(data.filter(u => u.role !== 'admin'));
-    } catch (error) {
-      console.error("사용자 목록 로드 실패:", error);
-    }
-  };
-
-  const getUserName = (userId) => {
-    const foundUser = users.find(u => u.id === userId);
-    return foundUser ? foundUser.username : '-';
-  };
-
   const loadData = async () => {
     try {
-      const studentsUrl = user?.role === 'admin' && selectedUserId !== 'all'
-        ? `/api/students?filterUserId=${selectedUserId}`
-        : '/api/students';
-      const classesUrl = user?.role === 'admin' && selectedUserId !== 'all'
-        ? `/api/classes?filterUserId=${selectedUserId}`
-        : '/api/classes';
-
       const [studentsRes, classesRes] = await Promise.all([
-        fetchWithAuth(studentsUrl),
-        fetchWithAuth(classesUrl)
+        fetchWithAuth('/api/students'),
+        fetchWithAuth('/api/classes')
       ]);
       const studentsData = await studentsRes.json();
       const classesData = await classesRes.json();
@@ -141,10 +108,7 @@ function StudentAttendance() {
 
   const loadAttendanceRecords = async () => {
     try {
-      const url = user?.role === 'admin' && selectedUserId !== 'all'
-        ? `/api/attendance?filterUserId=${selectedUserId}`
-        : '/api/attendance';
-      const response = await fetchWithAuth(url);
+      const response = await fetchWithAuth('/api/attendance');
       let records = await response.json();
 
       if (startDate && endDate) {
@@ -286,32 +250,6 @@ function StudentAttendance() {
       <div className="page-header">
         <h2 className="page-title">학생별 출석 조회</h2>
       </div>
-
-      {/* Admin User Filter */}
-      {user?.role === 'admin' && (
-        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--spacing-md)',
-            flexWrap: 'wrap'
-          }}>
-            <label className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>
-              사용자 선택
-            </label>
-            <select
-              value={selectedUserId}
-              onChange={(e) => setSelectedUserId(e.target.value)}
-              style={{ flex: 1, minWidth: '200px', maxWidth: isMobile ? '100%' : '300px' }}
-            >
-              <option value="all">전체 사용자</option>
-              {users.map(u => (
-                <option key={u.id} value={u.id}>{u.username}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
 
       {/* Filter Card */}
       <div className="card">
@@ -553,9 +491,6 @@ function StudentAttendance() {
                       <th>이름</th>
                       <th>생년월일 / 나이</th>
                       <th>수업</th>
-                      {user?.role === 'admin' && selectedUserId === 'all' && (
-                        <th>사용자</th>
-                      )}
                       <th style={{ width: '80px' }}>관리</th>
                     </tr>
                   </thead>
@@ -589,11 +524,6 @@ function StudentAttendance() {
                               </div>
                             )}
                           </td>
-                          {user?.role === 'admin' && selectedUserId === 'all' && (
-                            <td>
-                              <span className="badge badge-gray">{getUserName(student?.userId)}</span>
-                            </td>
-                          )}
                           <td>
                             <button
                               className="btn btn-danger btn-sm"
@@ -667,11 +597,6 @@ function StudentAttendance() {
                                   <div className="toss-list-item-subtitle">
                                     {classInfo?.name || '-'}
                                   </div>
-                                  {user?.role === 'admin' && selectedUserId === 'all' && (
-                                    <div className="toss-list-item-subtitle" style={{ marginTop: '2px' }}>
-                                      <span className="badge badge-gray" style={{ fontSize: '0.6875rem' }}>{getUserName(student?.userId)}</span>
-                                    </div>
-                                  )}
                                 </div>
                                 <div className="toss-list-item-value">
                                   <div className="toss-list-item-value-main" style={{ color: 'var(--color-success)' }}>

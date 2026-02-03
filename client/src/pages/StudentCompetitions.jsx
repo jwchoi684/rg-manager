@@ -17,8 +17,6 @@ function StudentCompetitions() {
   const [students, setStudents] = useState([]);
   const [competitions, setCompetitions] = useState([]);
   const [competitionStudentsWithEvents, setCompetitionStudentsWithEvents] = useState({});
-  const [users, setUsers] = useState([]);
-  const [selectedUserId, setSelectedUserId] = useState('all');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [searchText, setSearchText] = useState('');
 
@@ -44,45 +42,14 @@ function StudentCompetitions() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (user?.role === 'admin') {
-      loadUsers();
-    }
     loadData();
   }, []);
 
-  useEffect(() => {
-    loadData();
-    setSearchText('');
-  }, [selectedUserId]);
-
-  const loadUsers = async () => {
-    try {
-      const response = await fetchWithAuth("/api/auth/users");
-      const data = await response.json();
-      setUsers(data.filter(u => u.role !== 'admin'));
-    } catch (error) {
-      console.error("사용자 목록 로드 실패:", error);
-    }
-  };
-
-  const getUserName = (userId) => {
-    const foundUser = users.find(u => u.id === userId);
-    return foundUser ? foundUser.username : '-';
-  };
-
   const loadData = async () => {
     try {
-      const studentsUrl = user?.role === 'admin' && selectedUserId !== 'all'
-        ? `/api/students?filterUserId=${selectedUserId}`
-        : '/api/students';
-
-      const competitionsUrl = user?.role === 'admin' && selectedUserId !== 'all'
-        ? `/api/competitions?filterUserId=${selectedUserId}`
-        : '/api/competitions';
-
       const [studentsRes, competitionsRes] = await Promise.all([
-        fetchWithAuth(studentsUrl),
-        fetchWithAuth(competitionsUrl)
+        fetchWithAuth('/api/students'),
+        fetchWithAuth('/api/competitions')
       ]);
       const studentsData = await studentsRes.json();
       const competitionsData = await competitionsRes.json();
@@ -215,32 +182,6 @@ function StudentCompetitions() {
         </h2>
       </div>
 
-      {/* Admin User Filter */}
-      {user?.role === 'admin' && (
-        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--spacing-md)',
-            flexWrap: 'wrap'
-          }}>
-            <label className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>
-              사용자 선택
-            </label>
-            <select
-              value={selectedUserId}
-              onChange={(e) => setSelectedUserId(e.target.value)}
-              style={{ flex: 1, minWidth: '200px', maxWidth: isMobile ? '100%' : '300px' }}
-            >
-              <option value="all">전체 사용자</option>
-              {users.map(u => (
-                <option key={u.id} value={u.id}>{u.username}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
-
       {/* Search Card */}
       <div className="card">
         <div className="card-header">
@@ -331,9 +272,6 @@ function StudentCompetitions() {
                       <th>대회명</th>
                       <th>종목</th>
                       <th>수상 기록</th>
-                      {user?.role === 'admin' && selectedUserId === 'all' && (
-                        <th>사용자</th>
-                      )}
                       <th style={{ textAlign: 'center' }}>상태</th>
                     </tr>
                   </thead>
@@ -381,11 +319,6 @@ function StudentCompetitions() {
                             {formatAwards(record.events)}
                           </span>
                         </td>
-                        {user?.role === 'admin' && selectedUserId === 'all' && (
-                          <td>
-                            <span className="badge badge-gray">{getUserName(record.student.userId)}</span>
-                          </td>
-                        )}
                         <td style={{ textAlign: 'center' }}>
                           {isUpcoming(record.competition.date) ? (
                             <span className="badge badge-success">예정</span>
@@ -452,11 +385,6 @@ function StudentCompetitions() {
                       <div className="list-item-subtitle">
                         {formatDate(record.competition.date)} · {record.competition.location}
                       </div>
-                      {user?.role === 'admin' && selectedUserId === 'all' && (
-                        <div style={{ marginTop: '4px' }}>
-                          <span className="badge badge-gray" style={{ fontSize: '0.6875rem' }}>{getUserName(record.student.userId)}</span>
-                        </div>
-                      )}
                       {record.events && record.events.length > 0 && (
                         <div style={{
                           marginTop: 'var(--spacing-sm)',

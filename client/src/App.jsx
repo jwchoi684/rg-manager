@@ -18,7 +18,7 @@ import CompetitionStudentManagement from './pages/Competitions/CompetitionStuden
 import StudentCompetitions from './pages/StudentCompetitions';
 import KakaoCallback from './pages/KakaoCallback';
 import Settings from './pages/Settings';
-import KakaoMessages from './pages/KakaoMessages';
+import Notifications from './pages/Notifications';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -107,7 +107,7 @@ function App() {
 
   const adminLinks = [
     { path: '/logs', label: '로그', icon: '📝' },
-    { path: '/kakao-messages', label: '카카오 메시지', icon: '💬' },
+    { path: '/notifications', label: '알림', icon: '🔔' },
     { path: '/admin', label: '관리자', icon: '⚙️' },
   ];
 
@@ -243,7 +243,7 @@ function App() {
           <Route path="/student-attendance" element={<ProtectedRoute><StudentAttendance /></ProtectedRoute>} />
           <Route path="/student-competitions" element={<ProtectedRoute><StudentCompetitions /></ProtectedRoute>} />
           <Route path="/logs" element={<ProtectedRoute><Logs /></ProtectedRoute>} />
-          <Route path="/kakao-messages" element={<ProtectedRoute><KakaoMessages /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" />} />

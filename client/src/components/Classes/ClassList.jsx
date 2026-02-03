@@ -8,8 +8,6 @@ function ClassList() {
   const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [selectedUserId, setSelectedUserId] = useState('all');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [draggedIndex, setDraggedIndex] = useState(null);
   const [swipedId, setSwipedId] = useState(null);
@@ -27,39 +25,13 @@ function ClassList() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (user?.role === 'admin') {
-      loadUsers();
-    }
     loadClasses();
     loadStudents();
   }, []);
 
-  useEffect(() => {
-    loadClasses();
-    loadStudents();
-  }, [selectedUserId]);
-
-  const loadUsers = async () => {
-    try {
-      const response = await fetchWithAuth("/api/auth/users");
-      const data = await response.json();
-      setUsers(data.filter(u => u.role !== 'admin'));
-    } catch (error) {
-      console.error("사용자 목록 로드 실패:", error);
-    }
-  };
-
-  const getUserName = (userId) => {
-    const foundUser = users.find(u => u.id === userId);
-    return foundUser ? foundUser.username : '-';
-  };
-
   const loadClasses = async () => {
     try {
-      const url = user?.role === 'admin' && selectedUserId !== 'all'
-        ? `/api/classes?filterUserId=${selectedUserId}`
-        : '/api/classes';
-      const response = await fetchWithAuth(url);
+      const response = await fetchWithAuth('/api/classes');
       const data = await response.json();
       setClasses(data);
     } catch (error) {
@@ -69,10 +41,7 @@ function ClassList() {
 
   const loadStudents = async () => {
     try {
-      const url = user?.role === 'admin' && selectedUserId !== 'all'
-        ? `/api/students?filterUserId=${selectedUserId}`
-        : '/api/students';
-      const response = await fetchWithAuth(url);
+      const response = await fetchWithAuth('/api/students');
       const data = await response.json();
       setStudents(data);
     } catch (error) {
@@ -220,32 +189,6 @@ function ClassList() {
         </button>
       </div>
 
-      {/* Admin User Filter */}
-      {user?.role === 'admin' && (
-        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--spacing-md)',
-            flexWrap: 'wrap'
-          }}>
-            <label className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>
-              사용자 선택
-            </label>
-            <select
-              value={selectedUserId}
-              onChange={(e) => setSelectedUserId(e.target.value)}
-              style={{ flex: 1, minWidth: '200px', maxWidth: isMobile ? '100%' : '300px' }}
-            >
-              <option value="all">전체 사용자</option>
-              {users.map(u => (
-                <option key={u.id} value={u.id}>{u.username}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
-
       {/* Class List Card */}
       <div className="card">
         <div className="card-header">
@@ -266,10 +209,7 @@ function ClassList() {
                   <th>시간</th>
                   <th>강사</th>
                   <th style={{ textAlign: 'center' }}>등록 학생</th>
-                  {user?.role === 'admin' && selectedUserId === 'all' && (
-                    <th>사용자</th>
-                  )}
-                  <th style={{ width: '220px' }}>관리</th>
+                                    <th style={{ width: '220px' }}>관리</th>
                 </tr>
               </thead>
               <tbody>
@@ -297,12 +237,7 @@ function ClassList() {
                     <td style={{ textAlign: 'center' }}>
                       <span className="badge badge-primary">{getStudentsInClass(classItem.id).length}명</span>
                     </td>
-                    {user?.role === 'admin' && selectedUserId === 'all' && (
-                      <td>
-                        <span className="badge badge-gray">{getUserName(classItem.userId)}</span>
-                      </td>
-                    )}
-                    <td>
+                                        <td>
                       <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
                         <button className="btn btn-secondary btn-sm" onClick={() => handleEdit(classItem)}>
                           수정
@@ -372,11 +307,6 @@ function ClassList() {
                       {classItem.instructor && (
                         <div className="toss-list-item-subtitle">
                           강사: {classItem.instructor}
-                        </div>
-                      )}
-                      {user?.role === 'admin' && selectedUserId === 'all' && (
-                        <div className="toss-list-item-subtitle" style={{ marginTop: '2px' }}>
-                          <span className="badge badge-gray" style={{ fontSize: '0.6875rem' }}>{getUserName(classItem.userId)}</span>
                         </div>
                       )}
                     </div>

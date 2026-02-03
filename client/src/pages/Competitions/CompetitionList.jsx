@@ -8,8 +8,6 @@ function CompetitionList() {
   const navigate = useNavigate();
   const [competitions, setCompetitions] = useState([]);
   const [participantCounts, setParticipantCounts] = useState({});
-  const [users, setUsers] = useState([]);
-  const [selectedUserId, setSelectedUserId] = useState('all');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [swipedId, setSwipedId] = useState(null);
   const [touchStart, setTouchStart] = useState(null);
@@ -25,37 +23,12 @@ function CompetitionList() {
   }, []);
 
   useEffect(() => {
-    if (user?.role === 'admin') {
-      loadUsers();
-    }
     loadCompetitions();
   }, []);
 
-  useEffect(() => {
-    loadCompetitions();
-  }, [selectedUserId]);
-
-  const loadUsers = async () => {
-    try {
-      const response = await fetchWithAuth("/api/auth/users");
-      const data = await response.json();
-      setUsers(data.filter(u => u.role !== 'admin'));
-    } catch (error) {
-      console.error("사용자 목록 로드 실패:", error);
-    }
-  };
-
-  const getUserName = (userId) => {
-    const foundUser = users.find(u => u.id === userId);
-    return foundUser ? foundUser.username : '-';
-  };
-
   const loadCompetitions = async () => {
     try {
-      const url = user?.role === 'admin' && selectedUserId !== 'all'
-        ? `/api/competitions?filterUserId=${selectedUserId}`
-        : '/api/competitions';
-      const response = await fetchWithAuth(url);
+      const response = await fetchWithAuth('/api/competitions');
       const data = await response.json();
       setCompetitions(data);
 
@@ -184,32 +157,6 @@ function CompetitionList() {
         </button>
       </div>
 
-      {/* Admin User Filter */}
-      {user?.role === 'admin' && (
-        <div className="card" style={{ marginBottom: 'var(--spacing-lg)' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--spacing-md)',
-            flexWrap: 'wrap'
-          }}>
-            <label className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>
-              사용자 선택
-            </label>
-            <select
-              value={selectedUserId}
-              onChange={(e) => setSelectedUserId(e.target.value)}
-              style={{ flex: 1, minWidth: '200px', maxWidth: isMobile ? '100%' : '300px' }}
-            >
-              <option value="all">전체 사용자</option>
-              {users.map(u => (
-                <option key={u.id} value={u.id}>{u.username}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
-
       {/* Competition List Card */}
       <div className="card">
         <div className="card-header">
@@ -228,10 +175,7 @@ function CompetitionList() {
                   <th>날짜</th>
                   <th>장소</th>
                   <th style={{ textAlign: 'center' }}>참가 학생</th>
-                  {user?.role === 'admin' && selectedUserId === 'all' && (
-                    <th>사용자</th>
-                  )}
-                  <th style={{ width: '220px' }}>관리</th>
+                                    <th style={{ width: '220px' }}>관리</th>
                 </tr>
               </thead>
               <tbody>
@@ -254,12 +198,7 @@ function CompetitionList() {
                         {participantCounts[competition.id] || 0}명
                       </span>
                     </td>
-                    {user?.role === 'admin' && selectedUserId === 'all' && (
-                      <td>
-                        <span className="badge badge-gray">{getUserName(competition.userId)}</span>
-                      </td>
-                    )}
-                    <td>
+                                        <td>
                       <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
                         <button
                           className="btn btn-secondary btn-sm"
@@ -347,11 +286,6 @@ function CompetitionList() {
                       <div className="toss-list-item-subtitle">
                         {competition.location}
                       </div>
-                      {user?.role === 'admin' && selectedUserId === 'all' && (
-                        <div className="toss-list-item-subtitle" style={{ marginTop: '2px' }}>
-                          <span className="badge badge-gray" style={{ fontSize: '0.6875rem' }}>{getUserName(competition.userId)}</span>
-                        </div>
-                      )}
                     </div>
                     <div className="toss-list-item-value">
                       <div className="toss-list-item-value-main" style={{ color: 'var(--color-primary)' }}>
