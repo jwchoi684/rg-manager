@@ -160,6 +160,15 @@ class User {
     return result.rows.length > 0 ? result.rows[0] : null;
   }
 
+  static async updateUsername(id, username) {
+    const result = await pool.query(
+      `UPDATE users SET username = $1 WHERE id = $2
+       RETURNING id, username, role, "createdAt", email, "kakaoId", "kakaoMessageConsent"`,
+      [username, id]
+    );
+    return result.rows.length > 0 ? result.rows[0] : null;
+  }
+
   static async transferData(fromUserId, toUserId) {
     const client = await pool.connect();
 

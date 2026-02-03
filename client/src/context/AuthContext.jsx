@@ -134,6 +134,28 @@ export const AuthProvider = ({ children }) => {
     setToken(data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     localStorage.setItem('token', data.token);
+    return { user: data.user, isNewUser: data.isNewUser };
+  };
+
+  // 사용자 이름 설정
+  const updateUserName = async (username) => {
+    const response = await fetch('/api/auth/username', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ username })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error);
+    }
+
+    const data = await response.json();
+    setUser(data.user);
+    localStorage.setItem('user', JSON.stringify(data.user));
     return data.user;
   };
 
@@ -145,7 +167,8 @@ export const AuthProvider = ({ children }) => {
     logout,
     loading,
     getKakaoLoginUrl,
-    kakaoLogin
+    kakaoLogin,
+    updateUserName
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

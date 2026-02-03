@@ -17,6 +17,7 @@ import CompetitionForm from './pages/Competitions/CompetitionForm';
 import CompetitionStudentManagement from './pages/Competitions/CompetitionStudentManagement';
 import StudentCompetitions from './pages/StudentCompetitions';
 import KakaoCallback from './pages/KakaoCallback';
+import RegisterName from './pages/RegisterName';
 import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
 
@@ -90,6 +91,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Navigate to="/login" />} />
         <Route path="/oauth/kakao/callback" element={<KakaoCallback />} />
+        <Route path="/register-name" element={<RegisterName />} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     );

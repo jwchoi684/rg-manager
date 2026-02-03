@@ -1,5 +1,5 @@
 import express from 'express';
-import { login, signup, getUsers, updateUser, deleteUser, verifyTokenEndpoint, getKakaoAuthUrl, kakaoCallback, transferUserData, updateKakaoMessageConsent, getKakaoMessageLogs, sendKakaoMessage, getKakaoUsers, testKakaoMessage } from '../controllers/authController.js';
+import { login, signup, getUsers, updateUser, deleteUser, verifyTokenEndpoint, getKakaoAuthUrl, kakaoCallback, transferUserData, updateKakaoMessageConsent, getKakaoMessageLogs, sendKakaoMessage, getKakaoUsers, testKakaoMessage, updateUsername } from '../controllers/authController.js';
 import { verifyToken } from '../middleware/auth.js';
 import { logAction } from '../middleware/logger.js';
 
@@ -19,6 +19,9 @@ router.post('/users/transfer', verifyToken, logAction('TRANSFER_DATA'), transfer
 router.get('/kakao', getKakaoAuthUrl);
 router.post('/kakao/callback', logAction('KAKAO_LOGIN'), kakaoCallback);
 router.put('/kakao/consent', verifyToken, updateKakaoMessageConsent);
+
+// 사용자 이름 설정
+router.put('/username', verifyToken, logAction('UPDATE_USERNAME'), updateUsername);
 
 // 카카오 메시지 (관리자 전용)
 router.get('/kakao/messages', verifyToken, getKakaoMessageLogs);

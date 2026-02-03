@@ -210,17 +210,20 @@ export const kakaoCallback = async (req, res) => {
 
     // 3. 기존 사용자 확인 또는 새 사용자 생성
     let user = await User.getByKakaoId(kakaoId);
+    let isNewUser = false;
 
     if (!user) {
-      // 새 사용자 생성 (토큰 포함)
+      // 새 사용자 생성 (토큰 포함) - 임시 이름으로 생성
+      const tempUsername = `카카오_${Date.now()}`;
       user = await User.createWithKakao({
         kakaoId,
-        username: nickname,
+        username: tempUsername,
         email,
         accessToken,
         refreshToken,
         tokenExpiresAt,
       });
+      isNewUser = true;
     } else {
       // 기존 사용자 토큰 및 이메일 업데이트
       const updatedUser = await User.updateKakaoTokens(user.id, {
@@ -248,6 +251,7 @@ export const kakaoCallback = async (req, res) => {
       message: '카카오 로그인 성공',
       user: userWithoutPassword,
       token,
+      isNewUser,  // 신규 사용자 여부 반환
     });
   } catch (error) {
     console.error('카카오 로그인 오류:', error);
@@ -355,6 +359,38 @@ export const getKakaoUsers = async (req, res) => {
     res.json(kakaoUsers);
   } catch (error) {
     console.error('카카오 사용자 조회 오류:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// 사용자 이름 업데이트 (카카오 가입 후 이름 설정)
+export const updateUsername = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { username } = req.body;
+
+    if (!username || username.trim().length === 0) {
+      return res.status(400).json({ error: '이름을 입력해주세요.' });
+    }
+
+    // 중복 확인
+    const existingUser = await User.getByUsername(username.trim());
+    if (existingUser && existingUser.id !== userId) {
+      return res.status(400).json({ error: '이미 사용 중인 이름입니다.' });
+    }
+
+    const user = await User.updateUsername(userId, username.trim());
+
+    if (!user) {
+      return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+    }
+
+    res.json({
+      message: '이름이 설정되었습니다.',
+      user
+    });
+  } catch (error) {
+    console.error('이름 설정 오류:', error);
     res.status(500).json({ error: error.message });
   }
 };

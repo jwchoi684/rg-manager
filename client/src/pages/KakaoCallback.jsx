@@ -31,8 +31,13 @@ function KakaoCallback() {
       }
 
       try {
-        await kakaoLogin(code);
-        navigate('/');
+        const result = await kakaoLogin(code);
+        if (result.isNewUser) {
+          // 신규 사용자는 이름 등록 페이지로 이동
+          navigate('/register-name');
+        } else {
+          navigate('/');
+        }
       } catch (err) {
         setError(err.message || '카카오 로그인에 실패했습니다.');
         setTimeout(() => navigate('/login'), 2000);
