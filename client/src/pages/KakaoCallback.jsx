@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,9 +7,14 @@ function KakaoCallback() {
   const navigate = useNavigate();
   const { kakaoLogin } = useAuth();
   const [error, setError] = useState('');
+  const isProcessing = useRef(false);
 
   useEffect(() => {
     const processKakaoLogin = async () => {
+      // 이미 처리 중이면 중복 실행 방지
+      if (isProcessing.current) return;
+      isProcessing.current = true;
+
       const code = searchParams.get('code');
       const errorParam = searchParams.get('error');
 
