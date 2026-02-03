@@ -1,5 +1,5 @@
 import express from 'express';
-import { login, signup, getUsers, updateUser, deleteUser, verifyTokenEndpoint, getKakaoAuthUrl, kakaoCallback, transferUserData, updateKakaoMessageConsent, getKakaoMessageLogs, sendKakaoMessage, getKakaoUsers } from '../controllers/authController.js';
+import { login, signup, getUsers, updateUser, deleteUser, verifyTokenEndpoint, getKakaoAuthUrl, kakaoCallback, transferUserData, updateKakaoMessageConsent, getKakaoMessageLogs, sendKakaoMessage, getKakaoUsers, testKakaoMessage } from '../controllers/authController.js';
 import { verifyToken } from '../middleware/auth.js';
 import { logAction } from '../middleware/logger.js';
 
@@ -24,5 +24,8 @@ router.put('/kakao/consent', verifyToken, updateKakaoMessageConsent);
 router.get('/kakao/messages', verifyToken, getKakaoMessageLogs);
 router.post('/kakao/messages', verifyToken, logAction('SEND_KAKAO_MESSAGE'), sendKakaoMessage);
 router.get('/kakao/users', verifyToken, getKakaoUsers);
+
+// 카카오 메시지 테스트
+router.post('/kakao/test', verifyToken, testKakaoMessage);
 
 export default router;

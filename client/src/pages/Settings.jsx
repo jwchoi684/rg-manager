@@ -8,6 +8,8 @@ function Settings() {
   const navigate = useNavigate();
   const [kakaoMessageConsent, setKakaoMessageConsent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
+  const [testResult, setTestResult] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   const handleLogout = () => {
@@ -61,6 +63,25 @@ function Settings() {
       alert('설정 변경에 실패했습니다.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTestKakaoMessage = async () => {
+    setTestLoading(true);
+    setTestResult(null);
+    try {
+      const response = await fetchWithAuth('/api/auth/kakao/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await response.json();
+      setTestResult(data);
+      console.log('테스트 결과:', data);
+    } catch (error) {
+      console.error('테스트 실패:', error);
+      setTestResult({ status: 'ERROR', message: error.message });
+    } finally {
+      setTestLoading(false);
     }
   };
 
@@ -243,6 +264,57 @@ function Settings() {
           )}
         </div>
       </div>
+
+      {/* Test Kakao Message */}
+      {user?.kakaoId && (
+        <div className="card" style={{ marginTop: 'var(--spacing-lg)' }}>
+          <div className="card-header">
+            <h3 className="card-title">카카오 메시지 테스트</h3>
+          </div>
+          <div style={{ marginTop: 'var(--spacing-lg)' }}>
+            <p style={{
+              color: 'var(--color-gray-600)',
+              fontSize: '0.875rem',
+              marginBottom: 'var(--spacing-md)'
+            }}>
+              카카오톡 메시지 전송이 정상적으로 작동하는지 테스트합니다.
+            </p>
+            <button
+              className="btn btn-primary"
+              onClick={handleTestKakaoMessage}
+              disabled={testLoading}
+            >
+              {testLoading ? '테스트 중...' : '테스트 메시지 전송'}
+            </button>
+
+            {testResult && (
+              <div style={{
+                marginTop: 'var(--spacing-lg)',
+                padding: 'var(--spacing-md)',
+                backgroundColor: testResult.status === 'SUCCESS' ? 'var(--color-success-bg, #d4edda)' : 'var(--color-danger-bg, #f8d7da)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.875rem'
+              }}>
+                <div style={{ fontWeight: 600, marginBottom: '8px' }}>
+                  상태: {testResult.status}
+                </div>
+                <div style={{ color: 'var(--color-gray-700)' }}>
+                  {testResult.message}
+                </div>
+                {testResult.tokens && (
+                  <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'var(--color-gray-500)' }}>
+                    <div>액세스 토큰: {testResult.tokens.hasAccessToken ? '있음' : '없음'}</div>
+                    <div>리프레시 토큰: {testResult.tokens.hasRefreshToken ? '있음' : '없음'}</div>
+                    <div>토큰 만료: {testResult.tokens.expiresAt || '-'}</div>
+                    <div>만료됨: {testResult.tokens.isExpired ? '예' : '아니오'}</div>
+                    <div>알림 동의: {testResult.tokens.messageConsent ? '예' : '아니오'}</div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Info Box */}
       {user?.kakaoId && (

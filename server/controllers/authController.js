@@ -351,3 +351,91 @@ export const getKakaoUsers = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// 카카오 토큰 상태 확인 및 테스트 메시지 전송
+export const testKakaoMessage = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // 1. 토큰 정보 가져오기
+    const tokens = await User.getKakaoTokens(userId);
+    console.log('=== 카카오 토큰 테스트 ===');
+    console.log('userId:', userId);
+    console.log('토큰 존재 여부:', !!tokens);
+
+    if (!tokens) {
+      return res.json({
+        status: 'NO_TOKENS',
+        message: '카카오 토큰이 없습니다. 카카오로 다시 로그인해주세요.',
+        tokens: null
+      });
+    }
+
+    console.log('kakaoAccessToken 존재:', !!tokens.kakaoAccessToken);
+    console.log('kakaoRefreshToken 존재:', !!tokens.kakaoRefreshToken);
+    console.log('kakaoTokenExpiresAt:', tokens.kakaoTokenExpiresAt);
+    console.log('kakaoMessageConsent:', tokens.kakaoMessageConsent);
+
+    // 토큰 만료 여부 확인
+    const now = new Date();
+    const expiresAt = tokens.kakaoTokenExpiresAt ? new Date(tokens.kakaoTokenExpiresAt) : null;
+    const isExpired = expiresAt ? now > expiresAt : true;
+
+    if (!tokens.kakaoAccessToken) {
+      return res.json({
+        status: 'NO_ACCESS_TOKEN',
+        message: '액세스 토큰이 없습니다. 카카오로 다시 로그인해주세요.',
+        tokens: {
+          hasAccessToken: false,
+          hasRefreshToken: !!tokens.kakaoRefreshToken,
+          expiresAt: tokens.kakaoTokenExpiresAt,
+          messageConsent: tokens.kakaoMessageConsent
+        }
+      });
+    }
+
+    if (!tokens.kakaoMessageConsent) {
+      return res.json({
+        status: 'NO_CONSENT',
+        message: '카카오톡 알림에 동의하지 않았습니다. 설정에서 알림을 활성화해주세요.',
+        tokens: {
+          hasAccessToken: true,
+          hasRefreshToken: !!tokens.kakaoRefreshToken,
+          expiresAt: tokens.kakaoTokenExpiresAt,
+          isExpired,
+          messageConsent: false
+        }
+      });
+    }
+
+    // 2. 테스트 메시지 전송 시도
+    const { sendAttendanceKakaoMessage } = await import('../utils/kakaoMessage.js');
+
+    const testResult = await sendAttendanceKakaoMessage({
+      userId,
+      date: new Date().toISOString().split('T')[0],
+      className: '테스트 수업',
+      schedule: '테스트 시간',
+      students: [{ id: 1, name: '테스트학생' }],
+      presentStudentIds: [1]
+    });
+
+    console.log('테스트 메시지 결과:', testResult);
+
+    res.json({
+      status: testResult.success ? 'SUCCESS' : 'FAILED',
+      message: testResult.success ? '테스트 메시지가 전송되었습니다!' : testResult.error,
+      tokens: {
+        hasAccessToken: true,
+        hasRefreshToken: !!tokens.kakaoRefreshToken,
+        expiresAt: tokens.kakaoTokenExpiresAt,
+        isExpired,
+        messageConsent: true
+      },
+      testResult
+    });
+  } catch (error) {
+    console.error('카카오 테스트 오류:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
