@@ -50,8 +50,17 @@ function ProtectedRoute({ children }) {
 
 function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const { user, logout } = useAuth();
   const location = useLocation();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // 메뉴 열릴 때 body 스크롤 방지
   useEffect(() => {
@@ -85,6 +94,11 @@ function App() {
     return location.pathname.startsWith(path);
   };
 
+  // 관리자 페이지 여부 확인
+  const adminPaths = ['/logs', '/notifications', '/admin'];
+  const isAdminPage = adminPaths.some(path => location.pathname.startsWith(path));
+  const showAdminSidebar = user?.role === 'admin' && isAdminPage && !isMobile;
+
   if (!user) {
     return (
       <Routes>
@@ -110,7 +124,7 @@ function App() {
   const adminLinks = [
     { path: '/logs', label: '로그', icon: '📝' },
     { path: '/notifications', label: '알림', icon: '🔔' },
-    { path: '/admin', label: '관리자', icon: '⚙️' },
+    { path: '/admin', label: '사용자 관리', icon: '👤' },
   ];
 
   return (
@@ -137,15 +151,14 @@ function App() {
               {link.label}
             </Link>
           ))}
-          {user?.role === 'admin' && adminLinks.map(link => (
+          {user?.role === 'admin' && (
             <Link
-              key={link.path}
-              to={link.path}
-              className={isActive(link.path) ? 'active' : ''}
+              to="/admin"
+              className={isAdminPage ? 'active' : ''}
             >
-              {link.label}
+              관리자
             </Link>
-          ))}
+          )}
           <Link
             to="/settings"
             className={isActive('/settings') ? 'active' : ''}
@@ -227,30 +240,70 @@ function App() {
         </div>
       </div>
 
-      <main className="app-main">
-        <Routes>
-          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/students" element={<ProtectedRoute><StudentList /></ProtectedRoute>} />
-          <Route path="/students/new" element={<ProtectedRoute><StudentForm /></ProtectedRoute>} />
-          <Route path="/students/edit" element={<ProtectedRoute><StudentForm /></ProtectedRoute>} />
-          <Route path="/classes" element={<ProtectedRoute><ClassList /></ProtectedRoute>} />
-          <Route path="/classes/new" element={<ProtectedRoute><ClassForm /></ProtectedRoute>} />
-          <Route path="/classes/edit" element={<ProtectedRoute><ClassForm /></ProtectedRoute>} />
-          <Route path="/classes/manage-students" element={<ProtectedRoute><ClassStudentManagement /></ProtectedRoute>} />
-          <Route path="/competitions" element={<ProtectedRoute><CompetitionList /></ProtectedRoute>} />
-          <Route path="/competitions/new" element={<ProtectedRoute><CompetitionForm /></ProtectedRoute>} />
-          <Route path="/competitions/edit" element={<ProtectedRoute><CompetitionForm /></ProtectedRoute>} />
-          <Route path="/competitions/manage-students" element={<ProtectedRoute><CompetitionStudentManagement /></ProtectedRoute>} />
-          <Route path="/attendance" element={<ProtectedRoute><AttendanceCheck /></ProtectedRoute>} />
-          <Route path="/student-attendance" element={<ProtectedRoute><StudentAttendance /></ProtectedRoute>} />
-          <Route path="/student-competitions" element={<ProtectedRoute><StudentCompetitions /></ProtectedRoute>} />
-          <Route path="/logs" element={<ProtectedRoute><Logs /></ProtectedRoute>} />
-          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </main>
+      {/* Main Content with Admin Sidebar */}
+      {showAdminSidebar ? (
+        <div className="admin-layout">
+          {/* Admin Sidebar */}
+          <aside className="admin-sidebar">
+            <div className="admin-sidebar-header">
+              <h2>관리자</h2>
+            </div>
+            <nav className="admin-sidebar-nav">
+              {adminLinks.map(link => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`admin-sidebar-item ${isActive(link.path) ? 'active' : ''}`}
+                >
+                  <span className="admin-sidebar-icon">{link.icon}</span>
+                  <span className="admin-sidebar-label">{link.label}</span>
+                </Link>
+              ))}
+            </nav>
+            <div className="admin-sidebar-footer">
+              <Link to="/" className="admin-sidebar-back">
+                <span>←</span>
+                <span>메인으로 돌아가기</span>
+              </Link>
+            </div>
+          </aside>
+
+          {/* Admin Main Content */}
+          <main className="admin-main">
+            <Routes>
+              <Route path="/logs" element={<ProtectedRoute><Logs /></ProtectedRoute>} />
+              <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+              <Route path="*" element={<Navigate to="/admin" />} />
+            </Routes>
+          </main>
+        </div>
+      ) : (
+        <main className="app-main">
+          <Routes>
+            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/students" element={<ProtectedRoute><StudentList /></ProtectedRoute>} />
+            <Route path="/students/new" element={<ProtectedRoute><StudentForm /></ProtectedRoute>} />
+            <Route path="/students/edit" element={<ProtectedRoute><StudentForm /></ProtectedRoute>} />
+            <Route path="/classes" element={<ProtectedRoute><ClassList /></ProtectedRoute>} />
+            <Route path="/classes/new" element={<ProtectedRoute><ClassForm /></ProtectedRoute>} />
+            <Route path="/classes/edit" element={<ProtectedRoute><ClassForm /></ProtectedRoute>} />
+            <Route path="/classes/manage-students" element={<ProtectedRoute><ClassStudentManagement /></ProtectedRoute>} />
+            <Route path="/competitions" element={<ProtectedRoute><CompetitionList /></ProtectedRoute>} />
+            <Route path="/competitions/new" element={<ProtectedRoute><CompetitionForm /></ProtectedRoute>} />
+            <Route path="/competitions/edit" element={<ProtectedRoute><CompetitionForm /></ProtectedRoute>} />
+            <Route path="/competitions/manage-students" element={<ProtectedRoute><CompetitionStudentManagement /></ProtectedRoute>} />
+            <Route path="/attendance" element={<ProtectedRoute><AttendanceCheck /></ProtectedRoute>} />
+            <Route path="/student-attendance" element={<ProtectedRoute><StudentAttendance /></ProtectedRoute>} />
+            <Route path="/student-competitions" element={<ProtectedRoute><StudentCompetitions /></ProtectedRoute>} />
+            <Route path="/logs" element={<ProtectedRoute><Logs /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </main>
+      )}
     </div>
   );
 }
