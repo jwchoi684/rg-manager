@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { fetchWithAuth } from '../utils/api';
 
 function Settings() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [kakaoMessageConsent, setKakaoMessageConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -254,6 +261,48 @@ function Settings() {
           </ul>
         </div>
       )}
+
+      {/* Account Actions */}
+      <div className="card" style={{ marginTop: 'var(--spacing-lg)' }}>
+        <div className="card-header">
+          <h3 className="card-title">계정</h3>
+        </div>
+        <div style={{ marginTop: 'var(--spacing-lg)' }}>
+          <div
+            onClick={() => navigate('/settings')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-md)',
+              padding: 'var(--spacing-md)',
+              borderRadius: 'var(--radius-md)',
+              cursor: 'pointer',
+              backgroundColor: 'var(--color-primary-bg)',
+              marginBottom: 'var(--spacing-sm)'
+            }}
+          >
+            <span style={{ fontSize: '1.25rem' }}>⚙️</span>
+            <span style={{ fontWeight: 500, color: 'var(--color-gray-900)' }}>설정</span>
+          </div>
+          <div
+            onClick={handleLogout}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-md)',
+              padding: 'var(--spacing-md)',
+              borderRadius: 'var(--radius-md)',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-gray-100)'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <span style={{ fontSize: '1.25rem' }}>🚪</span>
+            <span style={{ fontWeight: 500, color: 'var(--color-danger)' }}>로그아웃</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
