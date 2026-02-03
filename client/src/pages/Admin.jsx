@@ -108,18 +108,20 @@ function Admin() {
     return `${year}.${month}.${day}`;
   };
 
-  const handleToggleKakaoConsent = async (userId, currentConsent) => {
+  const handleToggleKakaoConsent = async (targetUserId, currentConsent) => {
     try {
-      // 관리자가 다른 사용자의 설정을 변경하는 것이므로 별도 API 필요
-      // 일단 현재 로그인한 사용자의 설정만 변경 가능하도록 구현
       const response = await fetchWithAuth('/api/auth/kakao/consent', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ consent: !currentConsent })
+        body: JSON.stringify({
+          consent: !currentConsent,
+          targetUserId: targetUserId  // 관리자가 다른 사용자의 설정 변경 가능
+        })
       });
 
       if (response.ok) {
         await loadUsers();
+        alert(!currentConsent ? '카카오톡 알림이 활성화되었습니다.' : '카카오톡 알림이 비활성화되었습니다.');
       } else {
         const data = await response.json();
         alert(data.error || '알림 설정 변경에 실패했습니다.');
@@ -339,14 +341,12 @@ function Admin() {
                             <label style={{
                               display: 'inline-flex',
                               alignItems: 'center',
-                              cursor: u.id === user.id ? 'pointer' : 'not-allowed',
-                              opacity: u.id === user.id ? 1 : 0.5
+                              cursor: 'pointer'
                             }}>
                               <input
                                 type="checkbox"
                                 checked={u.kakaoMessageConsent || false}
-                                onChange={() => u.id === user.id && handleToggleKakaoConsent(u.id, u.kakaoMessageConsent)}
-                                disabled={u.id !== user.id}
+                                onChange={() => handleToggleKakaoConsent(u.id, u.kakaoMessageConsent)}
                                 style={{ marginRight: '6px' }}
                               />
                               <span style={{ fontSize: '0.8125rem', color: u.kakaoMessageConsent ? 'var(--color-success)' : 'var(--color-gray-500)' }}>
@@ -426,7 +426,7 @@ function Admin() {
                       <div className="list-item-subtitle">
                         #{u.id} | {u.email || '이메일 없음'} | {formatDate(u.createdAt)}
                       </div>
-                      {u.kakaoId && u.id === user.id && (
+                      {u.kakaoId && (
                         <div style={{ marginTop: '8px' }}>
                           <label style={{
                             display: 'inline-flex',

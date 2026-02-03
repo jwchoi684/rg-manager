@@ -120,11 +120,15 @@ export const submitBulkAttendance = async (req, res) => {
     // 3. 카카오 메시지 전송 (요청된 경우)
     let kakaoResult = { skipped: true };
     if (sendKakaoMessage) {
+      console.log('=== 카카오 메시지 전송 시작 ===');
+      console.log('userId:', userId, 'classId:', classId, 'date:', date);
       try {
         // 수업 정보 가져오기
         const classInfo = await Class.getById(classId, userId, role);
+        console.log('수업 정보:', classInfo?.name);
         // 해당 수업의 전체 학생 가져오기
         const allStudents = await Student.getByClassId(classId, userId, role);
+        console.log('학생 수:', allStudents?.length);
 
         kakaoResult = await sendAttendanceKakaoMessage({
           userId,
@@ -134,10 +138,13 @@ export const submitBulkAttendance = async (req, res) => {
           students: allStudents,
           presentStudentIds: studentIds,
         });
+        console.log('카카오 메시지 전송 결과:', kakaoResult);
       } catch (kakaoError) {
         console.error('카카오 메시지 전송 중 오류:', kakaoError);
         kakaoResult = { success: false, error: kakaoError.message };
       }
+    } else {
+      console.log('카카오 메시지 전송 스킵 (sendKakaoMessage:', sendKakaoMessage, ')');
     }
 
     res.json({

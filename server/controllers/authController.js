@@ -258,8 +258,15 @@ export const kakaoCallback = async (req, res) => {
 // 카카오 메시지 알림 동의 설정
 export const updateKakaoMessageConsent = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { consent } = req.body;
+    const { consent, targetUserId } = req.body;
+
+    // 관리자인 경우 다른 사용자의 동의 설정 변경 가능
+    let userId = req.user.id;
+    if (targetUserId && req.user.role === 'admin') {
+      userId = targetUserId;
+    }
+
+    console.log('카카오 알림 동의 변경:', { userId, consent, requestedBy: req.user.id });
 
     const user = await User.updateMessageConsent(userId, consent);
 
