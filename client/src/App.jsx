@@ -102,6 +102,9 @@ function App() {
     return location.pathname.startsWith(path);
   };
 
+  // 관리자 페이지 여부 확인
+  const isAdminPage = location.pathname.startsWith('/admin');
+
   if (!user) {
     return (
       <Routes>
@@ -125,46 +128,75 @@ function App() {
   ];
 
 
+  // 관리자 페이지일 경우 별도 레이아웃 사용
+  if (isAdminPage) {
+    return (
+      <Routes>
+        <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+          <Route index element={<Navigate to="/admin/students" replace />} />
+          <Route path="students" element={<AdminStudents />} />
+          <Route path="students/new" element={<StudentForm />} />
+          <Route path="students/edit" element={<StudentForm />} />
+          <Route path="classes" element={<AdminClasses />} />
+          <Route path="classes/new" element={<ClassForm />} />
+          <Route path="classes/edit" element={<ClassForm />} />
+          <Route path="classes/manage" element={<ClassStudentManagement />} />
+          <Route path="competitions" element={<AdminCompetitions />} />
+          <Route path="competitions/new" element={<CompetitionForm />} />
+          <Route path="competitions/edit" element={<CompetitionForm />} />
+          <Route path="competitions/manage" element={<CompetitionStudentManagement />} />
+          <Route path="attendance" element={<AdminAttendance />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="logs" element={<AdminLogs />} />
+          <Route path="notifications" element={<AdminNotifications />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/admin/students" />} />
+      </Routes>
+    );
+  }
+
   return (
     <div className="app">
       <header className="app-header">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h1 style={{ marginBottom: 0 }}>리듬체조 출석</h1>
-          <button className="mobile-menu-button" onClick={toggleMobileMenu}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-        {/* Desktop Navigation */}
-        <nav className="desktop-nav">
-          {navLinks.map(link => (
+        <div className="app-header-inner">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h1 style={{ marginBottom: 0 }}>리듬체조 출석</h1>
+            <button className="mobile-menu-button" onClick={toggleMobileMenu}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          {/* Desktop Navigation */}
+          <nav className="desktop-nav">
+            {navLinks.map(link => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={isActive(link.path) ? 'active' : ''}
+              >
+                {link.label}
+              </Link>
+            ))}
             <Link
-              key={link.path}
-              to={link.path}
-              className={isActive(link.path) ? 'active' : ''}
+              to="/settings"
+              className={isActive('/settings') ? 'active' : ''}
             >
-              {link.label}
+              설정
             </Link>
-          ))}
-          <Link
-            to="/settings"
-            className={isActive('/settings') ? 'active' : ''}
-          >
-            설정
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="btn btn-ghost"
-            style={{
-              fontSize: '0.875rem',
-            }}
-          >
-            로그아웃
-          </button>
-        </nav>
+            <button
+              onClick={handleLogout}
+              className="btn btn-ghost"
+              style={{
+                fontSize: '0.875rem',
+              }}
+            >
+              로그아웃
+            </button>
+          </nav>
+        </div>
       </header>
 
       {/* Mobile Fullscreen Menu */}
@@ -217,7 +249,6 @@ function App() {
       {/* Main Content */}
       <main className="app-main">
         <Routes>
-          {/* User Routes */}
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/students" element={<ProtectedRoute><StudentList /></ProtectedRoute>} />
           <Route path="/students/new" element={<ProtectedRoute><StudentForm /></ProtectedRoute>} />
@@ -234,27 +265,6 @@ function App() {
           <Route path="/student-attendance" element={<ProtectedRoute><StudentAttendance /></ProtectedRoute>} />
           <Route path="/student-competitions" element={<ProtectedRoute><StudentCompetitions /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
-            <Route index element={<Navigate to="/admin/students" replace />} />
-            <Route path="students" element={<AdminStudents />} />
-            <Route path="students/new" element={<StudentForm />} />
-            <Route path="students/edit" element={<StudentForm />} />
-            <Route path="classes" element={<AdminClasses />} />
-            <Route path="classes/new" element={<ClassForm />} />
-            <Route path="classes/edit" element={<ClassForm />} />
-            <Route path="classes/manage" element={<ClassStudentManagement />} />
-            <Route path="competitions" element={<AdminCompetitions />} />
-            <Route path="competitions/new" element={<CompetitionForm />} />
-            <Route path="competitions/edit" element={<CompetitionForm />} />
-            <Route path="competitions/manage" element={<CompetitionStudentManagement />} />
-            <Route path="attendance" element={<AdminAttendance />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="logs" element={<AdminLogs />} />
-            <Route path="notifications" element={<AdminNotifications />} />
-          </Route>
-
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
