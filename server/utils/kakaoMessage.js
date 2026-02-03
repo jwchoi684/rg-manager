@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import KakaoMessageLog from '../models/KakaoMessageLog.js';
 
 const KAKAO_CLIENT_ID = process.env.KAKAO_CLIENT_ID;
 const KAKAO_CLIENT_SECRET = process.env.KAKAO_CLIENT_SECRET;
@@ -58,7 +59,7 @@ async function refreshKakaoToken(userId, refreshToken) {
 /**
  * 유효한 액세스 토큰 가져오기 (필요시 갱신)
  */
-async function getValidAccessToken(userId) {
+async function getValidAccessToken(userId, checkConsent = true) {
   const tokens = await User.getKakaoTokens(userId);
 
   if (!tokens || !tokens.kakaoAccessToken) {
@@ -66,7 +67,7 @@ async function getValidAccessToken(userId) {
     return null;
   }
 
-  if (!tokens.kakaoMessageConsent) {
+  if (checkConsent && !tokens.kakaoMessageConsent) {
     console.log('메시지 알림 미동의');
     return null;
   }
@@ -148,11 +149,31 @@ export async function sendAttendanceKakaoMessage({
 
     const result = await response.json();
 
+    const messageContent = templateObject.text;
+
     if (result.result_code === 0) {
       console.log('카카오톡 메시지 전송 성공');
+      // 로그 기록
+      await KakaoMessageLog.create({
+        senderId: userId,
+        recipientId: userId,
+        messageType: 'ATTENDANCE',
+        messageContent,
+        success: true,
+        errorMessage: null,
+      });
       return { success: true };
     } else {
       console.error('카카오톡 메시지 전송 실패:', result);
+      // 실패 로그 기록
+      await KakaoMessageLog.create({
+        senderId: userId,
+        recipientId: userId,
+        messageType: 'ATTENDANCE',
+        messageContent,
+        success: false,
+        errorMessage: result.msg || '메시지 전송 실패',
+      });
       return { success: false, error: result.msg || '메시지 전송 실패' };
     }
   } catch (error) {
@@ -161,4 +182,77 @@ export async function sendAttendanceKakaoMessage({
   }
 }
 
-export default { sendAttendanceKakaoMessage };
+/**
+ * 관리자가 특정 사용자에게 커스텀 메시지 전송
+ */
+export async function sendCustomKakaoMessage({
+  senderId,
+  recipientId,
+  message,
+}) {
+  try {
+    // 수신자의 토큰으로 메시지 전송 (나에게 보내기 API 사용)
+    const accessToken = await getValidAccessToken(recipientId, false);
+
+    if (!accessToken) {
+      return {
+        success: false,
+        error: '수신자의 카카오 토큰이 없습니다. 수신자가 카카오로 다시 로그인해야 합니다.',
+      };
+    }
+
+    const templateObject = {
+      object_type: 'text',
+      text: message,
+      link: {
+        web_url: APP_URL,
+        mobile_web_url: APP_URL,
+      },
+      button_title: '출석 관리 열기',
+    };
+
+    const response = await fetch('https://kapi.kakao.com/v2/api/talk/memo/default/send', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+      },
+      body: new URLSearchParams({
+        template_object: JSON.stringify(templateObject),
+      }),
+    });
+
+    const result = await response.json();
+
+    if (result.result_code === 0) {
+      console.log('카카오톡 커스텀 메시지 전송 성공');
+      // 로그 기록
+      await KakaoMessageLog.create({
+        senderId,
+        recipientId,
+        messageType: 'CUSTOM',
+        messageContent: message,
+        success: true,
+        errorMessage: null,
+      });
+      return { success: true };
+    } else {
+      console.error('카카오톡 커스텀 메시지 전송 실패:', result);
+      // 실패 로그 기록
+      await KakaoMessageLog.create({
+        senderId,
+        recipientId,
+        messageType: 'CUSTOM',
+        messageContent: message,
+        success: false,
+        errorMessage: result.msg || '메시지 전송 실패',
+      });
+      return { success: false, error: result.msg || '메시지 전송 실패' };
+    }
+  } catch (error) {
+    console.error('카카오톡 커스텀 메시지 전송 오류:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export default { sendAttendanceKakaoMessage, sendCustomKakaoMessage };

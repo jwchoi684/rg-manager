@@ -276,3 +276,78 @@ export const updateKakaoMessageConsent = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// 카카오 메시지 로그 조회 (관리자 전용)
+export const getKakaoMessageLogs = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: '권한이 없습니다.' });
+    }
+
+    const { default: KakaoMessageLog } = await import('../models/KakaoMessageLog.js');
+    const limit = parseInt(req.query.limit) || 100;
+    const offset = parseInt(req.query.offset) || 0;
+
+    const logs = await KakaoMessageLog.getAll(limit, offset);
+    const total = await KakaoMessageLog.getCount();
+
+    res.json({ logs, total });
+  } catch (error) {
+    console.error('카카오 메시지 로그 조회 오류:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// 카카오 메시지 전송 (관리자 전용)
+export const sendKakaoMessage = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: '권한이 없습니다.' });
+    }
+
+    const { recipientId, message } = req.body;
+
+    if (!recipientId || !message) {
+      return res.status(400).json({ error: '수신자와 메시지 내용을 입력해주세요.' });
+    }
+
+    // 수신자가 카카오 사용자인지 확인
+    const recipient = await User.getById(recipientId);
+    if (!recipient || !recipient.kakaoId) {
+      return res.status(400).json({ error: '수신자가 카카오 계정이 아닙니다.' });
+    }
+
+    const { sendCustomKakaoMessage } = await import('../utils/kakaoMessage.js');
+    const result = await sendCustomKakaoMessage({
+      senderId: req.user.id,
+      recipientId,
+      message,
+    });
+
+    if (result.success) {
+      res.json({ message: '메시지가 전송되었습니다.' });
+    } else {
+      res.status(400).json({ error: result.error });
+    }
+  } catch (error) {
+    console.error('카카오 메시지 전송 오류:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// 카카오 사용자 목록 조회 (관리자 전용)
+export const getKakaoUsers = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: '권한이 없습니다.' });
+    }
+
+    const users = await User.getAll();
+    const kakaoUsers = users.filter(u => u.kakaoId);
+
+    res.json(kakaoUsers);
+  } catch (error) {
+    console.error('카카오 사용자 조회 오류:', error);
+    res.status(500).json({ error: error.message });
+  }
+};

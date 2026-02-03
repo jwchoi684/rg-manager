@@ -64,6 +64,11 @@ function StudentList() {
     }
   };
 
+  const getUserName = (userId) => {
+    const foundUser = users.find(u => u.id === userId);
+    return foundUser ? foundUser.username : '-';
+  };
+
   const loadStudents = async () => {
     try {
       const url = user?.role === 'admin' && selectedUserId !== 'all'
@@ -338,6 +343,9 @@ function StudentList() {
                       수강 수업 <span className="sort-icon">{getSortIcon('classes')}</span>
                     </span>
                   </th>
+                  {user?.role === 'admin' && selectedUserId === 'all' && (
+                    <th>사용자</th>
+                  )}
                   <th style={{ width: '160px' }}>관리</th>
                 </tr>
               </thead>
@@ -358,6 +366,11 @@ function StudentList() {
                     <td>
                       <span style={{ color: 'var(--color-gray-600)' }}>{getClassNames(student.classIds)}</span>
                     </td>
+                    {user?.role === 'admin' && selectedUserId === 'all' && (
+                      <td>
+                        <span className="badge badge-gray">{getUserName(student.userId)}</span>
+                      </td>
+                    )}
                     <td>
                       <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
                         <button className="btn btn-secondary btn-sm" onClick={() => handleEdit(student)}>
@@ -440,6 +453,11 @@ function StudentList() {
                         <div className="toss-list-item-subtitle">
                           {getClassNames(student.classIds)}
                         </div>
+                        {user?.role === 'admin' && selectedUserId === 'all' && (
+                          <div className="toss-list-item-subtitle" style={{ marginTop: '2px' }}>
+                            <span className="badge badge-gray" style={{ fontSize: '0.6875rem' }}>{getUserName(student.userId)}</span>
+                          </div>
+                        )}
                       </div>
                       <div className="toss-list-item-value">
                         <div className="toss-list-item-value-main">

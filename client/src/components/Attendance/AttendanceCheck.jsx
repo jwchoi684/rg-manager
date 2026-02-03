@@ -73,6 +73,11 @@ function AttendanceCheck() {
     }
   };
 
+  const getUserName = (userId) => {
+    const foundUser = users.find(u => u.id === userId);
+    return foundUser ? foundUser.username : '-';
+  };
+
   const loadData = async () => {
     try {
       const studentsUrl = user?.role === 'admin' && selectedUserId !== 'all'
@@ -568,6 +573,9 @@ function AttendanceCheck() {
                           color: checkedStudents.has(student.id) ? 'var(--color-success)' : 'var(--color-gray-900)'
                         }}>
                           {student.name}
+                          {user?.role === 'admin' && selectedUserId === 'all' && (
+                            <span className="badge badge-gray" style={{ marginLeft: '8px', fontSize: '0.6875rem' }}>{getUserName(student.userId)}</span>
+                          )}
                         </div>
                         <div style={{
                           fontSize: '0.8125rem',

@@ -193,6 +193,22 @@ const initDatabase = async () => {
       ADD COLUMN IF NOT EXISTS "kakaoMessageConsent" BOOLEAN DEFAULT FALSE
     `);
 
+    // 카카오 메시지 로그 테이블
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS kakao_message_logs (
+        id SERIAL PRIMARY KEY,
+        "senderId" INTEGER NOT NULL,
+        "recipientId" INTEGER NOT NULL,
+        "messageType" TEXT NOT NULL,
+        "messageContent" TEXT NOT NULL,
+        success BOOLEAN NOT NULL,
+        "errorMessage" TEXT,
+        "createdAt" TEXT NOT NULL,
+        FOREIGN KEY ("senderId") REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY ("recipientId") REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
     // 기본 관리자 계정 생성 (username: admin, password: admin123)
     const adminCheck = await client.query('SELECT * FROM users WHERE username = $1', ['admin']);
     const hashedAdminPassword = await bcrypt.hash('admin123', SALT_ROUNDS);

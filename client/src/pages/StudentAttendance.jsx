@@ -112,6 +112,11 @@ function StudentAttendance() {
     }
   };
 
+  const getUserName = (userId) => {
+    const foundUser = users.find(u => u.id === userId);
+    return foundUser ? foundUser.username : '-';
+  };
+
   const loadData = async () => {
     try {
       const studentsUrl = user?.role === 'admin' && selectedUserId !== 'all'
@@ -548,6 +553,9 @@ function StudentAttendance() {
                       <th>이름</th>
                       <th>생년월일 / 나이</th>
                       <th>수업</th>
+                      {user?.role === 'admin' && selectedUserId === 'all' && (
+                        <th>사용자</th>
+                      )}
                       <th style={{ width: '80px' }}>관리</th>
                     </tr>
                   </thead>
@@ -581,6 +589,11 @@ function StudentAttendance() {
                               </div>
                             )}
                           </td>
+                          {user?.role === 'admin' && selectedUserId === 'all' && (
+                            <td>
+                              <span className="badge badge-gray">{getUserName(student?.userId)}</span>
+                            </td>
+                          )}
                           <td>
                             <button
                               className="btn btn-danger btn-sm"
@@ -654,6 +667,11 @@ function StudentAttendance() {
                                   <div className="toss-list-item-subtitle">
                                     {classInfo?.name || '-'}
                                   </div>
+                                  {user?.role === 'admin' && selectedUserId === 'all' && (
+                                    <div className="toss-list-item-subtitle" style={{ marginTop: '2px' }}>
+                                      <span className="badge badge-gray" style={{ fontSize: '0.6875rem' }}>{getUserName(student?.userId)}</span>
+                                    </div>
+                                  )}
                                 </div>
                                 <div className="toss-list-item-value">
                                   <div className="toss-list-item-value-main" style={{ color: 'var(--color-success)' }}>

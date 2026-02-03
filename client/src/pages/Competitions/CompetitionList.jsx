@@ -45,6 +45,11 @@ function CompetitionList() {
     }
   };
 
+  const getUserName = (userId) => {
+    const foundUser = users.find(u => u.id === userId);
+    return foundUser ? foundUser.username : '-';
+  };
+
   const loadCompetitions = async () => {
     try {
       const url = user?.role === 'admin' && selectedUserId !== 'all'
@@ -223,6 +228,9 @@ function CompetitionList() {
                   <th>날짜</th>
                   <th>장소</th>
                   <th style={{ textAlign: 'center' }}>참가 학생</th>
+                  {user?.role === 'admin' && selectedUserId === 'all' && (
+                    <th>사용자</th>
+                  )}
                   <th style={{ width: '220px' }}>관리</th>
                 </tr>
               </thead>
@@ -246,6 +254,11 @@ function CompetitionList() {
                         {participantCounts[competition.id] || 0}명
                       </span>
                     </td>
+                    {user?.role === 'admin' && selectedUserId === 'all' && (
+                      <td>
+                        <span className="badge badge-gray">{getUserName(competition.userId)}</span>
+                      </td>
+                    )}
                     <td>
                       <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
                         <button
@@ -334,6 +347,11 @@ function CompetitionList() {
                       <div className="toss-list-item-subtitle">
                         {competition.location}
                       </div>
+                      {user?.role === 'admin' && selectedUserId === 'all' && (
+                        <div className="toss-list-item-subtitle" style={{ marginTop: '2px' }}>
+                          <span className="badge badge-gray" style={{ fontSize: '0.6875rem' }}>{getUserName(competition.userId)}</span>
+                        </div>
+                      )}
                     </div>
                     <div className="toss-list-item-value">
                       <div className="toss-list-item-value-main" style={{ color: 'var(--color-primary)' }}>

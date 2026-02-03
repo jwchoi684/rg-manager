@@ -49,6 +49,11 @@ function ClassList() {
     }
   };
 
+  const getUserName = (userId) => {
+    const foundUser = users.find(u => u.id === userId);
+    return foundUser ? foundUser.username : '-';
+  };
+
   const loadClasses = async () => {
     try {
       const url = user?.role === 'admin' && selectedUserId !== 'all'
@@ -261,6 +266,9 @@ function ClassList() {
                   <th>시간</th>
                   <th>강사</th>
                   <th style={{ textAlign: 'center' }}>등록 학생</th>
+                  {user?.role === 'admin' && selectedUserId === 'all' && (
+                    <th>사용자</th>
+                  )}
                   <th style={{ width: '220px' }}>관리</th>
                 </tr>
               </thead>
@@ -289,6 +297,11 @@ function ClassList() {
                     <td style={{ textAlign: 'center' }}>
                       <span className="badge badge-primary">{getStudentsInClass(classItem.id).length}명</span>
                     </td>
+                    {user?.role === 'admin' && selectedUserId === 'all' && (
+                      <td>
+                        <span className="badge badge-gray">{getUserName(classItem.userId)}</span>
+                      </td>
+                    )}
                     <td>
                       <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
                         <button className="btn btn-secondary btn-sm" onClick={() => handleEdit(classItem)}>
@@ -359,6 +372,11 @@ function ClassList() {
                       {classItem.instructor && (
                         <div className="toss-list-item-subtitle">
                           강사: {classItem.instructor}
+                        </div>
+                      )}
+                      {user?.role === 'admin' && selectedUserId === 'all' && (
+                        <div className="toss-list-item-subtitle" style={{ marginTop: '2px' }}>
+                          <span className="badge badge-gray" style={{ fontSize: '0.6875rem' }}>{getUserName(classItem.userId)}</span>
                         </div>
                       )}
                     </div>

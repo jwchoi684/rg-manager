@@ -65,6 +65,11 @@ function StudentCompetitions() {
     }
   };
 
+  const getUserName = (userId) => {
+    const foundUser = users.find(u => u.id === userId);
+    return foundUser ? foundUser.username : '-';
+  };
+
   const loadData = async () => {
     try {
       const studentsUrl = user?.role === 'admin' && selectedUserId !== 'all'
@@ -326,6 +331,9 @@ function StudentCompetitions() {
                       <th>대회명</th>
                       <th>종목</th>
                       <th>수상 기록</th>
+                      {user?.role === 'admin' && selectedUserId === 'all' && (
+                        <th>사용자</th>
+                      )}
                       <th style={{ textAlign: 'center' }}>상태</th>
                     </tr>
                   </thead>
@@ -373,6 +381,11 @@ function StudentCompetitions() {
                             {formatAwards(record.events)}
                           </span>
                         </td>
+                        {user?.role === 'admin' && selectedUserId === 'all' && (
+                          <td>
+                            <span className="badge badge-gray">{getUserName(record.student.userId)}</span>
+                          </td>
+                        )}
                         <td style={{ textAlign: 'center' }}>
                           {isUpcoming(record.competition.date) ? (
                             <span className="badge badge-success">예정</span>
@@ -439,6 +452,11 @@ function StudentCompetitions() {
                       <div className="list-item-subtitle">
                         {formatDate(record.competition.date)} · {record.competition.location}
                       </div>
+                      {user?.role === 'admin' && selectedUserId === 'all' && (
+                        <div style={{ marginTop: '4px' }}>
+                          <span className="badge badge-gray" style={{ fontSize: '0.6875rem' }}>{getUserName(record.student.userId)}</span>
+                        </div>
+                      )}
                       {record.events && record.events.length > 0 && (
                         <div style={{
                           marginTop: 'var(--spacing-sm)',
