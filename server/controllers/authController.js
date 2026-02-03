@@ -213,7 +213,10 @@ export const kakaoCallback = async (req, res) => {
     } else {
       // 기존 사용자 이메일 업데이트 (변경된 경우)
       if (email && user.email !== email) {
-        await User.updateKakaoInfo(user.id, { email });
+        const updatedUser = await User.updateKakaoInfo(user.id, { email });
+        if (updatedUser) {
+          user = updatedUser;
+        }
       }
     }
 

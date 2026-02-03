@@ -101,7 +101,7 @@ class User {
     const result = await pool.query(
       `INSERT INTO users (username, password, role, "createdAt", "kakaoId", email)
        VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, username, role, "createdAt", email`,
+       RETURNING id, username, role, "createdAt", email, "kakaoId"`,
       [username, randomPassword, role, createdAt, kakaoId, email]
     );
 
@@ -112,7 +112,7 @@ class User {
     const { email } = data;
     const result = await pool.query(
       `UPDATE users SET email = $1 WHERE id = $2
-       RETURNING id, username, role, "createdAt", email`,
+       RETURNING id, username, role, "createdAt", email, "kakaoId"`,
       [email, id]
     );
     return result.rows.length > 0 ? result.rows[0] : null;
