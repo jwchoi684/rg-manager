@@ -117,6 +117,55 @@ class User {
     );
     return result.rows.length > 0 ? result.rows[0] : null;
   }
+
+  static async transferData(fromUserId, toUserId) {
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // 학생 데이터 이전
+      const studentsResult = await client.query(
+        `UPDATE students SET "userId" = $1 WHERE "userId" = $2`,
+        [toUserId, fromUserId]
+      );
+
+      // 수업 데이터 이전
+      const classesResult = await client.query(
+        `UPDATE classes SET "userId" = $1 WHERE "userId" = $2`,
+        [toUserId, fromUserId]
+      );
+
+      // 출석 데이터 이전
+      const attendanceResult = await client.query(
+        `UPDATE attendance SET "userId" = $1 WHERE "userId" = $2`,
+        [toUserId, fromUserId]
+      );
+
+      // 대회 데이터 이전
+      const competitionsResult = await client.query(
+        `UPDATE competitions SET "userId" = $1 WHERE "userId" = $2`,
+        [toUserId, fromUserId]
+      );
+
+      await client.query('COMMIT');
+
+      return {
+        message: '데이터 이전이 완료되었습니다.',
+        transferred: {
+          students: studentsResult.rowCount,
+          classes: classesResult.rowCount,
+          attendance: attendanceResult.rowCount,
+          competitions: competitionsResult.rowCount
+        }
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
 }
 
 export default User;

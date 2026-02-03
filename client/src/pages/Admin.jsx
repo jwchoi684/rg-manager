@@ -9,6 +9,10 @@ function Admin() {
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferFrom, setTransferFrom] = useState('');
+  const [transferTo, setTransferTo] = useState('');
+  const [transferLoading, setTransferLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -104,6 +108,53 @@ function Admin() {
     return `${year}.${month}.${day}`;
   };
 
+  const handleTransfer = async () => {
+    if (!transferFrom || !transferTo) {
+      alert('이전할 사용자와 대상 사용자를 모두 선택해주세요.');
+      return;
+    }
+
+    if (transferFrom === transferTo) {
+      alert('같은 사용자에게 데이터를 이전할 수 없습니다.');
+      return;
+    }
+
+    const fromUser = users.find(u => u.id === parseInt(transferFrom));
+    const toUser = users.find(u => u.id === parseInt(transferTo));
+
+    if (!confirm(`"${fromUser?.username}"의 모든 데이터를 "${toUser?.username}"에게 이전하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+      return;
+    }
+
+    setTransferLoading(true);
+    try {
+      const response = await fetchWithAuth('/api/auth/users/transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fromUserId: parseInt(transferFrom),
+          toUserId: parseInt(transferTo)
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(`데이터 이전이 완료되었습니다.\n\n이전된 항목:\n- 학생: ${data.transferred.students}명\n- 수업: ${data.transferred.classes}개\n- 출석: ${data.transferred.attendance}건\n- 대회: ${data.transferred.competitions}개`);
+        setShowTransferModal(false);
+        setTransferFrom('');
+        setTransferTo('');
+      } else {
+        alert(data.error || '데이터 이전에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('데이터 이전 실패:', error);
+      alert('데이터 이전에 실패했습니다.');
+    } finally {
+      setTransferLoading(false);
+    }
+  };
+
   if (!user || user.role !== 'admin') {
     return null;
   }
@@ -113,6 +164,12 @@ function Admin() {
       {/* Page Header */}
       <div className="page-header">
         <h2 className="page-title">사용자 관리</h2>
+        <button
+          className="btn btn-secondary"
+          onClick={() => setShowTransferModal(true)}
+        >
+          데이터 이전
+        </button>
       </div>
 
       {/* Edit Form Card */}
@@ -315,6 +372,122 @@ function Admin() {
           </div>
         )}
       </div>
+
+      {/* Transfer Modal */}
+      {showTransferModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 'var(--spacing-lg)'
+          }}
+          onClick={() => setShowTransferModal(false)}
+        >
+          <div
+            className="card"
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              maxHeight: '90vh',
+              overflow: 'auto'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="card-header">
+              <h3 className="card-title">데이터 이전</h3>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowTransferModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: 'var(--spacing-lg)' }}>
+              <p style={{
+                color: 'var(--color-gray-600)',
+                fontSize: '0.9375rem',
+                marginBottom: 'var(--spacing-xl)',
+                lineHeight: 1.6
+              }}>
+                한 사용자의 모든 데이터(학생, 수업, 출석, 대회)를 다른 사용자에게 이전합니다.
+                <br />
+                <strong style={{ color: 'var(--color-danger)' }}>이 작업은 되돌릴 수 없습니다.</strong>
+              </p>
+
+              <div className="form-group">
+                <label className="form-label">데이터를 가져올 사용자 (From)</label>
+                <select
+                  value={transferFrom}
+                  onChange={(e) => setTransferFrom(e.target.value)}
+                >
+                  <option value="">선택하세요</option>
+                  {users.filter(u => u.role !== 'admin').map(u => (
+                    <option key={u.id} value={u.id}>
+                      {u.username} (#{u.id})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                margin: 'var(--spacing-md) 0',
+                color: 'var(--color-gray-400)'
+              }}>
+                ↓
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">데이터를 받을 사용자 (To)</label>
+                <select
+                  value={transferTo}
+                  onChange={(e) => setTransferTo(e.target.value)}
+                >
+                  <option value="">선택하세요</option>
+                  {users.filter(u => u.role !== 'admin' && u.id !== parseInt(transferFrom)).map(u => (
+                    <option key={u.id} value={u.id}>
+                      {u.username} (#{u.id})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                gap: 'var(--spacing-md)',
+                marginTop: 'var(--spacing-xl)',
+                paddingTop: 'var(--spacing-lg)',
+                borderTop: '1px solid var(--color-gray-200)'
+              }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleTransfer}
+                  disabled={transferLoading || !transferFrom || !transferTo}
+                  style={{ flex: 1 }}
+                >
+                  {transferLoading ? '이전 중...' : '데이터 이전'}
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setShowTransferModal(false)}
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

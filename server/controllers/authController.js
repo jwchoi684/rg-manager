@@ -115,6 +115,27 @@ export const verifyTokenEndpoint = async (req, res) => {
   }
 };
 
+// 사용자 데이터 이전 (관리자 전용)
+export const transferUserData = async (req, res) => {
+  try {
+    const { fromUserId, toUserId } = req.body;
+
+    if (!fromUserId || !toUserId) {
+      return res.status(400).json({ error: '이전할 사용자와 대상 사용자를 모두 선택해주세요.' });
+    }
+
+    if (fromUserId === toUserId) {
+      return res.status(400).json({ error: '같은 사용자에게 데이터를 이전할 수 없습니다.' });
+    }
+
+    const result = await User.transferData(fromUserId, toUserId);
+    res.json(result);
+  } catch (error) {
+    console.error('데이터 이전 오류:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // 카카오 로그인 URL 생성
 export const getKakaoAuthUrl = (req, res) => {
   if (!KAKAO_CLIENT_ID) {
