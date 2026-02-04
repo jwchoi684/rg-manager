@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 
-const adminTabs = [
+const adminMenuItems = [
   { path: '/admin/students', label: '학생', icon: '👥' },
   { path: '/admin/classes', label: '수업', icon: '📚' },
   { path: '/admin/competitions', label: '대회', icon: '🏆' },
@@ -15,14 +15,30 @@ function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
+      if (window.innerWidth > 768) {
+        setMobileMenuOpen(false);
+      }
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // 메뉴 열릴 때 body 스크롤 방지
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
 
   const isActive = (path) => {
     if (path === '/admin/students') {
@@ -31,63 +47,108 @@ function AdminLayout() {
     return location.pathname.startsWith(path);
   };
 
+  const handleMenuItemClick = (path) => {
+    navigate(path);
+    setMobileMenuOpen(false);
+  };
+
+  const getCurrentPageLabel = () => {
+    const currentItem = adminMenuItems.find(item => isActive(item.path));
+    return currentItem ? currentItem.label : '관리자';
+  };
+
   return (
-    <div className="admin-dashboard">
-      {/* Desktop Header */}
-      <header className="admin-dashboard-header">
-        <h1 className="admin-dashboard-title">관리자 대시보드</h1>
-        <Link to="/" className="admin-dashboard-back">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
+    <div className="admin-layout">
+      {/* Desktop Sidebar */}
+      <aside className="admin-sidebar">
+        <div className="admin-sidebar-header">
+          <h2>관리자</h2>
+        </div>
+        <nav className="admin-sidebar-nav">
+          {adminMenuItems.map(item => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`admin-sidebar-item ${isActive(item.path) ? 'active' : ''}`}
+            >
+              <span className="admin-sidebar-icon">{item.icon}</span>
+              <span className="admin-sidebar-label">{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+        <div className="admin-sidebar-footer">
+          <Link to="/" className="admin-sidebar-back">
+            <span>←</span>
+            <span>메인으로 돌아가기</span>
+          </Link>
+        </div>
+      </aside>
+
+      {/* Mobile Header */}
+      <header className="admin-mobile-header">
+        <button
+          className="admin-mobile-menu-btn"
+          onClick={() => setMobileMenuOpen(true)}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
-          <span>메인으로</span>
+        </button>
+        <span className="admin-mobile-title">{getCurrentPageLabel()}</span>
+        <Link to="/" className="admin-mobile-back-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
         </Link>
       </header>
 
-      {/* Mobile Header */}
-      <div className="admin-mobile-header">
-        <Link to="/" className="admin-mobile-back">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
-        </Link>
-        <span className="admin-mobile-title">관리자 대시보드</span>
-        <div style={{ width: 36 }}></div>
-      </div>
-
-      {/* Desktop Tabs */}
-      <nav className="admin-tabs">
-        {adminTabs.map(tab => (
-          <Link
-            key={tab.path}
-            to={tab.path}
-            className={`admin-tab ${isActive(tab.path) ? 'active' : ''}`}
+      {/* Mobile Fullscreen Menu */}
+      <div className={`admin-mobile-menu-overlay ${mobileMenuOpen ? 'open' : ''}`}>
+        <div className="admin-mobile-menu-header">
+          <span className="admin-mobile-menu-title">관리자 메뉴</span>
+          <button
+            className="admin-mobile-menu-close"
+            onClick={() => setMobileMenuOpen(false)}
           >
-            <span className="admin-tab-icon">{tab.icon}</span>
-            <span>{tab.label}</span>
-          </Link>
-        ))}
-      </nav>
-
-      {/* Mobile Dropdown */}
-      <div className="admin-mobile-dropdown">
-        <select
-          value={adminTabs.find(tab => isActive(tab.path))?.path || '/admin/students'}
-          onChange={(e) => navigate(e.target.value)}
-          className="admin-mobile-select"
-        >
-          {adminTabs.map(tab => (
-            <option key={tab.path} value={tab.path}>
-              {tab.icon} {tab.label}
-            </option>
-          ))}
-        </select>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div className="admin-mobile-menu-content">
+          <div className="admin-mobile-menu-section">
+            <div className="admin-mobile-menu-section-title">관리</div>
+            {adminMenuItems.map(item => (
+              <button
+                key={item.path}
+                onClick={() => handleMenuItemClick(item.path)}
+                className={`admin-mobile-menu-item ${isActive(item.path) ? 'active' : ''}`}
+              >
+                <span className="admin-mobile-menu-icon">{item.icon}</span>
+                <span className="admin-mobile-menu-label">{item.label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="admin-mobile-menu-section">
+            <div className="admin-mobile-menu-section-title">이동</div>
+            <Link
+              to="/"
+              className="admin-mobile-menu-item"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <span className="admin-mobile-menu-icon">🏠</span>
+              <span className="admin-mobile-menu-label">메인으로 돌아가기</span>
+            </Link>
+          </div>
+        </div>
       </div>
 
-      {/* Content */}
-      <main className="admin-dashboard-content">
+      {/* Main Content */}
+      <main className="admin-content">
         <Outlet />
       </main>
     </div>
