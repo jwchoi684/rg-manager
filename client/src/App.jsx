@@ -256,7 +256,7 @@ function App() {
           <Route path="/classes" element={<ProtectedRoute><ClassList /></ProtectedRoute>} />
           <Route path="/classes/new" element={<ProtectedRoute><ClassForm /></ProtectedRoute>} />
           <Route path="/classes/edit" element={<ProtectedRoute><ClassForm /></ProtectedRoute>} />
-          <Route path="/classes/manage-students" element={<ProtectedRoute><ClassStudentManagement /></ProtectedRoute>} />
+          <Route path="/classes/manage" element={<ProtectedRoute><ClassStudentManagement /></ProtectedRoute>} />
           <Route path="/competitions" element={<ProtectedRoute><CompetitionList /></ProtectedRoute>} />
           <Route path="/competitions/new" element={<ProtectedRoute><CompetitionForm /></ProtectedRoute>} />
           <Route path="/competitions/edit" element={<ProtectedRoute><CompetitionForm /></ProtectedRoute>} />
