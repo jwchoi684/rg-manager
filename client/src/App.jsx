@@ -260,7 +260,7 @@ function App() {
           <Route path="/competitions" element={<ProtectedRoute><CompetitionList /></ProtectedRoute>} />
           <Route path="/competitions/new" element={<ProtectedRoute><CompetitionForm /></ProtectedRoute>} />
           <Route path="/competitions/edit" element={<ProtectedRoute><CompetitionForm /></ProtectedRoute>} />
-          <Route path="/competitions/manage-students" element={<ProtectedRoute><CompetitionStudentManagement /></ProtectedRoute>} />
+          <Route path="/competitions/manage" element={<ProtectedRoute><CompetitionStudentManagement /></ProtectedRoute>} />
           <Route path="/attendance" element={<ProtectedRoute><AttendanceCheck /></ProtectedRoute>} />
           <Route path="/student-attendance" element={<ProtectedRoute><StudentAttendance /></ProtectedRoute>} />
           <Route path="/student-competitions" element={<ProtectedRoute><StudentCompetitions /></ProtectedRoute>} />
