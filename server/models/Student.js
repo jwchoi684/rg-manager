@@ -1,4 +1,5 @@
 import pool from '../database.js';
+import { safeJsonParse } from '../utils/safeJsonParse.js';
 
 class Student {
   static async getAll(userId, role) {
@@ -17,7 +18,7 @@ class Student {
     // classIds를 JSON 파싱
     return result.rows.map(student => ({
       ...student,
-      classIds: student.classIds ? JSON.parse(student.classIds) : []
+      classIds: safeJsonParse(student.classIds, [])
     }));
   }
 
@@ -38,7 +39,7 @@ class Student {
     const student = result.rows[0];
     return {
       ...student,
-      classIds: student.classIds ? JSON.parse(student.classIds) : []
+      classIds: safeJsonParse(student.classIds, [])
     };
   }
 
@@ -57,7 +58,7 @@ class Student {
     const newStudent = result.rows[0];
     return {
       ...newStudent,
-      classIds: newStudent.classIds ? JSON.parse(newStudent.classIds) : []
+      classIds: safeJsonParse(newStudent.classIds, [])
     };
   }
 
@@ -84,7 +85,7 @@ class Student {
     const updatedStudent = result.rows[0];
     return {
       ...updatedStudent,
-      classIds: updatedStudent.classIds ? JSON.parse(updatedStudent.classIds) : []
+      classIds: safeJsonParse(updatedStudent.classIds, [])
     };
   }
 
@@ -119,7 +120,7 @@ class Student {
     const filteredStudents = result.rows
       .map(student => ({
         ...student,
-        classIds: student.classIds ? JSON.parse(student.classIds) : []
+        classIds: safeJsonParse(student.classIds, [])
       }))
       .filter(student => student.classIds.includes(parseInt(classId)));
 

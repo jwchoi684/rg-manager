@@ -60,51 +60,25 @@ async function refreshKakaoToken(userId, refreshToken) {
  * 유효한 액세스 토큰 가져오기 (필요시 갱신)
  */
 async function getValidAccessToken(userId, checkConsent = true) {
-  console.log('=== getValidAccessToken 호출 ===');
-  console.log('userId:', userId, 'checkConsent:', checkConsent);
-
   const tokens = await User.getKakaoTokens(userId);
-  console.log('토큰 조회 결과:', tokens ? {
-    hasAccessToken: !!tokens.kakaoAccessToken,
-    hasRefreshToken: !!tokens.kakaoRefreshToken,
-    expiresAt: tokens.kakaoTokenExpiresAt,
-    messageConsent: tokens.kakaoMessageConsent
-  } : 'null');
 
-  if (!tokens) {
-    console.log('카카오 토큰 정보 없음 (tokens is null)');
-    return null;
-  }
-
-  if (!tokens.kakaoAccessToken) {
-    console.log('카카오 액세스 토큰 없음');
-    return null;
-  }
-
-  if (checkConsent && !tokens.kakaoMessageConsent) {
-    console.log('메시지 알림 미동의 (kakaoMessageConsent:', tokens.kakaoMessageConsent, ')');
-    return null;
-  }
+  if (!tokens) return null;
+  if (!tokens.kakaoAccessToken) return null;
+  if (checkConsent && !tokens.kakaoMessageConsent) return null;
 
   // 토큰 만료 확인 (5분 버퍼)
   const expiresAt = tokens.kakaoTokenExpiresAt ? new Date(tokens.kakaoTokenExpiresAt) : null;
   const now = new Date();
   const bufferMs = 5 * 60 * 1000; // 5분
 
-  console.log('토큰 만료 시간:', expiresAt?.toISOString(), '현재:', now.toISOString());
-
   if (!expiresAt) {
-    console.log('토큰 만료 시간 정보 없음, 토큰 갱신 시도...');
     return await refreshKakaoToken(userId, tokens.kakaoRefreshToken);
   }
 
   if (expiresAt.getTime() - now.getTime() < bufferMs) {
-    // 토큰 만료 임박, 갱신 시도
-    console.log('카카오 토큰 만료 임박, 갱신 시도...');
     return await refreshKakaoToken(userId, tokens.kakaoRefreshToken);
   }
 
-  console.log('유효한 토큰 반환');
   return tokens.kakaoAccessToken;
 }
 

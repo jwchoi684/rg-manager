@@ -1,4 +1,5 @@
 import pool from '../database.js';
+import { safeJsonParse } from '../utils/safeJsonParse.js';
 
 class Competition {
   static async getAll(userId, role) {
@@ -139,7 +140,7 @@ class Competition {
       [competitionId, studentId]
     );
     if (result.rows.length > 0 && result.rows[0].events) {
-      return JSON.parse(result.rows[0].events);
+      return safeJsonParse(result.rows[0].events, []);
     }
     return [];
   }
@@ -161,7 +162,7 @@ class Competition {
     const result = await pool.query(query, params);
     return result.rows.map(row => ({
       ...row,
-      events: row.events ? JSON.parse(row.events) : [],
+      events: safeJsonParse(row.events, []),
       paid: row.paid || false,
       coachFeePaid: row.coachFeePaid || false
     }));

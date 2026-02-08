@@ -1,26 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { fetchWithAuth } from '../../utils/api';
+import { useIsMobile } from '../../hooks/useMediaQuery';
 
 function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState({ username: '', password: '', role: 'user' });
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const isMobile = useIsMobile();
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [transferFrom, setTransferFrom] = useState('');
   const [transferTo, setTransferTo] = useState('');
   const [transferLoading, setTransferLoading] = useState(false);
   const { user } = useAuth();
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     loadUsers();

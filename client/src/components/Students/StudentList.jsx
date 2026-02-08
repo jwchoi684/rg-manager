@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { fetchWithAuth } from "../../utils/api";
-import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { matchKoreanSearch } from "../../utils/koreanSearch";
+import { calculateAge } from "../../utils/dateHelpers";
+import { useIsMobile } from "../../hooks/useMediaQuery";
 
 function StudentList({ basePath = '/students' }) {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [students, setStudents] = useState([]);
   const [classes, setClasses] = useState([]);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const isMobile = useIsMobile();
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [classFilter, setClassFilter] = useState('');
   const [searchName, setSearchName] = useState('');
@@ -17,26 +17,6 @@ function StudentList({ basePath = '/students' }) {
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
   const [swipeOffset, setSwipeOffset] = useState({});
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const calculateAge = (birthdate) => {
-    if (!birthdate) return "-";
-    const today = new Date();
-    const birth = new Date(birthdate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age;
-  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -84,7 +64,7 @@ function StudentList({ basePath = '/students' }) {
     }
   };
 
-  const getClassNames = (classIds) => {
+  const getClassNames = useCallback((classIds) => {
     if (!classIds || classIds.length === 0) return "-";
     return classIds
       .map((id) => {
@@ -93,7 +73,7 @@ function StudentList({ basePath = '/students' }) {
       })
       .filter((name) => name)
       .join(", ");
-  };
+  }, [classes]);
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -103,23 +83,23 @@ function StudentList({ basePath = '/students' }) {
     setSortConfig({ key, direction });
   };
 
-  const getSortedStudents = () => {
-    let sortedStudents = [...students];
+  const sortedStudents = useMemo(() => {
+    let result = [...students];
 
     if (searchName) {
-      sortedStudents = sortedStudents.filter(student =>
+      result = result.filter(student =>
         matchKoreanSearch(searchName, student.name)
       );
     }
 
     if (classFilter) {
-      sortedStudents = sortedStudents.filter(student =>
+      result = result.filter(student =>
         student.classIds && student.classIds.includes(parseInt(classFilter))
       );
     }
 
     if (sortConfig.key) {
-      sortedStudents.sort((a, b) => {
+      result.sort((a, b) => {
         let aValue, bValue;
 
         if (sortConfig.key === 'name') {
@@ -146,8 +126,8 @@ function StudentList({ basePath = '/students' }) {
       });
     }
 
-    return sortedStudents;
-  };
+    return result;
+  }, [students, searchName, classFilter, sortConfig, getClassNames]);
 
   const getSortIcon = (key) => {
     if (sortConfig.key !== key) return '';
@@ -201,8 +181,6 @@ function StudentList({ basePath = '/students' }) {
       handleEdit(student);
     }
   };
-
-  const sortedStudents = getSortedStudents();
 
   return (
     <div className="animate-fadeIn">

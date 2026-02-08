@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../../utils/api';
 import DateRangePicker from '../../components/common/DateRangePicker';
+import { useIsMobile } from '../../hooks/useMediaQuery';
 
 function AdminLogs() {
   const formatDateOnly = (date) => {
@@ -27,18 +28,10 @@ function AdminLogs() {
   const [allLogs, setAllLogs] = useState([]);
   const [startDate, setStartDate] = useState(thisMonth.start);
   const [endDate, setEndDate] = useState(thisMonth.end);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     loadLogs();
-  }, []);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {

@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { fetchWithAuth } from "../../utils/api";
 import { useAuth } from "../../context/AuthContext";
 import { matchKoreanSearch } from "../../utils/koreanSearch";
+import { calculateAge } from "../../utils/dateHelpers";
+import { useIsMobile } from "../../hooks/useMediaQuery";
 
 function AttendanceCheck() {
   const { user } = useAuth();
@@ -13,7 +15,7 @@ function AttendanceCheck() {
   );
   const [checkedStudents, setCheckedStudents] = useState(new Set());
   const [hasChanges, setHasChanges] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const isMobile = useIsMobile();
 
   // 보강 수업 추가 모달 상태
   const [showAddModal, setShowAddModal] = useState(false);
@@ -23,26 +25,6 @@ function AttendanceCheck() {
   const [studentSearchText, setStudentSearchText] = useState('');
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
   const [dropdownTouchStartY, setDropdownTouchStartY] = useState(null);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const calculateAge = (birthdate) => {
-    if (!birthdate) return "-";
-    const today = new Date();
-    const birth = new Date(birthdate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age;
-  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -204,7 +186,7 @@ function AttendanceCheck() {
     setShowStudentDropdown(false);
   };
 
-  const getFilteredStudents = () => {
+  const filteredStudents = useMemo(() => {
     if (!selectedClass) {
       return students;
     }
@@ -212,9 +194,7 @@ function AttendanceCheck() {
       (student) =>
         student.classIds && student.classIds.includes(parseInt(selectedClass))
     );
-  };
-
-  const filteredStudents = getFilteredStudents();
+  }, [students, selectedClass]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);

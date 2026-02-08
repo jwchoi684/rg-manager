@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { saveToken, getToken, saveUser, getUser, clearAuth } from '../utils/tokenStorage';
 
 const AuthContext = createContext();
 
@@ -17,8 +18,8 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const verifyStoredToken = async () => {
-      const storedToken = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
+      const storedToken = getToken();
+      const storedUser = getUser();
 
       if (!storedToken || !storedUser) {
         setLoading(false);
@@ -26,7 +27,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       // 저장된 사용자 정보로 먼저 로그인 상태 설정 (빠른 UX)
-      setUser(JSON.parse(storedUser));
+      setUser(storedUser);
       setToken(storedToken);
 
       try {
@@ -39,13 +40,12 @@ export const AuthProvider = ({ children }) => {
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
-          localStorage.setItem('user', JSON.stringify(data.user));
+          saveUser(data.user);
         } else {
           // Token is invalid or expired - logout
           setUser(null);
           setToken(null);
-          localStorage.removeItem('user');
-          localStorage.removeItem('token');
+          clearAuth();
         }
       } catch (error) {
         // 네트워크 오류 시 저장된 정보로 로그인 유지
@@ -73,8 +73,8 @@ export const AuthProvider = ({ children }) => {
     const data = await response.json();
     setUser(data.user);
     setToken(data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    localStorage.setItem('token', data.token);
+    saveUser(data.user);
+    saveToken(data.token);
     return data.user;
   };
 
@@ -93,16 +93,15 @@ export const AuthProvider = ({ children }) => {
     const data = await response.json();
     setUser(data.user);
     setToken(data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    localStorage.setItem('token', data.token);
+    saveUser(data.user);
+    saveToken(data.token);
     return data.user;
   };
 
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    clearAuth();
   };
 
   // 카카오 로그인 URL 가져오기
@@ -132,8 +131,8 @@ export const AuthProvider = ({ children }) => {
     const data = await response.json();
     setUser(data.user);
     setToken(data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    localStorage.setItem('token', data.token);
+    saveUser(data.user);
+    saveToken(data.token);
     return { user: data.user, isNewUser: data.isNewUser };
   };
 
@@ -155,7 +154,7 @@ export const AuthProvider = ({ children }) => {
 
     const data = await response.json();
     setUser(data.user);
-    localStorage.setItem('user', JSON.stringify(data.user));
+    saveUser(data.user);
     return data.user;
   };
 

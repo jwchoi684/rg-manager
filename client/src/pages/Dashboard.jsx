@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import DateRangePicker from '../components/common/DateRangePicker';
+import { useIsMobile } from '../hooks/useMediaQuery';
 import {
   BarChart,
   Bar,
@@ -26,7 +27,7 @@ function Dashboard() {
   const [weeklyDistinctStudents, setWeeklyDistinctStudents] = useState([]);
   const [monthlyAttendanceData, setMonthlyAttendanceData] = useState([]);
   const [studentsByAge, setStudentsByAge] = useState([]);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const isMobile = useIsMobile();
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('all');
 
@@ -50,14 +51,6 @@ function Dashboard() {
       loadUsers();
     }
     loadData();
-  }, []);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {

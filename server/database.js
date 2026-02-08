@@ -5,15 +5,18 @@ import bcrypt from 'bcrypt';
 const SALT_ROUNDS = 10;
 
 // PostgreSQL 연결 설정
-// Render 환경: DATABASE_URL 환경 변수 사용
-// 로컬 환경: 기본 PostgreSQL 연결 또는 환경 변수
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://rg_manager_user:xgTkd8GYojqIOvkVluzIukCXriiAFNWU@dpg-d4ogj8a4i8rc73f3jeqg-a.oregon-postgres.render.com/rg_manager';
-
-console.log(`데이터베이스 연결: ${DATABASE_URL.replace(/:[^:@]+@/, ':****@')}`); // 비밀번호 숨김
+// DATABASE_URL 환경 변수 필수
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  console.error('DATABASE_URL 환경 변수가 설정되지 않았습니다.');
+  process.exit(1);
+}
 
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: process.env.NODE_ENV === 'production'
+    ? { rejectUnauthorized: false }
+    : false
 });
 
 // 데이터베이스 초기화
@@ -43,6 +46,17 @@ const initDatabase = async () => {
         "displayOrder" INTEGER DEFAULT 0,
         "createdAt" TEXT NOT NULL
       )
+    `);
+
+    // students 테이블에 phone, parentPhone 컬럼 추가
+    await client.query(`
+      ALTER TABLE students
+      ADD COLUMN IF NOT EXISTS phone TEXT
+    `);
+
+    await client.query(`
+      ALTER TABLE students
+      ADD COLUMN IF NOT EXISTS "parentPhone" TEXT
     `);
 
     // displayOrder 컬럼이 없는 경우 추가 (기존 테이블 마이그레이션)
@@ -79,6 +93,16 @@ const initDatabase = async () => {
         FOREIGN KEY ("classId") REFERENCES classes(id) ON DELETE CASCADE
       )
     `);
+
+    // attendance 테이블에 UNIQUE 제약 추가
+    try {
+      await client.query(`
+        ALTER TABLE attendance
+        ADD CONSTRAINT attendance_unique UNIQUE ("studentId", "classId", date)
+      `);
+    } catch (e) {
+      // constraint가 이미 존재하면 무시
+    }
 
     // Users 테이블
     await client.query(`
@@ -209,70 +233,18 @@ const initDatabase = async () => {
       )
     `);
 
-    // 기본 관리자 계정 생성 (username: admin, password: admin123)
+    // 기본 관리자 계정 생성 (최초 1회만, 기존 계정이 없을 때)
     const adminCheck = await client.query('SELECT * FROM users WHERE username = $1', ['admin']);
-    const hashedAdminPassword = await bcrypt.hash('admin123', SALT_ROUNDS);
     if (adminCheck.rows.length === 0) {
+      const adminPassword = process.env.ADMIN_INITIAL_PASSWORD || 'admin123';
+      const hashedAdminPassword = await bcrypt.hash(adminPassword, SALT_ROUNDS);
       await client.query(
         `INSERT INTO users (username, password, role, "createdAt")
          VALUES ($1, $2, $3, $4)`,
         ['admin', hashedAdminPassword, 'admin', new Date().toISOString()]
       );
-      console.log('기본 관리자 계정 생성 완료 (username: admin, password: admin123)');
-    } else {
-      // admin 계정 비밀번호를 admin123으로 리셋
-      await client.query(
-        'UPDATE users SET password = $1 WHERE username = $2',
-        [hashedAdminPassword, 'admin']
-      );
-      console.log('관리자 계정 비밀번호 리셋 완료 (password: admin123)');
+      console.log('기본 관리자 계정 생성 완료. 즉시 비밀번호를 변경하세요.');
     }
-
-    // 이재림 사용자 생성
-    const jaerimCheck = await client.query('SELECT * FROM users WHERE username = $1', ['이재림']);
-    let jaerimUserId;
-    if (jaerimCheck.rows.length === 0) {
-      const hashedJaerimPassword = await bcrypt.hash('jaerim123', SALT_ROUNDS);
-      const jaerimResult = await client.query(
-        `INSERT INTO users (username, password, role, "createdAt")
-         VALUES ($1, $2, $3, $4)
-         RETURNING id`,
-        ['이재림', hashedJaerimPassword, 'user', new Date().toISOString()]
-      );
-      jaerimUserId = jaerimResult.rows[0].id;
-      console.log('이재림 사용자 계정 생성 완료 (username: 이재림, password: jaerim123)');
-    } else {
-      jaerimUserId = jaerimCheck.rows[0].id;
-      // 기존 이재림 계정의 비밀번호가 평문이면 해싱된 비밀번호로 업데이트
-      const jaerim = jaerimCheck.rows[0];
-      if (jaerim.password === 'jaerim123') {
-        const hashedJaerimPassword = await bcrypt.hash('jaerim123', SALT_ROUNDS);
-        await client.query(
-          'UPDATE users SET password = $1 WHERE username = $2',
-          [hashedJaerimPassword, '이재림']
-        );
-        console.log('기존 이재림 계정 비밀번호 암호화 완료');
-      }
-    }
-
-    // 기존 데이터를 이재림 사용자에게 할당
-    await client.query(`
-      UPDATE students
-      SET "userId" = $1
-      WHERE "userId" IS NULL
-    `, [jaerimUserId]);
-
-    await client.query(`
-      UPDATE classes
-      SET "userId" = $1
-      WHERE "userId" IS NULL
-    `, [jaerimUserId]);
-
-    await client.query(`
-      UPDATE attendance
-      SET "userId" = $1
-      WHERE "userId" IS NULL
-    `, [jaerimUserId]);
 
     console.log('데이터베이스 초기화 완료');
   } catch (error) {

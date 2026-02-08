@@ -3,8 +3,10 @@
 // 프로덕션 환경: 상대 경로 사용 (서버가 클라이언트를 제공)
 export const API_BASE_URL = '';
 
+import { getToken, clearAuth } from './tokenStorage';
+
 export const fetchWithAuth = async (url, options = {}) => {
-  const token = localStorage.getItem('token');
+  const token = getToken();
 
   const headers = {
     'Content-Type': 'application/json',
@@ -23,8 +25,7 @@ export const fetchWithAuth = async (url, options = {}) => {
   if (response.status === 401) {
     const data = await response.json();
     if (data.tokenExpired) {
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
+      clearAuth();
       window.location.href = '/login';
       throw new Error('토큰이 만료되었습니다. 다시 로그인해주세요.');
     }

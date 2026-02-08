@@ -2,26 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { fetchWithAuth } from '../utils/api';
+import { useIsMobile } from '../hooks/useMediaQuery';
 
 function Settings() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [kakaoMessageConsent, setKakaoMessageConsent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const isMobile = useIsMobile();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     window.scrollTo(0, 0);

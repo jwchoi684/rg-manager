@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { useIsMobile } from './hooks/useMediaQuery';
 import StudentList from './components/Students/StudentList';
 import StudentForm from './pages/Students/StudentForm';
 import ClassList from './components/Classes/ClassList';
@@ -58,17 +59,9 @@ function ProtectedRoute({ children }) {
 
 function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const isMobile = useIsMobile();
   const { user, logout } = useAuth();
   const location = useLocation();
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // 메뉴 열릴 때 body 스크롤 방지
   useEffect(() => {

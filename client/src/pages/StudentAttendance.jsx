@@ -3,6 +3,8 @@ import { fetchWithAuth } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import DateRangePicker from '../components/common/DateRangePicker';
 import { matchKoreanSearch } from '../utils/koreanSearch';
+import { calculateAge } from '../utils/dateHelpers';
+import { useIsMobile } from '../hooks/useMediaQuery';
 
 function StudentAttendance() {
   const { user } = useAuth();
@@ -34,7 +36,7 @@ function StudentAttendance() {
   const [endDate, setEndDate] = useState(thisMonth.end);
   const [selectedStudent, setSelectedStudent] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const isMobile = useIsMobile();
   const [swipedId, setSwipedId] = useState(null);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
@@ -44,26 +46,6 @@ function StudentAttendance() {
   const [studentSearchText, setStudentSearchText] = useState('');
   const [showStudentDropdown, setShowStudentDropdown] = useState(false);
   const [dropdownTouchStartY, setDropdownTouchStartY] = useState(null);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const calculateAge = (birthdate) => {
-    if (!birthdate) return '-';
-    const today = new Date();
-    const birth = new Date(birthdate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age;
-  };
 
   useEffect(() => {
     window.scrollTo(0, 0);

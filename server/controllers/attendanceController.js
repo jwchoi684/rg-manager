@@ -12,14 +12,19 @@ export const getAttendance = async (req, res) => {
 
     // Admin이 특정 사용자로 필터링하는 경우
     if (role === 'admin' && filterUserId && filterUserId !== 'all') {
-      const attendance = await Attendance.getAll(parseInt(filterUserId), 'user');
+      const targetUserId = parseInt(filterUserId, 10);
+      if (isNaN(targetUserId)) {
+        return res.status(400).json({ error: '잘못된 사용자 ID입니다.' });
+      }
+      const attendance = await Attendance.getAll(targetUserId, 'user');
       res.json(attendance);
     } else {
       const attendance = await Attendance.getAll(userId, role);
       res.json(attendance);
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('출석 조회 오류:', error);
+    res.status(500).json({ error: '출석 조회 중 오류가 발생했습니다.' });
   }
 };
 
@@ -29,7 +34,8 @@ export const checkAttendance = async (req, res) => {
     const newRecord = await Attendance.create(req.body, userId);
     res.status(201).json(newRecord);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('출석 체크 오류:', error);
+    res.status(500).json({ error: '출석 체크 중 오류가 발생했습니다.' });
   }
 };
 
@@ -42,14 +48,19 @@ export const getAttendanceByDate = async (req, res) => {
 
     // Admin이 특정 사용자로 필터링하는 경우
     if (role === 'admin' && filterUserId && filterUserId !== 'all') {
-      const attendance = await Attendance.getByDate(date, parseInt(filterUserId), 'user');
+      const targetUserId = parseInt(filterUserId, 10);
+      if (isNaN(targetUserId)) {
+        return res.status(400).json({ error: '잘못된 사용자 ID입니다.' });
+      }
+      const attendance = await Attendance.getByDate(date, targetUserId, 'user');
       res.json(attendance);
     } else {
       const attendance = await Attendance.getByDate(date, userId, role);
       res.json(attendance);
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('출석 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };
 
@@ -61,7 +72,8 @@ export const deleteAttendance = async (req, res) => {
     await Attendance.delete(id, userId, role);
     res.json({ message: '출석 기록이 삭제되었습니다.' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('출석 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };
 
@@ -73,7 +85,8 @@ export const deleteAttendanceByDateAndClass = async (req, res) => {
     await Attendance.deleteByDateAndClass(date, classId, userId, role);
     res.json({ message: '출석 기록이 삭제되었습니다.' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('출석 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };
 
@@ -97,7 +110,8 @@ export const submitAttendanceWithEmail = async (req, res) => {
       res.status(500).json({ error: '이메일 발송 실패', details: emailResult.error });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('출석 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };
 
@@ -120,15 +134,9 @@ export const submitBulkAttendance = async (req, res) => {
     // 3. 카카오 메시지 전송 (요청된 경우)
     let kakaoResult = { skipped: true };
     if (sendKakaoMessage) {
-      console.log('=== 카카오 메시지 전송 시작 ===');
-      console.log('userId:', userId, 'classId:', classId, 'date:', date);
       try {
-        // 수업 정보 가져오기
         const classInfo = await Class.getById(classId, userId, role);
-        console.log('수업 정보:', classInfo?.name);
-        // 해당 수업의 전체 학생 가져오기
         const allStudents = await Student.getByClassId(classId, userId, role);
-        console.log('학생 수:', allStudents?.length);
 
         kakaoResult = await sendAttendanceKakaoMessage({
           userId,
@@ -138,13 +146,10 @@ export const submitBulkAttendance = async (req, res) => {
           students: allStudents,
           presentStudentIds: studentIds,
         });
-        console.log('카카오 메시지 전송 결과:', kakaoResult);
       } catch (kakaoError) {
         console.error('카카오 메시지 전송 중 오류:', kakaoError);
-        kakaoResult = { success: false, error: kakaoError.message };
+        kakaoResult = { success: false, error: '메시지 전송 실패' };
       }
-    } else {
-      console.log('카카오 메시지 전송 스킵 (sendKakaoMessage:', sendKakaoMessage, ')');
     }
 
     res.json({
@@ -153,7 +158,7 @@ export const submitBulkAttendance = async (req, res) => {
       kakaoMessage: kakaoResult,
     });
   } catch (error) {
-    console.error('출석 체크 오류:', error);
-    res.status(500).json({ error: error.message });
+    console.error('출석 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };

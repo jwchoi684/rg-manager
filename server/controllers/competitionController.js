@@ -7,14 +7,19 @@ export const getCompetitions = async (req, res) => {
     const filterUserId = req.query.filterUserId;
 
     if (role === 'admin' && filterUserId && filterUserId !== 'all') {
-      const competitions = await Competition.getAll(parseInt(filterUserId), 'user');
+      const targetUserId = parseInt(filterUserId, 10);
+      if (isNaN(targetUserId)) {
+        return res.status(400).json({ error: '잘못된 사용자 ID입니다.' });
+      }
+      const competitions = await Competition.getAll(targetUserId, 'user');
       res.json(competitions);
     } else {
       const competitions = await Competition.getAll(userId, role);
       res.json(competitions);
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('대회 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };
 
@@ -31,7 +36,8 @@ export const getCompetition = async (req, res) => {
 
     res.json(competition);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('대회 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };
 
@@ -41,7 +47,8 @@ export const createCompetition = async (req, res) => {
     const newCompetition = await Competition.create(req.body, userId);
     res.status(201).json(newCompetition);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('대회 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };
 
@@ -58,7 +65,8 @@ export const updateCompetition = async (req, res) => {
 
     res.json(updatedCompetition);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('대회 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };
 
@@ -70,7 +78,8 @@ export const deleteCompetition = async (req, res) => {
     await Competition.delete(id, userId, role);
     res.json({ message: '대회가 삭제되었습니다.' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('대회 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };
 
@@ -83,7 +92,8 @@ export const getCompetitionStudents = async (req, res) => {
     const students = await Competition.getStudents(id, userId, role);
     res.json(students);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('대회 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };
 
@@ -91,10 +101,19 @@ export const addStudentToCompetition = async (req, res) => {
   try {
     const { id } = req.params;
     const { studentId, events } = req.body;
+    const userId = req.user.id;
+    const role = req.user.role;
+
+    // 대회 소유권 확인
+    const competition = await Competition.getById(id, userId, role);
+    if (!competition) {
+      return res.status(404).json({ error: '대회를 찾을 수 없습니다.' });
+    }
+
     await Competition.addStudent(id, studentId, events);
     res.status(201).json({ message: '학생이 대회에 등록되었습니다.' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: '대회 학생 등록 중 오류가 발생했습니다.' });
   }
 };
 
@@ -108,7 +127,8 @@ export const updateStudentEvents = async (req, res) => {
     }
     res.json({ message: '종목 정보가 업데이트되었습니다.' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('대회 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };
 
@@ -118,7 +138,8 @@ export const getStudentEvents = async (req, res) => {
     const events = await Competition.getStudentEvents(id, studentId);
     res.json(events);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('대회 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };
 
@@ -130,17 +151,27 @@ export const getCompetitionStudentsWithEvents = async (req, res) => {
     const students = await Competition.getStudentsWithEvents(id, userId, role);
     res.json(students);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('대회 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };
 
 export const removeStudentFromCompetition = async (req, res) => {
   try {
     const { id, studentId } = req.params;
+    const userId = req.user.id;
+    const role = req.user.role;
+
+    // 대회 소유권 확인
+    const competition = await Competition.getById(id, userId, role);
+    if (!competition) {
+      return res.status(404).json({ error: '대회를 찾을 수 없습니다.' });
+    }
+
     await Competition.removeStudent(id, studentId);
     res.json({ message: '학생이 대회에서 제외되었습니다.' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: '대회 학생 제외 중 오류가 발생했습니다.' });
   }
 };
 
@@ -150,7 +181,8 @@ export const getCompetitionStudentIds = async (req, res) => {
     const studentIds = await Competition.getStudentIds(id);
     res.json(studentIds);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('대회 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };
 
@@ -164,6 +196,7 @@ export const updateStudentPaid = async (req, res) => {
     }
     res.json({ message: '납부 상태가 업데이트되었습니다.' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('대회 처리 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 };

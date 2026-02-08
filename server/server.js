@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import studentRoutes from './routes/students.js';
@@ -15,13 +17,70 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-app.use(cors());
-app.use(express.json());
+// 보안 헤더
+app.use(helmet({
+  contentSecurityPolicy: false, // React SPA와 호환
+  crossOriginEmbedderPolicy: false
+}));
+
+// CORS 설정
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:3000'];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    // 같은 서버 요청(origin 없음) 또는 허용 목록 확인
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS 정책에 의해 차단되었습니다.'));
+    }
+  },
+  credentials: true
+}));
+
+// 레이트 리미팅 - 인증 엔드포인트
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15분
+  max: 20,
+  message: { error: '너무 많은 요청입니다. 잠시 후 다시 시도해주세요.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// 레이트 리미팅 - 일반 API
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { error: '너무 많은 요청입니다. 잠시 후 다시 시도해주세요.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// HTTPS 리다이렉션 (프로덕션)
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.header('x-forwarded-proto') !== 'https') {
+      const host = process.env.APP_HOST || req.header('host');
+      res.redirect(`https://${host}${req.url}`);
+    } else {
+      next();
+    }
+  });
+}
+
+app.use(express.json({ limit: '10mb' }));
 
 // API routes
 app.get('/api', (req, res) => {
   res.json({ message: '리듬체조 출석 관리 API' });
 });
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/signup', authLimiter);
+app.use('/api/auth/kakao', authLimiter);
+app.use('/api', apiLimiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);

@@ -2,26 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { fetchWithAuth } from '../utils/api';
+import { useIsMobile } from '../hooks/useMediaQuery';
 
 function Notifications() {
   const [logs, setLogs] = useState([]);
   const [kakaoUsers, setKakaoUsers] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const isMobile = useIsMobile();
   const [showSendModal, setShowSendModal] = useState(false);
   const [sendForm, setSendForm] = useState({ recipientId: '', message: '' });
   const [sendLoading, setSendLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     window.scrollTo(0, 0);

@@ -2,7 +2,7 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-const JWT_EXPIRES_IN = '365d';
+const JWT_EXPIRES_IN = '30d'; // 로그아웃 전까지 유지 (30일)
 
 // 카카오 OAuth 설정 (환경 변수에서 로드)
 const KAKAO_CLIENT_ID = process.env.KAKAO_CLIENT_ID;
@@ -83,21 +83,27 @@ export const getUsers = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: '권한이 없습니다.' });
+    }
     const { id } = req.params;
     const updatedUser = await User.update(id, req.body);
     res.json(updatedUser);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: '사용자 수정 중 오류가 발생했습니다.' });
   }
 };
 
 export const deleteUser = async (req, res) => {
   try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: '권한이 없습니다.' });
+    }
     const { id } = req.params;
     await User.delete(id);
     res.json({ message: '사용자가 삭제되었습니다.' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: '사용자 삭제 중 오류가 발생했습니다.' });
   }
 };
 
@@ -118,6 +124,10 @@ export const verifyTokenEndpoint = async (req, res) => {
 // 사용자 데이터 이전 (관리자 전용)
 export const transferUserData = async (req, res) => {
   try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: '권한이 없습니다.' });
+    }
+
     const { fromUserId, toUserId } = req.body;
 
     if (!fromUserId || !toUserId) {
@@ -270,7 +280,7 @@ export const updateKakaoMessageConsent = async (req, res) => {
       userId = targetUserId;
     }
 
-    console.log('카카오 알림 동의 변경:', { userId, consent, requestedBy: req.user.id });
+    // 카카오 알림 동의 변경 처리
 
     const user = await User.updateMessageConsent(userId, consent);
 
@@ -402,9 +412,6 @@ export const testKakaoMessage = async (req, res) => {
 
     // 1. 토큰 정보 가져오기
     const tokens = await User.getKakaoTokens(userId);
-    console.log('=== 카카오 토큰 테스트 ===');
-    console.log('userId:', userId);
-    console.log('토큰 존재 여부:', !!tokens);
 
     if (!tokens) {
       return res.json({
@@ -413,11 +420,6 @@ export const testKakaoMessage = async (req, res) => {
         tokens: null
       });
     }
-
-    console.log('kakaoAccessToken 존재:', !!tokens.kakaoAccessToken);
-    console.log('kakaoRefreshToken 존재:', !!tokens.kakaoRefreshToken);
-    console.log('kakaoTokenExpiresAt:', tokens.kakaoTokenExpiresAt);
-    console.log('kakaoMessageConsent:', tokens.kakaoMessageConsent);
 
     // 토큰 만료 여부 확인
     const now = new Date();
@@ -463,8 +465,6 @@ export const testKakaoMessage = async (req, res) => {
       presentStudentIds: [1]
     });
 
-    console.log('테스트 메시지 결과:', testResult);
-
     res.json({
       status: testResult.success ? 'SUCCESS' : 'FAILED',
       message: testResult.success ? '테스트 메시지가 전송되었습니다!' : testResult.error,
@@ -479,6 +479,6 @@ export const testKakaoMessage = async (req, res) => {
     });
   } catch (error) {
     console.error('카카오 테스트 오류:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: '카카오 테스트 중 오류가 발생했습니다.' });
   }
 };
