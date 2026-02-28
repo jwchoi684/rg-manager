@@ -30,6 +30,9 @@ function Dashboard() {
   const isMobile = useIsMobile();
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('all');
+  const [allAttendance, setAllAttendance] = useState([]);
+  const [allStudents, setAllStudents] = useState([]);
+  const [attendanceModal, setAttendanceModal] = useState(null);
 
   const getDefaultDateRange = () => {
     const endDate = new Date();
@@ -106,6 +109,9 @@ function Dashboard() {
       const students = await studentsRes.json();
       const classesData = await classesRes.json();
       const attendance = await attendanceRes.json();
+
+      setAllStudents(students);
+      setAllAttendance(attendance);
 
       setStats({
         totalStudents: students.length,
@@ -282,6 +288,24 @@ function Dashboard() {
     if (ratio >= 0.8) return 'var(--color-success-bg)';
     if (ratio >= 0.5) return 'var(--color-warning-bg)';
     return 'var(--color-danger-bg)';
+  };
+
+  const handleAttendanceClick = (classItem, date) => {
+    const matchingRecords = allAttendance.filter(
+      a => a.classId === classItem.id && a.date === date
+    );
+    const attendedStudentIds = matchingRecords.map(a => a.studentId);
+    const attendedStudents = allStudents
+      .filter(s => attendedStudentIds.includes(s.id))
+      .map(s => ({ id: s.id, name: s.name, birthdate: s.birthdate }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+
+    setAttendanceModal({
+      className: classItem.name,
+      classSchedule: classItem.schedule,
+      date,
+      students: attendedStudents
+    });
   };
 
   return (
@@ -708,6 +732,8 @@ function Dashboard() {
                       {item.dailyAttendance.map((day, dayIdx) => (
                         <td key={dayIdx} style={{ textAlign: 'center' }}>
                           <span
+                            onClick={day.count > 0 ? () => handleAttendanceClick(item.class, day.date) : undefined}
+                            title={day.count > 0 ? '클릭하여 출석 학생 보기' : undefined}
                             style={{
                               display: 'inline-flex',
                               alignItems: 'center',
@@ -718,8 +744,12 @@ function Dashboard() {
                               color: day.count === 0 ? 'var(--color-gray-400)' : getAttendanceColor(day.count, item.enrolledStudents),
                               fontWeight: 600,
                               fontSize: '0.8125rem',
-                              minWidth: '36px'
+                              minWidth: '36px',
+                              cursor: day.count > 0 ? 'pointer' : 'default',
+                              transition: 'opacity 0.2s'
                             }}
+                            onMouseEnter={day.count > 0 ? (e) => { e.currentTarget.style.opacity = '0.7'; } : undefined}
+                            onMouseLeave={day.count > 0 ? (e) => { e.currentTarget.style.opacity = '1'; } : undefined}
                           >
                             {day.count > 0 ? `${day.count}` : '-'}
                           </span>
@@ -753,6 +783,101 @@ function Dashboard() {
           </>
         )}
       </div>
+
+      {/* Attendance Students Modal */}
+      {attendanceModal && (
+        <div
+          onClick={() => setAttendanceModal(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 'var(--spacing-md)'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: 'var(--bg-primary)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-lg)',
+              maxWidth: '400px',
+              width: '100%',
+              maxHeight: '80vh',
+              overflow: 'auto'
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: 'var(--spacing-lg)',
+              borderBottom: '1px solid var(--color-gray-200)'
+            }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--color-gray-900)' }}>
+                  {attendanceModal.className}
+                </h3>
+                <div style={{ fontSize: '0.85rem', color: 'var(--color-gray-500)', marginTop: '2px' }}>
+                  {formatDate(attendanceModal.date)} · {attendanceModal.students.length}명 출석
+                </div>
+              </div>
+              <button
+                onClick={() => setAttendanceModal(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  color: 'var(--color-gray-400)',
+                  padding: '4px',
+                  lineHeight: 1
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal Body - Student List */}
+            <div style={{ padding: 'var(--spacing-md)' }}>
+              {attendanceModal.students.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: 'var(--spacing-lg)', color: 'var(--color-gray-500)' }}>
+                  출석한 학생이 없습니다.
+                </div>
+              ) : (
+                attendanceModal.students.map((student, idx) => (
+                  <div
+                    key={student.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: 'var(--spacing-sm) var(--spacing-md)',
+                      backgroundColor: idx % 2 === 0 ? 'var(--bg-primary)' : 'var(--color-gray-50)',
+                      borderRadius: 'var(--radius-sm)'
+                    }}
+                  >
+                    <span style={{ fontWeight: 500, color: 'var(--color-gray-900)' }}>
+                      {student.name}
+                    </span>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--color-gray-500)' }}>
+                      {calculateAge(student.birthdate) !== null ? `${calculateAge(student.birthdate)}세` : '-'}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
