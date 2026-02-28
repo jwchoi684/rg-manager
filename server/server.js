@@ -23,7 +23,10 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// CORS 설정
+// Serve static files from React build (CORS 체크 전에 정적 파일 서빙)
+app.use(express.static(path.join(__dirname, '../client/dist')));
+
+// CORS 설정 (API 요청에만 적용)
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : ['http://localhost:3000'];
@@ -88,9 +91,6 @@ app.use('/api/classes', classRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/logs', logRoutes);
 app.use('/api/competitions', competitionRoutes);
-
-// Serve static files from React build
-app.use(express.static(path.join(__dirname, '../client/dist')));
 
 // Handle React routing - serve index.html for all non-API routes
 app.get('*', (req, res) => {
