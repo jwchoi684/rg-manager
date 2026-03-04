@@ -96,6 +96,15 @@ function AttendanceCheck() {
         }),
       });
 
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || '출석 체크 중 오류가 발생했습니다.');
+        }
+        throw new Error('출석 체크 중 서버 오류가 발생했습니다.');
+      }
+
       const result = await response.json();
 
       setHasChanges(false);
@@ -108,7 +117,7 @@ function AttendanceCheck() {
       alert(message);
     } catch (error) {
       console.error("출석 체크 제출 실패:", error);
-      alert("출석 체크 제출에 실패했습니다.");
+      alert(error.message || "출석 체크 제출에 실패했습니다.");
     }
   };
 
