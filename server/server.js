@@ -37,7 +37,9 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('CORS 정책에 의해 차단되었습니다.'));
+      // 허용되지 않은 origin: CORS 헤더를 설정하지 않음 (에러 대신)
+      // same-origin 요청은 CORS 헤더 없이도 정상 동작
+      callback(null, false);
     }
   },
   credentials: true

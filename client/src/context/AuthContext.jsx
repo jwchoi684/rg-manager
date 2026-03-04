@@ -108,8 +108,12 @@ export const AuthProvider = ({ children }) => {
   const getKakaoLoginUrl = async () => {
     const response = await fetch('/api/auth/kakao');
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error);
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const error = await response.json();
+        throw new Error(error.error || '카카오 로그인 URL을 가져올 수 없습니다.');
+      }
+      throw new Error('카카오 로그인 URL을 가져올 수 없습니다.');
     }
     const data = await response.json();
     return data.url;
@@ -124,8 +128,12 @@ export const AuthProvider = ({ children }) => {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error);
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const error = await response.json();
+        throw new Error(error.error || '카카오 로그인에 실패했습니다.');
+      }
+      throw new Error('카카오 로그인에 실패했습니다. 서버 오류가 발생했습니다.');
     }
 
     const data = await response.json();
